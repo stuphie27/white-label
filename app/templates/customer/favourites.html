@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Your Favourites | {{ brand.display_name }}</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/dsi-gallery.css"
+    >
+
+<style>
+:root {
+    --brand-page: {{ brand.theme.page_background }};
+    --brand-header: {{ brand.theme.header_background }};
+    --brand-panel: {{ brand.theme.panel_background }};
+    --brand-panel-secondary: {{ brand.theme.panel_secondary }};
+    --brand-primary: {{ brand.theme.primary_colour }};
+    --brand-accent: {{ brand.theme.accent_colour }};
+    --brand-accent-hover: {{ brand.theme.accent_hover }};
+    --brand-text: {{ brand.theme.text_colour }};
+    --brand-muted: {{ brand.theme.muted_text_colour }};
+    --brand-border: {{ brand.theme.border_colour }};
+}
+</style>
+
+</head>
+
+<body>
+
+<header class="dsi-header">
+
+    <div class="brand">
+        {% if brand.logo_file %}
+        {% if brand.logo_file %}
+        <img src="/static/{{ brand.logo_file.replace('app/static/', '') }}" alt="{{ brand.display_name }}">
+        {% else %}
+        <strong class="brand-name-fallback">{{ brand.display_name }}</strong>
+        {% endif %}
+        {% else %}
+        <strong class="brand-name-fallback">{{ brand.display_name }}</strong>
+        {% endif %}
+    </div>
+
+    <nav>
+        <a href="/gallery/{{ event.public_slug }}">
+            EVENT PHOTOS
+        </a>
+
+        {% if brand.extra_nav_link %}
+        <a
+            href="{{ brand.extra_nav_link.url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="video-booking-link"
+        >
+            {{ brand.extra_nav_link.label }}
+        </a>
+        {% endif %}
+    </nav>
+
+</header>
+
+
+<main>
+
+<section class="event-hero">
+
+    <div>
+        <p class="eyebrow">
+            {{ event.event_name }}
+        </p>
+
+        <h1>Your Favourites</h1>
+
+        <p>
+            Your saved photographs from this event.
+        </p>
+    </div>
+
+    <div class="gallery-actions">
+        <a
+            class="customer-action-button"
+            href="/gallery/{{ event.public_slug }}"
+        >
+            ← Back to Gallery
+        </a>
+
+        <button disabled>
+            Basket {{ basket_count }}
+        </button>
+    </div>
+
+</section>
+
+
+{% if photos %}
+
+<section class="photo-grid">
+
+    {% for photo in photos %}
+
+    <article class="photo-card">
+
+        <img
+            src="/gallery/{{ event.public_slug }}/preview/{{ photo.id }}"
+            alt="{{ photo.original_filename }}"
+            loading="lazy"
+        >
+
+        <div class="photo-info">
+
+            <span>
+                {{ photo.original_filename }}
+            </span>
+
+            <form
+                method="post"
+                action="/gallery/{{ event.public_slug }}/favourite/{{ photo.id }}"
+            >
+                <button
+                    type="submit"
+                    class="favourite-button selected"
+                >
+                    ♥
+                </button>
+            </form>
+
+        </div>
+
+    </article>
+
+    {% endfor %}
+
+</section>
+
+{% else %}
+
+<section class="empty-gallery">
+
+    <h2>No favourites yet</h2>
+
+    <p>
+        Tap the heart on any photograph to save it here.
+    </p>
+
+    <a
+        class="customer-action-button"
+        href="/gallery/{{ event.public_slug }}"
+    >
+        Browse Event Photos
+    </a>
+
+</section>
+
+{% endif %}
+
+</main>
+
+</body>
+</html>

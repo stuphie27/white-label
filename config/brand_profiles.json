@@ -1,0 +1,112 @@
+{
+  "brands": [
+    {
+      "brand_id": "sophies",
+      "display_name": "Sophie's Photography",
+      "logo_file": "app/static/images/Sophies Logo.png",
+      "watermark_file": "",
+      "primary_colour": "#000000",
+      "accent_colour": "#d60000",
+      "favicon_file": "",
+      "public_subdomain": "",
+      "footer_text": "",
+      "legal_name": "Sophie's Photography",
+      "customer_wording": {
+        "gallery_title": "Your Photos",
+        "favourites_title": "Your Favourites",
+        "basket_title": "Your Basket"
+      },
+      "digital_products": {
+        "social": {
+          "name": "Social Media Download",
+          "single_price": 14.0,
+          "bundles": {
+            "5": 55.0,
+            "10": 100.0,
+            "15": 145.0,
+            "20": 190.0,
+            "25": 235.0
+          }
+        },
+        "full_resolution": {
+          "name": "Full Resolution Download",
+          "single_price": 22.0,
+          "bundles": {
+            "5": 100.0,
+            "10": 190.0,
+            "15": 280.0,
+            "20": 370.0,
+            "25": 460.0
+          }
+        }
+      },
+      "theme": {
+        "page_background": "#180305",
+        "header_background": "#090102",
+        "panel_background": "#2a070b",
+        "panel_secondary": "#200407",
+        "primary_colour": "#3b080d",
+        "accent_colour": "#b20d1d",
+        "accent_hover": "#e31b2f",
+        "text_colour": "#ffffff",
+        "muted_text_colour": "#d5b9bc",
+        "border_colour": "#64202a"
+      },
+      "extra_nav_link": null
+    },
+    {
+      "brand_id": "partner",
+      "display_name": "DSI",
+      "logo_file": "app/static/images/DSI.png",
+      "watermark_file": "app/static/images/DSI.png",
+      "primary_colour": "#000000",
+      "accent_colour": "#d60000",
+      "favicon_file": "",
+      "public_subdomain": "",
+      "footer_text": "",
+      "legal_name": "",
+      "customer_wording": {
+        "gallery_title": "Your Photos",
+        "favourites_title": "Your Favourites",
+        "basket_title": "Your Basket"
+      },
+      "digital_products": {
+        "social": {
+          "name": "Social Media Download",
+          "single_price": 14.0,
+          "bundles": {
+            "5": 60.0,
+            "10": 120.0,
+            "15": 180.0,
+            "20": 240.0,
+            "25": 300.0
+          }
+        },
+        "full_resolution": {
+          "name": "Full Resolution Download",
+          "single_price": 22.0,
+          "bundles": {
+            "5": 100.0,
+            "10": 190.0,
+            "15": 280.0,
+            "20": 370.0,
+            "25": 460.0
+          }
+        }
+      },
+      "extra_nav_link": null,
+      "theme": {
+        "page_background": "#031b3d",
+        "header_background": "#011a38",
+        "panel_background": "#003b70",
+        "panel_secondary": "#001e45",
+        "primary_colour": "#034f8c",
+        "accent_colour": "#1599ef",
+        "accent_hover": "#35baff",
+        "text_colour": "#ffffff",
+        "muted_text_colour": "#a9d5f0",
+        "border_colour": "#399fdc"
+      }
+    }
+  ]
+}

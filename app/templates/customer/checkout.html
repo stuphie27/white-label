@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>
+        Checkout | {{ brand.display_name }}
+    </title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/dsi-gallery.css"
+    >
+
+    <style>
+        :root {
+            --brand-page: {{ brand.theme.page_background }};
+            --brand-header: {{ brand.theme.header_background }};
+            --brand-panel: {{ brand.theme.panel_background }};
+            --brand-panel-secondary: {{ brand.theme.panel_secondary }};
+            --brand-primary: {{ brand.theme.primary_colour }};
+            --brand-accent: {{ brand.theme.accent_colour }};
+            --brand-accent-hover: {{ brand.theme.accent_hover }};
+            --brand-text: {{ brand.theme.text_colour }};
+            --brand-muted: {{ brand.theme.muted_text_colour }};
+            --brand-border: {{ brand.theme.border_colour }};
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="dsi-header">
+
+    <div class="brand">
+
+        {% if brand.logo_file %}
+
+        <img
+            src="/static/{{ brand.logo_file.replace('app/static/', '') }}"
+            alt="{{ brand.display_name }}"
+        >
+
+        {% else %}
+
+        <strong class="brand-name-fallback">
+            {{ brand.display_name }}
+        </strong>
+
+        {% endif %}
+
+    </div>
+
+    <nav>
+        <a href="/gallery/{{ event.public_slug }}">
+            EVENT PHOTOS
+        </a>
+    </nav>
+
+</header>
+
+
+<main class="checkout-main">
+
+<section class="checkout-heading">
+
+    <a
+        href="/gallery/{{ event.public_slug }}/basket"
+        class="basket-back-link"
+    >
+        ← Back to Basket
+    </a>
+
+    <p class="eyebrow">
+        SECURE CHECKOUT
+    </p>
+
+    <h1>
+        Complete Your Order
+    </h1>
+
+    <p>
+        {{ basket_count }}
+        selected photo{% if basket_count != 1 %}s{% endif %}
+    </p>
+
+</section>
+
+
+{% if items %}
+
+<div class="checkout-layout">
+
+    <section class="checkout-customer">
+
+        <div class="checkout-card">
+
+            <p class="eyebrow">
+                YOUR DETAILS
+            </p>
+
+            <h2>
+                Where should we send your downloads?
+            </h2>
+
+            <form
+                id="checkout-details-form"
+                onsubmit="saveCheckoutDetails(event)"
+            >
+
+                <label>
+                    Name
+
+                    <input
+                        type="text"
+                        name="customer_name"
+                        value="{{ customer_name }}"
+                        autocomplete="name"
+                        required
+                    >
+                </label>
+
+                <label>
+                    Email
+
+                    <input
+                        type="email"
+                        name="customer_email"
+                        value="{{ customer_email }}"
+                        autocomplete="email"
+                        required
+                    >
+                </label>
+
+                <p
+                    id="checkout-message"
+                    class="checkout-message"
+                ></p>
+
+                <p class="checkout-save-note">
+                    Your name and email will be saved when you continue to payment.
+                </p>
+
+            </form>
+
+        </div>
+
+
+        <div class="checkout-card">
+
+            <p class="eyebrow">
+                YOUR PHOTOS
+            </p>
+
+            <div class="checkout-items">
+
+                {% for item in items %}
+
+                <div class="checkout-item">
+
+                    <button
+                        type="button"
+                        class="checkout-thumb-button"
+                        onclick="openCheckoutPhoto(
+                            '/gallery/{{ event.public_slug }}/preview/{{ item.photo_id }}',
+                            '{{ item.original_filename|e }}'
+                        )"
+                        aria-label="View {{ item.original_filename }}"
+                    >
+                        <img
+                            class="checkout-item-thumb"
+                            src="/gallery/{{ event.public_slug }}/preview/{{ item.photo_id }}"
+                            alt="{{ item.original_filename }}"
+                            loading="lazy"
+                        >
+                    </button>
+
+                    <div class="checkout-item-info">
+
+                        <span class="checkout-item-name">
+                            {{ item.original_filename }}
+                        </span>
+
+                        <strong class="checkout-item-product">
+                            {% if item.product_type == 'social' %}
+                                Social Media Download
+                            {% else %}
+                                Full Resolution Download
+                            {% endif %}
+                        </strong>
+
+                    </div>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <aside class="checkout-summary">
+
+        <div class="checkout-card">
+
+            <p class="eyebrow">
+                ORDER SUMMARY
+            </p>
+
+            {% if social_pricing.count %}
+
+            <div class="checkout-summary-row">
+
+                <span>
+                    Social Media
+                </span>
+
+                <span>
+                    {{ social_pricing.count }}
+                </span>
+
+                <strong>
+                    £{{ "%.2f"|format(social_pricing.total) }}
+                </strong>
+
+            </div>
+
+            {% endif %}
+
+
+            {% if fullres_pricing.count %}
+
+            <div class="checkout-summary-row">
+
+                <span>
+                    Full Resolution
+                </span>
+
+                <span>
+                    {{ fullres_pricing.count }}
+                </span>
+
+                <strong>
+                    £{{ "%.2f"|format(fullres_pricing.total) }}
+                </strong>
+
+            </div>
+
+            {% endif %}
+
+
+            {% if total_saving > 0 %}
+
+            <div class="checkout-saving">
+                You save
+                £{{ "%.2f"|format(total_saving) }}
+            </div>
+
+            {% endif %}
+
+
+            <div class="checkout-total">
+
+                <span>
+                    Total
+                </span>
+
+                <strong>
+                    £{{ "%.2f"|format(total) }}
+                </strong>
+
+            </div>
+
+
+            <button
+                type="button"
+                id="checkout-payment-button"
+                class="checkout-payment-button"
+                onclick="continueToPayment()"
+            >
+                CONTINUE TO PAYMENT
+            </button>
+
+            <small>
+                You’ll be redirected securely to SumUp to complete payment.
+            </small>
+
+        </div>
+
+    </aside>
+
+</div>
+
+{% else %}
+
+<section class="empty-gallery">
+
+    <h2>
+        Your basket is empty
+    </h2>
+
+    <a
+        href="/gallery/{{ event.public_slug }}"
+        class="customer-action-button"
+    >
+        Browse Event Photos
+    </a>
+
+</section>
+
+{% endif %}
+
+</main>
+
+
+<div
+    id="checkout-photo-viewer"
+    class="checkout-photo-viewer"
+    hidden
+    onclick="closeCheckoutPhoto(event)"
+>
+    <div
+        class="checkout-photo-viewer-inner"
+        onclick="event.stopPropagation()"
+    >
+        <button
+            type="button"
+            class="checkout-photo-viewer-close"
+            onclick="closeCheckoutPhoto()"
+            aria-label="Close photograph"
+        >
+            ×
+        </button>
+
+        <img
+            id="checkout-photo-viewer-image"
+            src=""
+            alt=""
+        >
+
+        <div
+            id="checkout-photo-viewer-name"
+            class="checkout-photo-viewer-name"
+        ></div>
+    </div>
+</div>
+
+
+<script>
+function openCheckoutPhoto(src, name) {
+    const viewer =
+        document.getElementById("checkout-photo-viewer");
+
+    const image =
+        document.getElementById("checkout-photo-viewer-image");
+
+    const filename =
+        document.getElementById("checkout-photo-viewer-name");
+
+    image.src = src;
+    image.alt = name;
+    filename.textContent = name;
+
+    viewer.hidden = false;
+
+    document.body.classList.add(
+        "checkout-viewer-open"
+    );
+}
+
+
+function closeCheckoutPhoto(event) {
+    if (
+        event &&
+        event.target !== event.currentTarget
+    ) {
+        return;
+    }
+
+    const viewer =
+        document.getElementById("checkout-photo-viewer");
+
+    viewer.hidden = true;
+
+    document.body.classList.remove(
+        "checkout-viewer-open"
+    );
+}
+
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+        if (event.key === "Escape") {
+            closeCheckoutPhoto();
+        }
+    }
+);
+
+
+async function continueToPayment() {
+    const form =
+        document.getElementById(
+            "checkout-details-form"
+        );
+
+    const button =
+        document.getElementById(
+            "checkout-payment-button"
+        );
+
+    const message =
+        document.getElementById(
+            "checkout-message"
+        );
+
+    if (!form.reportValidity()) {
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent =
+        "PREPARING PAYMENT...";
+
+    message.textContent =
+        "Saving your details...";
+
+    try {
+        const detailsResponse = await fetch(
+            "/api/gallery/{{ event.public_slug }}/checkout/details",
+            {
+                method: "POST",
+                credentials: "same-origin",
+                body: new FormData(form)
+            }
+        );
+
+        const detailsData =
+            await detailsResponse.json();
+
+        if (!detailsData.ok) {
+            throw new Error(
+                detailsData.error ||
+                "Could not save your details."
+            );
+        }
+
+        message.textContent =
+            "✓ Details saved — opening secure payment...";
+
+        const paymentResponse = await fetch(
+            "/api/gallery/{{ event.public_slug }}/checkout/payment",
+            {
+                method: "POST",
+                credentials: "same-origin"
+            }
+        );
+
+        const paymentData =
+            await paymentResponse.json();
+
+        if (!paymentData.ok) {
+            throw new Error(
+                paymentData.error ||
+                "Could not start payment."
+            );
+        }
+
+        window.location.href =
+            paymentData.payment_url;
+
+    } catch (error) {
+        message.textContent =
+            error.message;
+
+        button.disabled = false;
+        button.textContent =
+            "CONTINUE TO PAYMENT";
+    }
+}
+
+async function saveCheckoutDetails(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const message =
+        document.getElementById(
+            "checkout-message"
+        );
+
+    const button =
+        form.querySelector(
+            'button[type="submit"]'
+        );
+
+    button.disabled = true;
+    message.textContent = "";
+
+    try {
+
+        const response = await fetch(
+            "/api/gallery/{{ event.public_slug }}/checkout/details",
+            {
+                method: "POST",
+                credentials: "same-origin",
+                body: new FormData(form)
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(
+                data.error ||
+                "Could not save your details."
+            );
+        }
+
+        const orderReference =
+            data.order_reference;
+
+        message.textContent =
+            "✓ Order " +
+            orderReference +
+            " ready";
+
+        button.textContent =
+            "DETAILS SAVED";
+
+        const paymentButton =
+            document.getElementById(
+                "checkout-payment-button"
+            );
+
+        paymentButton.disabled = false;
+
+        paymentButton.dataset.orderReference =
+            orderReference;
+
+    } catch (error) {
+
+        message.textContent =
+            error.message;
+
+        button.disabled = false;
+
+    }
+}
+</script>
+
+</body>
+</html>

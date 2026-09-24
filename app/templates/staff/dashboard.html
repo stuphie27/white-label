@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Stuphie Online</title>
+    <link rel="stylesheet" href="/static/css/stuphie-online.css">
+</head>
+<body>
+
+<header class="topbar">
+    <div>
+        <div class="eyebrow">ONLINE OPERATIONS</div>
+        <h1>Stuphie Online</h1>
+    </div>
+
+    <div class="brand-switch">
+        {% for brand in brands %}
+        <form method="post" action="/staff/brand/{{ brand.brand_id }}">
+            <button
+                type="submit"
+                class="brand-pill {% if brand.brand_id == current_brand_id %}active{% endif %}">
+                {{ brand.display_name }}
+            </button>
+        </form>
+        {% endfor %}
+    </div>
+</header>
+
+<main>
+
+<section class="hero-card">
+    <div>
+        <div class="eyebrow">CURRENT EVENT</div>
+
+        {% if current_event %}
+            <h2>{{ current_event.event_name }}</h2>
+            <p>{{ current_event.event_date }}</p>
+            <p>{{ current_event.source_folder }}</p>
+        {% else %}
+            <h2>No event selected</h2>
+            <p>Create your first online event.</p>
+        {% endif %}
+    </div>
+
+    <div class="status">
+        {% if current_event %}
+            {{ current_event.visibility|upper }}
+        {% else %}
+            PRIVATE
+        {% endif %}
+    </div>
+</section>
+
+<div class="section-title">PHOTO PIPELINE</div>
+
+<section class="grid">
+    <div class="card">
+        <span>Original Photos Detected</span>
+        <strong>{{ stats.photos }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Previews Created</span>
+        <strong>{{ stats.preview_ready }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Waiting to Upload</span>
+        <strong>{{ stats.waiting_upload }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Uploaded</span>
+        <strong>{{ stats.uploaded }}</strong>
+    </div>
+
+    <div class="card danger">
+        <span>Failed</span>
+        <strong>{{ stats.failed }}</strong>
+    </div>
+</section>
+
+<div class="section-title">CUSTOMER ACTIVITY</div>
+
+<section class="grid">
+    <div class="card">
+        <span>Customer Sessions</span>
+        <strong>{{ stats.sessions }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Favourites</span>
+        <strong>{{ stats.favourites }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Open Baskets</span>
+        <strong>{{ stats.baskets }}</strong>
+    </div>
+</section>
+
+<div class="section-title">SALES & DELIVERY</div>
+
+<section class="grid">
+    <div class="card">
+        <span>Orders</span>
+        <strong>{{ stats.orders }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Paid Orders</span>
+        <strong>{{ stats.paid_orders }}</strong>
+    </div>
+
+    <div class="card">
+        <span>Deliveries Waiting</span>
+        <strong>{{ stats.deliveries }}</strong>
+    </div>
+
+    <div class="card sales">
+        <span>Sales Total</span>
+        <strong>£{{ "%.2f"|format(stats.sales_total) }}</strong>
+    </div>
+</section>
+
+<section class="brand-preview-action">
+    <a
+        href="/staff/brand-preview"
+        target="_blank"
+        class="preview-brand-button"
+    >
+        Preview Customer Branding
+    </a>
+</section>
+
+<section class="actions">
+    <a class="action-button" href="/events/new">Create Event</a>
+    <button disabled>Gallery</button>
+    <button disabled>Orders</button>
+</section>
+
+</main>
+
+</body>
+</html>

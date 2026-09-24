@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>Thank You</title>
+
+    {% if brand.brand_id == "partner" %}
+    <link
+        rel="stylesheet"
+        href="/static/css/dsi-gallery.css"
+    >
+    {% endif %}
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #031f3d;
+            color: white;
+        }
+
+        .success-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 18px;
+        }
+
+        .success-card {
+            width: min(620px, 100%);
+            text-align: center;
+            padding: 42px 28px;
+            background: rgba(4, 45, 84, 0.96);
+            border: 1px solid rgba(51, 184, 255, 0.55);
+            border-radius: 22px;
+        }
+
+        .brand-logo {
+            display: block;
+            max-width: 190px;
+            max-height: 90px;
+            margin: 0 auto 30px;
+            object-fit: contain;
+        }
+
+        .success-tick {
+            width: 74px;
+            height: 74px;
+            margin: 0 auto 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #159447;
+            font-size: 40px;
+            font-weight: 900;
+        }
+
+        h1 {
+            margin: 0 0 14px;
+            font-size: clamp(30px, 6vw, 46px);
+            line-height: 1.05;
+        }
+
+        .lead {
+            margin: 0 auto 28px;
+            max-width: 470px;
+            font-size: 18px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.82);
+        }
+
+        .order-box {
+            margin: 28px 0;
+            padding: 20px;
+            border-radius: 14px;
+            background: rgba(0,0,0,0.18);
+        }
+
+        .order-label {
+            margin-bottom: 7px;
+            font-size: 12px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: #35baff;
+        }
+
+        .order-reference {
+            font-size: 21px;
+            font-weight: 800;
+            overflow-wrap: anywhere;
+        }
+
+        .small-text {
+            margin: 26px 0 0;
+            font-size: 14px;
+            line-height: 1.6;
+            color: rgba(255,255,255,0.68);
+        }
+
+        @media (max-width: 600px) {
+            .success-card {
+                padding: 34px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="success-page">
+        <section class="success-card">
+
+            {% if brand.logo_path %}
+            <img
+                class="brand-logo"
+                src="/static/images/{{ brand.logo_path }}"
+                alt=""
+            >
+            {% endif %}
+
+            <div class="success-tick">✓</div>
+
+            <h1>Thank you</h1>
+
+            <p class="lead">
+                Your payment has been received and
+                your order is being confirmed.
+            </p>
+
+            {% if order %}
+            <div class="order-box">
+                <div class="order-label">
+                    Order Reference
+                </div>
+
+                <div class="order-reference">
+                    {{ order.order_reference }}
+                </div>
+            </div>
+            {% endif %}
+
+            <p class="small-text">
+                Your download details will be sent to
+                the email address provided at checkout.
+                You can safely close this page.
+            </p>
+
+        </section>
+    </main>
+</body>
+</html>

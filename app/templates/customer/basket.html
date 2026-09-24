@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Your Basket | {{ brand.display_name }}</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/dsi-gallery.css"
+    >
+
+<style>
+:root {
+    --brand-page: {{ brand.theme.page_background }};
+    --brand-header: {{ brand.theme.header_background }};
+    --brand-panel: {{ brand.theme.panel_background }};
+    --brand-panel-secondary: {{ brand.theme.panel_secondary }};
+    --brand-primary: {{ brand.theme.primary_colour }};
+    --brand-accent: {{ brand.theme.accent_colour }};
+    --brand-accent-hover: {{ brand.theme.accent_hover }};
+    --brand-text: {{ brand.theme.text_colour }};
+    --brand-muted: {{ brand.theme.muted_text_colour }};
+    --brand-border: {{ brand.theme.border_colour }};
+}
+</style>
+
+</head>
+
+<body>
+
+<header class="dsi-header">
+
+    <div class="brand">
+        {% if brand.logo_file %}
+        {% if brand.logo_file %}
+        <img src="/static/{{ brand.logo_file.replace('app/static/', '') }}" alt="{{ brand.display_name }}">
+        {% else %}
+        <strong class="brand-name-fallback">{{ brand.display_name }}</strong>
+        {% endif %}
+        {% else %}
+        <strong class="brand-name-fallback">{{ brand.display_name }}</strong>
+        {% endif %}
+    </div>
+
+    <nav>
+        <a href="/gallery/{{ event.public_slug }}">
+            EVENT PHOTOS
+        </a>
+
+        {% if brand.extra_nav_link %}
+        <a
+            href="{{ brand.extra_nav_link.url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="video-booking-link"
+        >
+            {{ brand.extra_nav_link.label }}
+        </a>
+        {% endif %}
+    </nav>
+
+</header>
+
+
+<main class="compact-basket-main">
+
+<section class="basket-page-heading">
+
+    <div>
+        <a
+            href="/gallery/{{ event.public_slug }}"
+            class="basket-back-link"
+        >
+            ← Continue Browsing
+        </a>
+
+        <h1>Your Basket</h1>
+
+        <p>
+            {{ basket_count }}
+            selected photo{% if basket_count != 1 %}s{% endif %}
+        </p>
+    </div>
+
+</section>
+
+
+{% if items %}
+
+<div class="compact-basket-layout">
+
+    <section class="compact-basket-list">
+
+        <div class="basket-list-toolbar">
+
+            <strong>
+                Selected Photos
+            </strong>
+
+            <button
+                type="button"
+                class="clear-basket-button"
+                onclick="clearBasket()"
+            >
+                Clear Basket
+            </button>
+
+        </div>
+
+        {% for item in items %}
+
+        <article class="compact-basket-row">
+
+            <button
+                type="button"
+                class="basket-thumb-button"
+                onclick="openBasketPreview(
+                    {{ item.photo_id }},
+                    '{{ item.original_filename|e }}',
+                    '{{ item.product_type }}'
+                )"
+            >
+
+                <img
+                    src="/gallery/{{ event.public_slug }}/preview/{{ item.photo_id }}"
+                    alt="{{ item.original_filename }}"
+                >
+
+            </button>
+
+            <div class="compact-basket-details">
+
+                <strong>
+                    {{ item.original_filename }}
+                </strong>
+
+                <select
+                    onchange="changeProduct(
+                        {{ item.photo_id }},
+                        this.value
+                    )"
+                >
+                    <option
+                        value="social"
+                        {% if item.product_type == 'social' %}selected{% endif %}
+                    >
+                        Social Media — £14
+                    </option>
+
+                    <option
+                        value="full_resolution"
+                        {% if item.product_type == 'full_resolution' %}selected{% endif %}
+                    >
+                        Full Resolution — £22
+                    </option>
+                </select>
+
+            </div>
+
+            <div class="compact-basket-price">
+
+                {% if item.product_type == 'social' %}
+                    {% if event.public_slug == 'white-label-test-22-26' %}
+                        £1.00
+                    {% else %}
+                        £14.00
+                    {% endif %}
+                {% else %}
+                    £22.00
+                {% endif %}
+
+            </div>
+
+            <button
+                type="button"
+                class="compact-remove-button"
+                onclick="removeItem({{ item.photo_id }})"
+                aria-label="Remove photograph"
+            >
+                ×
+            </button>
+
+        </article>
+
+        {% endfor %}
+
+    </section>
+
+
+    <aside class="compact-basket-side">
+
+        <section class="basket-preview-panel">
+
+            <div class="basket-preview-placeholder" id="basket-preview-placeholder">
+                <p>Click a thumbnail to preview</p>
+            </div>
+
+            <div
+                id="basket-preview-content"
+                class="basket-preview-content"
+                hidden
+            >
+
+                <div class="basket-preview-image-wrap">
+
+                    <img
+                        id="basket-preview-image"
+                        src=""
+                        alt=""
+                    >
+
+                    <button
+                        type="button"
+                        class="basket-preview-close"
+                        onclick="closeBasketPreview()"
+                    >
+                        ×
+                    </button>
+
+                </div>
+
+                <div class="basket-preview-info">
+
+                    <strong id="basket-preview-name"></strong>
+
+                    <span id="basket-preview-position"></span>
+
+                </div>
+
+                <div class="basket-preview-products">
+
+                    <button
+                        type="button"
+                        id="preview-social"
+                        onclick="changePreviewProduct('social')"
+                    >
+                        <strong>Social Media</strong>
+                        <span>£14</span>
+                        <small>Perfect for social sharing</small>
+                    </button>
+
+                    <button
+                        type="button"
+                        id="preview-full"
+                        onclick="changePreviewProduct('full_resolution')"
+                    >
+                        <strong>Full Resolution</strong>
+                        <span>£22</span>
+                        <small>Highest quality digital file</small>
+                    </button>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <section class="compact-order-summary">
+
+            <p class="eyebrow">
+                ORDER SUMMARY
+            </p>
+
+            {% if social_pricing.count %}
+
+            <div class="compact-summary-row">
+
+                <span>
+                    Social Media
+                </span>
+
+                <span>
+                    {{ social_pricing.count }}
+                    photo{% if social_pricing.count != 1 %}s{% endif %}
+                </span>
+
+                <strong>
+                    £{{ "%.2f"|format(social_pricing.total) }}
+                </strong>
+
+            </div>
+
+            {% if social_pricing.saving > 0 %}
+
+            <div class="compact-saving">
+                Deal applied — saving
+                £{{ "%.2f"|format(social_pricing.saving) }}
+            </div>
+
+            {% endif %}
+
+            {% if social_pricing.next_deal %}
+
+            <div class="compact-next-deal">
+                Add {{ social_pricing.next_deal.needed }}
+                more Social Media photo{% if social_pricing.next_deal.needed != 1 %}s{% endif %}
+                to unlock
+                {{ social_pricing.next_deal.target }}
+                for £{{ "%.0f"|format(social_pricing.next_deal.price) }}
+            </div>
+
+            {% endif %}
+
+            {% endif %}
+
+
+            {% if fullres_pricing.count %}
+
+            <div class="compact-summary-row">
+
+                <span>
+                    Full Resolution
+                </span>
+
+                <span>
+                    {{ fullres_pricing.count }}
+                    photo{% if fullres_pricing.count != 1 %}s{% endif %}
+                </span>
+
+                <strong>
+                    £{{ "%.2f"|format(fullres_pricing.total) }}
+                </strong>
+
+            </div>
+
+            {% if fullres_pricing.saving > 0 %}
+
+            <div class="compact-saving">
+                Deal applied — saving
+                £{{ "%.2f"|format(fullres_pricing.saving) }}
+            </div>
+
+            {% endif %}
+
+            {% if fullres_pricing.next_deal %}
+
+            <div class="compact-next-deal">
+                Add {{ fullres_pricing.next_deal.needed }}
+                more Full Resolution photo{% if fullres_pricing.next_deal.needed != 1 %}s{% endif %}
+                to unlock
+                {{ fullres_pricing.next_deal.target }}
+                for £{{ "%.0f"|format(fullres_pricing.next_deal.price) }}
+            </div>
+
+            {% endif %}
+
+            {% endif %}
+
+
+            {% if total_saving > 0 %}
+
+            <div class="compact-total-saving">
+                You save
+                £{{ "%.2f"|format(total_saving) }}
+            </div>
+
+            {% endif %}
+
+
+            <div class="compact-total-row">
+
+                <span>Total</span>
+
+                <strong>
+                    £{{ "%.2f"|format(total) }}
+                </strong>
+
+            </div>
+
+
+            <a
+                href="/gallery/{{ event.public_slug }}/checkout"
+                class="compact-checkout-button checkout-link-button"
+            >
+                CHECKOUT
+            </a>
+
+        </section>
+
+    </aside>
+
+</div>
+
+{% else %}
+
+<section class="empty-gallery">
+
+    <h2>
+        Your basket is empty
+    </h2>
+
+    <p>
+        Choose a photograph and tap BUY DIGITAL.
+    </p>
+
+    <a
+        class="customer-action-button"
+        href="/gallery/{{ event.public_slug }}"
+    >
+        Browse Event Photos
+    </a>
+
+</section>
+
+{% endif %}
+
+</main>
+
+
+<script>
+let previewPhotoId = null;
+
+async function changeProduct(photoId, productType) {
+
+    const formData = new FormData();
+    formData.append("product_type", productType);
+
+    const response = await fetch(
+        `/api/gallery/{{ event.public_slug }}/basket/${photoId}/product`,
+        {
+            method: "POST",
+            credentials: "same-origin",
+            body: formData
+        }
+    );
+
+    const data = await response.json();
+
+    if (!data.ok) {
+        alert(data.error || "Could not update basket.");
+        return;
+    }
+
+    window.location.reload();
+}
+
+
+async function removeItem(photoId) {
+
+    const response = await fetch(
+        `/api/gallery/{{ event.public_slug }}/basket/${photoId}/remove`,
+        {
+            method: "POST",
+            credentials: "same-origin"
+        }
+    );
+
+    const data = await response.json();
+
+    if (!data.ok) {
+        alert(data.error || "Could not remove photograph.");
+        return;
+    }
+
+    window.location.reload();
+}
+
+
+function openBasketPreview(photoId, photoName, productType) {
+
+    previewPhotoId = photoId;
+
+    document.getElementById(
+        "basket-preview-placeholder"
+    ).hidden = true;
+
+    document.getElementById(
+        "basket-preview-content"
+    ).hidden = false;
+
+    document.getElementById(
+        "basket-preview-image"
+    ).src =
+        `/gallery/{{ event.public_slug }}/preview/${photoId}`;
+
+    document.getElementById(
+        "basket-preview-name"
+    ).textContent = photoName;
+
+    const socialButton =
+        document.getElementById("preview-social");
+
+    const fullButton =
+        document.getElementById("preview-full");
+
+    socialButton.classList.toggle(
+        "selected",
+        productType === "social"
+    );
+
+    fullButton.classList.toggle(
+        "selected",
+        productType === "full_resolution"
+    );
+}
+
+
+function closeBasketPreview() {
+
+    previewPhotoId = null;
+
+    document.getElementById(
+        "basket-preview-content"
+    ).hidden = true;
+
+    document.getElementById(
+        "basket-preview-placeholder"
+    ).hidden = false;
+}
+
+
+async function changePreviewProduct(productType) {
+
+    if (!previewPhotoId) {
+        return;
+    }
+
+    await changeProduct(
+        previewPhotoId,
+        productType
+    );
+}
+
+
+async function clearBasket() {
+
+    const ok = confirm(
+        "Remove all photographs from your basket?"
+    );
+
+    if (!ok) {
+        return;
+    }
+
+    const photoIds = [
+        {% for item in items %}
+            {{ item.photo_id }},
+        {% endfor %}
+    ];
+
+    for (const photoId of photoIds) {
+
+        await fetch(
+            `/api/gallery/{{ event.public_slug }}/basket/${photoId}/remove`,
+            {
+                method: "POST",
+                credentials: "same-origin"
+            }
+        );
+    }
+
+    window.location.reload();
+}
+</script>
+
+</body>
+</html>

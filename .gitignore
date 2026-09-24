@@ -1,0 +1,38 @@
+# Python environments
+.venv/
+.venv*/
+venv/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# macOS
+.DS_Store
+
+# Local databases
+data/*.db
+*.db
+*.db-shm
+*.db-wal
+
+# Logs
+logs/
+*.log
+
+# Development backups
+*.before-*
+*.backup
+*.bak
+
+# Local secrets
+.env
+*.env
+
+# IDE
+.vscode/
+.idea/
+
+# Config backups
+config/*.before-*

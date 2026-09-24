@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Create Event - Stuphie Online</title>
+    <link rel="stylesheet" href="/static/css/stuphie-online.css">
+</head>
+
+<body>
+
+<header class="topbar">
+    <div>
+        <div class="eyebrow">ONLINE OPERATIONS</div>
+        <h1>Create Event</h1>
+    </div>
+
+    <a class="back-link" href="/">← Dashboard</a>
+</header>
+
+<main>
+
+<section class="form-card">
+
+    <div class="eyebrow">EVENT BRAND</div>
+
+    <div class="locked-brand">
+        <strong>{{ current_brand.display_name }}</strong>
+        <span>Selected from the Staff Brand Switch</span>
+    </div>
+
+    <p class="brand-warning">
+        This brand will be permanently saved against this event.
+        Changing the Staff Brand Switch later will not rebrand this gallery.
+    </p>
+
+    {% if error %}
+    <div class="form-error">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <form method="post" action="/events/new">
+
+        <label>
+            Event name
+            <input
+                type="text"
+                name="event_name"
+                placeholder="Example: Autumn Dance Festival"
+                required
+                autofocus
+            >
+        </label>
+
+        <label>
+            Event date
+            <input
+                type="date"
+                name="event_date"
+                required
+            >
+        </label>
+
+        <label>
+            Photo source folder
+
+            <div class="folder-picker-row">
+                <input
+                    id="source_folder"
+                    type="text"
+                    name="source_folder"
+                    placeholder="No folder selected"
+                    required
+                >
+
+                <button
+                    type="button"
+                    class="choose-folder-button"
+                    onclick="choosePhotoFolder()"
+                >
+                    Choose Folder
+                </button>
+            </div>
+
+            <small>
+                Choose the photograph folder on the external event drive. Stuphie will automatically keep all previews, deliveries and event-created files on that same drive.
+            </small>
+        </label>
+
+        <label>
+            Public gallery address
+            <input
+                type="text"
+                name="public_slug"
+                placeholder="Leave blank to create automatically"
+            >
+            <small>
+                Example: autumn-dance-festival
+            </small>
+        </label>
+
+        <div class="visibility-box">
+            <div class="eyebrow">GALLERY VISIBILITY</div>
+
+            <label class="radio-option">
+                <input
+                    type="radio"
+                    name="visibility"
+                    value="private"
+                    checked
+                >
+                <span>
+                    <strong>Private</strong>
+                    <small>Prepare the event without customer access.</small>
+                </span>
+            </label>
+
+            <label class="radio-option">
+                <input
+                    type="radio"
+                    name="visibility"
+                    value="live"
+                >
+                <span>
+                    <strong>Live</strong>
+                    <small>Customer gallery can be made publicly available.</small>
+                </span>
+            </label>
+        </div>
+
+        <div class="form-actions">
+            <a class="secondary-button" href="/">Cancel</a>
+            <button type="submit">Create Event</button>
+        </div>
+
+    </form>
+
+</section>
+
+</main>
+
+<script>
+async function choosePhotoFolder() {
+    const button = document.querySelector(".choose-folder-button");
+    const input = document.getElementById("source_folder");
+
+    button.disabled = true;
+    button.textContent = "Choose in Finder...";
+
+    try {
+        const response = await fetch("/api/choose-source-folder", {
+            method: "POST"
+        });
+
+        const data = await response.json();
+
+        if (data.ok && data.path) {
+            input.value = data.path;
+        } else if (data.error) {
+            alert(data.error);
+        }
+    } catch (error) {
+        alert("Stuphie could not open the folder chooser.");
+    } finally {
+        button.disabled = false;
+        button.textContent = "Choose Folder";
+    }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,1078 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>{{ event.event_name }} | {{ brand.display_name }}</title>
+
+    <link
+        rel="stylesheet"
+        href="/static/css/dsi-gallery.css"
+    >
+
+<style>
+:root {
+    --brand-page: {{ brand.theme.page_background }};
+    --brand-header: {{ brand.theme.header_background }};
+    --brand-panel: {{ brand.theme.panel_background }};
+    --brand-panel-secondary: {{ brand.theme.panel_secondary }};
+    --brand-primary: {{ brand.theme.primary_colour }};
+    --brand-accent: {{ brand.theme.accent_colour }};
+    --brand-accent-hover: {{ brand.theme.accent_hover }};
+    --brand-text: {{ brand.theme.text_colour }};
+    --brand-muted: {{ brand.theme.muted_text_colour }};
+    --brand-border: {{ brand.theme.border_colour }};
+}
+</style>
+
+</head>
+
+<body>
+
+<header class="dsi-header">
+
+    <div class="brand">
+        {% if brand.logo_file %}
+        {% if brand.logo_file %}
+        <img
+            src="/static/{{ brand.logo_file.replace('app/static/', '') }}"
+            alt="{{ brand.display_name }}"
+        >
+        {% else %}
+        <strong class="brand-name-fallback">
+            {{ brand.display_name }}
+        </strong>
+        {% endif %}
+        {% else %}
+        <strong class="brand-name-fallback">
+            {{ brand.display_name }}
+        </strong>
+        {% endif %}
+    </div>
+
+    <nav>
+        <a href="/gallery/{{ event.public_slug }}">
+            EVENT PHOTOS
+        </a>
+
+        {% if brand.extra_nav_link %}
+        <a
+            href="{{ brand.extra_nav_link.url }}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="video-booking-link"
+        >
+            {{ brand.extra_nav_link.label }}
+        </a>
+        {% endif %}
+    </nav>
+
+</header>
+
+
+<main>
+
+<section class="event-hero">
+
+    <div>
+        <p class="eyebrow">
+            OFFICIAL EVENT PHOTOGRAPHY
+        </p>
+
+        <h1>{{ event.event_name }}</h1>
+
+        <p>{{ event.event_date }}</p>
+    </div>
+
+    <div class="gallery-actions">
+        <a
+            class="customer-action-button"
+            href="/gallery/{{ event.public_slug }}/favourites"
+        >
+            ♡ Favourites <span id="favourite-count">{{ favourite_count }}</span>
+        </a>
+
+        <a
+            id="basket-button"
+            class="customer-action-button"
+            href="/gallery/{{ event.public_slug }}/basket"
+        >
+            Basket <span id="basket-count">{{ basket_count }}</span>
+        </a>
+    </div>
+
+</section>
+
+
+<section class="breadcrumbs">
+
+    <a href="/gallery/{{ event.public_slug }}">
+        {{ event.event_name }}
+    </a>
+
+    {% for crumb in breadcrumbs %}
+        <span>›</span>
+
+        <a
+            href="/gallery/{{ event.public_slug }}?folder={{ crumb.path }}"
+        >
+            {{ crumb.name }}
+        </a>
+    {% endfor %}
+
+</section>
+
+
+{% if subfolders %}
+
+<section class="folder-grid">
+
+    {% for folder_path in subfolders %}
+
+    {% set folder_name = folder_path.split('/')[-1] %}
+
+    <a
+        class="folder-card"
+        href="/gallery/{{ event.public_slug }}?folder={{ folder_path }}"
+    >
+        <div class="folder-icon">
+            📁
+        </div>
+
+        <div>
+            <strong>{{ folder_name }}</strong>
+            <span>Open gallery</span>
+        </div>
+    </a>
+
+    {% endfor %}
+
+</section>
+
+{% endif %}
+
+
+{% if photos and not subfolders %}
+
+<section class="gallery-toolbar">
+
+    <div class="photo-count">
+        {{ photos|length }}
+        photo{% if photos|length != 1 %}s{% endif %}
+    </div>
+
+</section>
+
+
+<section class="photo-grid">
+
+    {% for photo in photos %}
+
+    <article class="photo-card">
+
+        <img
+            class="gallery-photo-thumbnail"
+            src="/gallery/{{ event.public_slug }}/preview/{{ photo.id }}"
+            alt="{{ photo.original_filename }}"
+            loading="lazy"
+            data-photo-id="{{ photo.id }}"
+            data-photo-name="{{ photo.original_filename|e }}"
+            onclick="openGalleryLightbox(this)"
+        >
+
+        <div class="photo-info">
+
+            <span>
+                {{ photo.original_filename }}
+            </span>
+
+            <button
+                type="button"
+                class="favourite-button {% if photo.id in favourite_ids %}selected{% endif %}"
+                data-photo-id="{{ photo.id }}"
+                aria-label="Favourite photo"
+                onclick="toggleFavourite(this)"
+            >
+                {% if photo.id in favourite_ids %}
+                    ♥
+                {% else %}
+                    ♡
+                {% endif %}
+            </button>
+
+        </div>
+
+        <div class="buy-digital-area">
+
+            <button
+                type="button"
+                class="buy-digital-button"
+                data-photo-id="{{ photo.id }}"
+                onclick="quickAddDigital(this)"
+            >
+                ADD TO BASKET
+            </button>
+
+        </div>
+
+    </article>
+
+    {% endfor %}
+
+</section>
+
+{% endif %}
+
+
+{% if not subfolders and not photos %}
+
+<section class="empty-gallery">
+
+    <h2>
+        Photos are coming soon
+    </h2>
+
+    <p>
+        This gallery is currently being prepared.
+    </p>
+
+</section>
+
+{% endif %}
+
+</main>
+
+
+<footer>
+
+    <img
+        src="/static/{{ brand.logo_file.replace('app/static/', '') }}"
+        alt="{{ brand.display_name }}"
+    >
+
+    <span>
+        Official event photography
+    </span>
+
+</footer>
+
+
+<script>
+let pendingFavouriteButton = null;
+
+async function toggleFavourite(button) {
+    if (button.dataset.busy === "1") {
+        return;
+    }
+
+    button.dataset.busy = "1";
+
+    const photoId = button.dataset.photoId;
+
+    try {
+        const response = await fetch(
+            `/api/gallery/{{ event.public_slug }}/favourite/${photoId}`,
+            {
+                method: "POST",
+                credentials: "same-origin"
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(
+                data.error || "Favourite update failed."
+            );
+        }
+
+        if (data.needs_details) {
+            pendingFavouriteButton = button;
+
+            document.getElementById(
+                "customer-photo-id"
+            ).value = photoId;
+
+            document.getElementById(
+                "customer-details-modal"
+            ).classList.add("open");
+
+            return;
+        }
+
+        updateFavouriteButton(
+            button,
+            data.selected,
+            data.count
+        );
+
+    } catch (error) {
+        alert(
+            "We could not update your favourite. Please try again."
+        );
+    } finally {
+        button.dataset.busy = "0";
+    }
+}
+
+
+function updateFavouriteButton(
+    button,
+    selected,
+    count
+) {
+    button.classList.toggle(
+        "selected",
+        selected
+    );
+
+    button.textContent = selected
+        ? "♥"
+        : "♡";
+
+    const countElement =
+        document.getElementById(
+            "favourite-count"
+        );
+
+    if (countElement) {
+        countElement.textContent = count;
+    }
+}
+
+
+function closeCustomerModal() {
+    document.getElementById(
+        "customer-details-modal"
+    ).classList.remove("open");
+
+    pendingFavouriteButton = null;
+}
+
+
+async function saveCustomerDetails(event) {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    const submitButton =
+        form.querySelector(
+            'button[type="submit"]'
+        );
+
+    const message =
+        document.getElementById(
+            "customer-details-message"
+        );
+
+    submitButton.disabled = true;
+    message.textContent = "";
+
+    try {
+        const formData = new FormData(form);
+
+        const response = await fetch(
+            "/api/gallery/{{ event.public_slug }}/identify",
+            {
+                method: "POST",
+                credentials: "same-origin",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(
+                data.error ||
+                "Could not save your details."
+            );
+        }
+
+        if (pendingFavouriteButton) {
+            updateFavouriteButton(
+                pendingFavouriteButton,
+                true,
+                data.count
+            );
+        }
+
+        const secureLink =
+            `${window.location.origin}${data.secure_path}`;
+
+        const resultBox =
+            document.getElementById(
+                "saved-gallery-result"
+            );
+
+        const linkInput =
+            document.getElementById(
+                "saved-gallery-link"
+            );
+
+        linkInput.value = secureLink;
+        resultBox.hidden = false;
+
+        document.getElementById(
+            "customer-details-fields"
+        ).hidden = true;
+
+        message.textContent =
+            "Your favourites are saved.";
+
+    } catch (error) {
+        message.textContent = error.message;
+    } finally {
+        submitButton.disabled = false;
+    }
+}
+
+
+async function copySavedGalleryLink() {
+    const input =
+        document.getElementById(
+            "saved-gallery-link"
+        );
+
+    try {
+        await navigator.clipboard.writeText(
+            input.value
+        );
+
+        document.getElementById(
+            "copy-link-button"
+        ).textContent = "Copied";
+    } catch (error) {
+        input.select();
+        document.execCommand("copy");
+    }
+}
+</script>
+
+
+<div
+    id="customer-details-modal"
+    class="customer-modal"
+>
+    <div class="customer-modal-card">
+
+        <button
+            type="button"
+            class="modal-close"
+            onclick="closeCustomerModal()"
+            aria-label="Close"
+        >
+            ×
+        </button>
+
+        <div class="favourites-brand">
+
+            <img
+                src="/static/{{ brand.logo_file.replace('app/static/', '') }}"
+                alt="{{ brand.display_name }}"
+            >
+
+            <div class="favourites-brand-line"></div>
+
+            <span>OFFICIAL EVENT PHOTOGRAPHY</span>
+
+        </div>
+
+        <p class="eyebrow">
+            SAVE YOUR PHOTOS
+        </p>
+
+        <h2>
+            Keep your favourites
+        </h2>
+
+        <p class="modal-copy">
+            Save your favourite event photographs and return
+            to them whenever you like.
+        </p>
+
+        <form
+            onsubmit="saveCustomerDetails(event)"
+        >
+            <div id="customer-details-fields">
+
+                <label>
+                    Name
+                    <input
+                        type="text"
+                        name="customer_name"
+                        required
+                        autocomplete="name"
+                    >
+                </label>
+
+                <label>
+                    Email
+                    <input
+                        type="email"
+                        name="customer_email"
+                        required
+                        autocomplete="email"
+                    >
+                </label>
+
+                <input
+                    id="customer-photo-id"
+                    type="hidden"
+                    name="photo_id"
+                >
+
+                <button
+                    type="submit"
+                    class="save-favourites-button"
+                >
+                    SAVE MY FAVOURITES
+                </button>
+
+            </div>
+
+            <p
+                id="customer-details-message"
+                class="customer-details-message"
+            ></p>
+
+            <div
+                id="saved-gallery-result"
+                class="saved-gallery-result"
+                hidden
+            >
+                <strong>
+                    Your secure return link
+                </strong>
+
+                <p>
+                    Keep this link to reopen these favourites
+                    on another device.
+                </p>
+
+                <input
+                    id="saved-gallery-link"
+                    type="text"
+                    readonly
+                >
+
+                <button
+                    id="copy-link-button"
+                    type="button"
+                    onclick="copySavedGalleryLink()"
+                >
+                    Copy Link
+                </button>
+
+                <a
+                    href="/gallery/{{ event.public_slug }}/favourites"
+                    class="customer-action-button"
+                >
+                    View My Favourites
+                </a>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+
+
+<div
+    id="buy-digital-modal"
+    class="customer-modal"
+>
+    <div class="customer-modal-card buy-modal-card">
+
+        <button
+            type="button"
+            class="modal-close"
+            onclick="closeBuyDigital()"
+            aria-label="Close"
+        >
+            ×
+        </button>
+
+        <div class="favourites-brand">
+            <img
+                src="/static/{{ brand.logo_file.replace('app/static/', '') }}"
+                alt="{{ brand.display_name }}"
+            >
+
+            <div class="favourites-brand-line"></div>
+
+            <span>DIGITAL DOWNLOADS</span>
+        </div>
+
+        <p class="eyebrow">
+            CHOOSE YOUR DOWNLOAD
+        </p>
+
+        <h2 id="buy-photo-name">
+            Buy Digital
+        </h2>
+
+        <div class="digital-product-options">
+
+            <button
+                type="button"
+                class="digital-product-card"
+                onclick="addDigitalToBasket('social')"
+            >
+                <strong>
+                    Social Media Download
+                </strong>
+
+                <span class="digital-price">
+                    £14
+                </span>
+
+                <small>
+                    Optimised for sharing online and on social media.
+                </small>
+            </button>
+
+            <button
+                type="button"
+                class="digital-product-card"
+                onclick="addDigitalToBasket('full_resolution')"
+            >
+                <strong>
+                    Full Resolution Download
+                </strong>
+
+                <span class="digital-price">
+                    £22
+                </span>
+
+                <small>
+                    Full-size digital file from the original photograph.
+                </small>
+            </button>
+
+        </div>
+
+        <p
+            id="buy-digital-message"
+            class="customer-details-message"
+        ></p>
+
+    </div>
+</div>
+
+
+<script>
+let currentBuyPhotoId = null;
+
+function openBuyDigital(photoId, photoName) {
+    currentBuyPhotoId = photoId;
+
+    document.getElementById(
+        "buy-photo-name"
+    ).textContent = photoName;
+
+    document.getElementById(
+        "buy-digital-message"
+    ).textContent = "";
+
+    document.getElementById(
+        "buy-digital-modal"
+    ).classList.add("open");
+}
+
+
+function closeBuyDigital() {
+    document.getElementById(
+        "buy-digital-modal"
+    ).classList.remove("open");
+
+    currentBuyPhotoId = null;
+}
+
+
+async function addDigitalToBasket(productType) {
+    if (!currentBuyPhotoId) {
+        return;
+    }
+
+    const message =
+        document.getElementById(
+            "buy-digital-message"
+        );
+
+    message.textContent = "";
+
+    const formData = new FormData();
+    formData.append(
+        "product_type",
+        productType
+    );
+
+    try {
+        const response = await fetch(
+            `/api/gallery/{{ event.public_slug }}/basket/${currentBuyPhotoId}`,
+            {
+                method: "POST",
+                credentials: "same-origin",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(
+                data.error ||
+                "Could not add this photograph."
+            );
+        }
+
+        if (data.needs_details) {
+            closeBuyDigital();
+
+            pendingFavouriteButton = null;
+
+            document.getElementById(
+                "customer-photo-id"
+            ).value = currentBuyPhotoId;
+
+            document.getElementById(
+                "customer-details-modal"
+            ).classList.add("open");
+
+            return;
+        }
+
+        const basketCount =
+            document.getElementById(
+                "basket-count"
+            );
+
+        if (basketCount) {
+            basketCount.textContent =
+                data.count;
+        }
+
+        message.textContent =
+            data.product_type === "social"
+                ? "Social Media download added to your basket."
+                : "Full Resolution download added to your basket.";
+
+        setTimeout(
+            closeBuyDigital,
+            700
+        );
+
+    } catch (error) {
+        message.textContent = error.message;
+    }
+}
+</script>
+
+
+<script>
+async function quickAddDigital(button) {
+    if (button.dataset.busy === "1") {
+        return;
+    }
+
+    button.dataset.busy = "1";
+
+    const originalText = button.textContent;
+    const photoId = button.dataset.photoId;
+
+    button.textContent = "ADDING...";
+
+    const formData = new FormData();
+
+    // Social Media is the default.
+    // Customer can upgrade to Full Resolution in the basket.
+    formData.append("product_type", "social");
+
+    try {
+        const response = await fetch(
+            `/api/gallery/{{ event.public_slug }}/basket/${photoId}`,
+            {
+                method: "POST",
+                credentials: "same-origin",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (!data.ok) {
+            throw new Error(
+                data.error || "Could not add photograph."
+            );
+        }
+
+        const basketCount =
+            document.getElementById("basket-count");
+
+        if (basketCount) {
+            basketCount.textContent = data.count;
+        }
+
+        button.textContent = "✓ IN BASKET";
+        button.classList.add("in-basket");
+
+    } catch (error) {
+        alert(error.message);
+        button.textContent = originalText;
+    } finally {
+        button.dataset.busy = "0";
+    }
+}
+</script>
+
+
+<div
+    id="gallery-lightbox"
+    class="gallery-lightbox"
+    aria-hidden="true"
+>
+    <button
+        type="button"
+        class="gallery-lightbox-close"
+        onclick="closeGalleryLightbox()"
+        aria-label="Close photo"
+    >
+        ×
+    </button>
+
+    <button
+        type="button"
+        class="gallery-lightbox-arrow gallery-lightbox-prev"
+        onclick="moveGalleryLightbox(-1)"
+        aria-label="Previous photo"
+    >
+        ‹
+    </button>
+
+    <div class="gallery-lightbox-inner">
+
+        <div class="gallery-lightbox-image-wrap">
+            <img
+                id="gallery-lightbox-image"
+                src=""
+                alt=""
+            >
+        </div>
+
+        <div class="gallery-lightbox-bar">
+
+            <div class="gallery-lightbox-details">
+                <strong id="gallery-lightbox-name"></strong>
+                <span id="gallery-lightbox-position"></span>
+            </div>
+
+            <div class="gallery-lightbox-actions">
+
+                <button
+                    id="gallery-lightbox-favourite"
+                    type="button"
+                    class="gallery-lightbox-favourite favourite-button"
+                    data-photo-id=""
+                    onclick="toggleFavourite(this)"
+                >
+                    ♡
+                </button>
+
+                <button
+                    id="gallery-lightbox-basket"
+                    type="button"
+                    class="gallery-lightbox-basket buy-digital-button"
+                    data-photo-id=""
+                    onclick="quickAddDigital(this)"
+                >
+                    ADD TO BASKET
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+    <button
+        type="button"
+        class="gallery-lightbox-arrow gallery-lightbox-next"
+        onclick="moveGalleryLightbox(1)"
+        aria-label="Next photo"
+    >
+        ›
+    </button>
+</div>
+
+
+<script>
+let galleryLightboxPhotos = [];
+let galleryLightboxIndex = 0;
+
+function buildGalleryLightboxList() {
+    galleryLightboxPhotos = Array.from(
+        document.querySelectorAll(".gallery-photo-thumbnail")
+    );
+}
+
+function openGalleryLightbox(imageElement) {
+    buildGalleryLightboxList();
+
+    galleryLightboxIndex =
+        galleryLightboxPhotos.indexOf(imageElement);
+
+    if (galleryLightboxIndex < 0) {
+        galleryLightboxIndex = 0;
+    }
+
+    showGalleryLightboxPhoto();
+
+    const lightbox =
+        document.getElementById("gallery-lightbox");
+
+    lightbox.classList.add("open");
+    lightbox.setAttribute("aria-hidden", "false");
+
+    document.body.classList.add("lightbox-open");
+}
+
+function showGalleryLightboxPhoto() {
+    if (!galleryLightboxPhotos.length) {
+        return;
+    }
+
+    const source =
+        galleryLightboxPhotos[galleryLightboxIndex];
+
+    const photoId =
+        source.dataset.photoId;
+
+    const photoName =
+        source.dataset.photoName || source.alt || "";
+
+    const image =
+        document.getElementById("gallery-lightbox-image");
+
+    image.src = source.src;
+    image.alt = photoName;
+
+    document.getElementById(
+        "gallery-lightbox-name"
+    ).textContent = photoName;
+
+    document.getElementById(
+        "gallery-lightbox-position"
+    ).textContent =
+        `${galleryLightboxIndex + 1} of ${galleryLightboxPhotos.length}`;
+
+    const favouriteButton =
+        document.getElementById(
+            "gallery-lightbox-favourite"
+        );
+
+    favouriteButton.dataset.photoId = photoId;
+
+    const thumbnailFavourite =
+        document.querySelector(
+            `.photo-card .favourite-button[data-photo-id="${photoId}"]`
+        );
+
+    const selected =
+        thumbnailFavourite &&
+        thumbnailFavourite.classList.contains("selected");
+
+    favouriteButton.classList.toggle(
+        "selected",
+        selected
+    );
+
+    favouriteButton.textContent =
+        selected ? "♥" : "♡";
+
+    const basketButton =
+        document.getElementById(
+            "gallery-lightbox-basket"
+        );
+
+    basketButton.dataset.photoId = photoId;
+
+    const galleryBasketButton =
+        document.querySelector(
+            `.photo-card .buy-digital-button[data-photo-id="${photoId}"]`
+        );
+
+    const inBasket =
+        galleryBasketButton &&
+        galleryBasketButton.classList.contains("in-basket");
+
+    basketButton.classList.toggle(
+        "in-basket",
+        inBasket
+    );
+
+    basketButton.textContent =
+        inBasket
+            ? "✓ IN BASKET"
+            : "ADD TO BASKET";
+}
+
+function moveGalleryLightbox(direction) {
+    if (!galleryLightboxPhotos.length) {
+        return;
+    }
+
+    galleryLightboxIndex += direction;
+
+    if (galleryLightboxIndex < 0) {
+        galleryLightboxIndex =
+            galleryLightboxPhotos.length - 1;
+    }
+
+    if (
+        galleryLightboxIndex >=
+        galleryLightboxPhotos.length
+    ) {
+        galleryLightboxIndex = 0;
+    }
+
+    showGalleryLightboxPhoto();
+}
+
+function closeGalleryLightbox() {
+    const lightbox =
+        document.getElementById("gallery-lightbox");
+
+    lightbox.classList.remove("open");
+    lightbox.setAttribute("aria-hidden", "true");
+
+    document.body.classList.remove("lightbox-open");
+}
+
+document.addEventListener(
+    "keydown",
+    function(event) {
+        const lightbox =
+            document.getElementById("gallery-lightbox");
+
+        if (!lightbox.classList.contains("open")) {
+            return;
+        }
+
+        if (event.key === "Escape") {
+            closeGalleryLightbox();
+        }
+
+        if (event.key === "ArrowLeft") {
+            moveGalleryLightbox(-1);
+        }
+
+        if (event.key === "ArrowRight") {
+            moveGalleryLightbox(1);
+        }
+    }
+);
+</script>
+
+</body>
+</html>

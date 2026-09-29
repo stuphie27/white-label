@@ -1346,8 +1346,12 @@ def build_sync_router() -> APIRouter:
         return {
             "id": asset.id,
             "source_ref": asset.source_ref,
-            "size_bytes": asset.size_bytes,
+            "filename": asset.filename,
+            "folder_path": asset.folder_path,
+            "media_kind": asset.media_kind,
+            "size_bytes": int(asset.size_bytes or 0),
             "status": asset.status,
+            "public_preview_available": bool(asset.storage_path),
             "storage": "spaces",
         }
 

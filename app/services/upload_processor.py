@@ -1,6 +1,11 @@
 from pathlib import Path
+import json
 import sqlite3
 import sys
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 import boto3
 from botocore.config import Config
@@ -12,6 +17,314 @@ CONFIG_PATH = (
     / "stuphie-online"
     / "spaces.env"
 )
+
+
+SYNC_CONFIG_PATH = (
+    Path.home()
+    / ".config"
+    / "stuphie-online"
+    / "sync.env"
+)
+
+_FOLDER_SYNC_STATE = {}
+
+
+def load_sync_config():
+    if not SYNC_CONFIG_PATH.exists():
+        raise RuntimeError(
+            f"Stuphie sync configuration not found: {SYNC_CONFIG_PATH}"
+        )
+
+    values = {}
+
+    for raw_line in SYNC_CONFIG_PATH.read_text().splitlines():
+        line = raw_line.strip()
+
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+
+    required = [
+        "STUPHIE_SYNC_BASE_URL",
+        "STUPHIE_SYNC_API_KEY",
+    ]
+
+    missing = [
+        key for key in required
+        if not values.get(key)
+    ]
+
+    if missing:
+        raise RuntimeError(
+            "Missing Stuphie sync configuration: "
+            + ", ".join(missing)
+        )
+
+    return values
+
+
+def sync_json(config, method, path, payload=None, headers=None):
+    base_url = config["STUPHIE_SYNC_BASE_URL"].rstrip("/")
+    url = base_url + path
+
+    request_headers = {
+        "X-Pirouette-Sync-Key": config["STUPHIE_SYNC_API_KEY"],
+        "Accept": "application/json",
+    }
+
+    if headers:
+        request_headers.update(headers)
+
+    data = None
+
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+        request_headers["Content-Type"] = "application/json"
+
+    elif method in {"POST", "PUT"}:
+        data = b""
+
+    request = urllib.request.Request(
+        url,
+        data=data,
+        headers=request_headers,
+        method=method,
+    )
+
+    try:
+        with urllib.request.urlopen(
+            request,
+            timeout=60,
+        ) as response:
+            raw = response.read()
+
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(
+            f"Cloud sync HTTP {exc.code}: {body[:500]}"
+        ) from exc
+
+    except urllib.error.URLError as exc:
+        raise RuntimeError(
+            f"Cloud sync connection failed: {exc}"
+        ) from exc
+
+    if not raw:
+        return {}
+
+    return json.loads(raw.decode("utf-8"))
+
+
+def sync_folder_manifest(event, config):
+    source_folder = Path(event["source_folder"])
+
+    if not source_folder.exists():
+        raise RuntimeError(
+            f"Source folder is unavailable: {source_folder}"
+        )
+
+    gallery_ref = str(event["public_slug"])
+    now = time.monotonic()
+    state = _FOLDER_SYNC_STATE.get(gallery_ref)
+
+    # Avoid walking a large event tree for every individual photograph.
+    if state and now - state["checked_at"] < 30:
+        return
+
+    folders = []
+
+    for path in source_folder.rglob("*"):
+        if not path.is_dir():
+            continue
+
+        relative = str(
+            path.relative_to(source_folder)
+        ).replace("\\", "/").strip("/")
+
+        if relative:
+            folders.append(relative)
+
+    folders.sort()
+    signature = tuple(folders)
+
+    if not state or state.get("signature") != signature:
+        quoted_gallery = urllib.parse.quote(
+            gallery_ref,
+            safe="",
+        )
+
+        sync_json(
+            config,
+            "PUT",
+            (
+                "/api/sync/v1/galleries/"
+                f"{quoted_gallery}/folders"
+            ),
+            {
+                "folders": [
+                    {
+                        "path": folder,
+                        "media_kind": "photos",
+                    }
+                    for folder in folders
+                ]
+            },
+        )
+
+    _FOLDER_SYNC_STATE[gallery_ref] = {
+        "checked_at": now,
+        "signature": signature,
+    }
+
+
+def sync_preview_to_cloud(event, job, preview_path):
+    config = load_sync_config()
+
+    sync_folder_manifest(
+        event,
+        config,
+    )
+
+    gallery_ref = str(event["public_slug"])
+    asset_ref = f"photo-{int(job['photo_id']):08d}"
+
+    quoted_gallery = urllib.parse.quote(
+        gallery_ref,
+        safe="",
+    )
+    quoted_asset = urllib.parse.quote(
+        asset_ref,
+        safe="",
+    )
+
+    filename = str(job["original_filename"])
+    relative_folder = str(
+        job["relative_folder"] or ""
+    ).replace("\\", "/").strip("/")
+
+    content_type = "image/jpeg"
+    preview_bytes = preview_path.read_bytes()
+
+    prepared = sync_json(
+        config,
+        "POST",
+        (
+            "/api/sync/v1/galleries/"
+            f"{quoted_gallery}/assets/"
+            f"{quoted_asset}/direct-upload"
+        ),
+        headers={
+            "X-Pirouette-Filename": filename,
+            "X-Pirouette-Content-Type": content_type,
+        },
+    )
+
+    upload_url = prepared.get("upload_url")
+
+    if not upload_url:
+        raise RuntimeError(
+            "Cloud did not return a direct upload URL."
+        )
+
+    upload_request = urllib.request.Request(
+        upload_url,
+        data=preview_bytes,
+        headers={
+            "Content-Type": content_type,
+        },
+        method="PUT",
+    )
+
+    try:
+        with urllib.request.urlopen(
+            upload_request,
+            timeout=120,
+        ) as response:
+            response.read()
+
+    except urllib.error.HTTPError as exc:
+        body = exc.read().decode("utf-8", "replace")
+        raise RuntimeError(
+            f"Preview storage upload HTTP {exc.code}: {body[:500]}"
+        ) from exc
+
+    except urllib.error.URLError as exc:
+        raise RuntimeError(
+            f"Preview storage upload failed: {exc}"
+        ) from exc
+
+    completed = sync_json(
+        config,
+        "POST",
+        (
+            "/api/sync/v1/galleries/"
+            f"{quoted_gallery}/assets/"
+            f"{quoted_asset}/direct-upload/complete"
+        ),
+        headers={
+            "X-Pirouette-Filename": filename,
+            "X-Pirouette-Content-Type": content_type,
+            "X-Pirouette-Folder-Path": relative_folder,
+            "X-Pirouette-Media-Kind": "photos",
+            "X-Pirouette-Size-Bytes": str(
+                len(preview_bytes)
+            ),
+        },
+    )
+
+    if completed.get("status") != "ready":
+        raise RuntimeError(
+            "Cloud preview did not become ready."
+        )
+
+    if str(completed.get("source_ref") or "") != asset_ref:
+        raise RuntimeError(
+            "Cloud asset reference verification failed."
+        )
+
+    cloud_folder = str(
+        completed.get("folder_path") or ""
+    ).replace("\\", "/").strip("/")
+
+    if cloud_folder != relative_folder:
+        raise RuntimeError(
+            "Cloud folder verification failed: "
+            f"expected {relative_folder!r}, "
+            f"received {cloud_folder!r}."
+        )
+
+    if str(completed.get("media_kind") or "") != "photos":
+        raise RuntimeError(
+            "Cloud media type verification failed."
+        )
+
+    if not bool(
+        completed.get("public_preview_available")
+    ):
+        raise RuntimeError(
+            "Cloud preview verification failed: "
+            "public preview is unavailable."
+        )
+
+    cloud_size = int(
+        completed.get("size_bytes") or 0
+    )
+
+    if cloud_size != len(preview_bytes):
+        raise RuntimeError(
+            "Cloud preview size verification failed: "
+            f"expected {len(preview_bytes)}, "
+            f"received {cloud_size}."
+        )
+
+    return {
+        "asset_ref": asset_ref,
+        "cloud_size": cloud_size,
+        "folder_path": cloud_folder,
+        "verified": True,
+    }
 
 
 def load_spaces_config():
@@ -108,6 +421,8 @@ def process_next_upload(event_db_path: str):
         SELECT
             j.id AS job_id,
             j.photo_id,
+            p.original_filename,
+            p.relative_folder,
             p.preview_path,
             p.preview_status
         FROM processing_jobs j
@@ -186,6 +501,12 @@ def process_next_upload(event_db_path: str):
             Key=remote_key,
         )
 
+        cloud_result = sync_preview_to_cloud(
+            event,
+            job,
+            preview_path,
+        )
+
         conn.execute(
             """
             UPDATE photos
@@ -220,6 +541,7 @@ def process_next_upload(event_db_path: str):
             "photo_id": job["photo_id"],
             "remote_key": remote_key,
             "size": info["ContentLength"],
+            "cloud_asset_ref": cloud_result["asset_ref"],
         }
 
     except Exception as exc:

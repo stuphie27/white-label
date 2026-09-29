@@ -1,0 +1,305 @@
+
+/* v1.6.6 - explicit favourites retention choice; 5-day free is the default */
+.favourites-retention-options{display:grid;gap:.75rem;margin:1rem 0}.favourites-retention-option{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:1rem;padding:1rem 1.1rem;border:1px solid #3b3b3b;border-radius:14px;background:#111;cursor:pointer}.favourites-retention-option:has(input:checked){border-color:#e3262e;box-shadow:0 0 0 1px #e3262e inset;background:#171111}.favourites-retention-option input{width:20px;height:20px;accent-color:#e3262e}.favourites-retention-free:has(input:checked) .favourites-extension-price{color:#fff}.favourites-extension-copy{display:grid;gap:.2rem}.favourites-extension-copy small{color:#aaa;line-height:1.35}.favourites-extension-price{font-weight:800;white-space:nowrap}
+
+/* v1.7.2 returning customer favourites entry */
+.kiosk-returning-customer{margin-top:1.25rem;padding:1.1rem 1.2rem;border:1px solid #353535;border-left:3px solid #e3262e;border-radius:14px;background:#111}.kiosk-returning-customer h2{margin:.15rem 0 .4rem}.kiosk-returning-customer p{margin:.25rem 0;color:#bbb}.kiosk-returning-customer form{display:grid;grid-template-columns:1fr 1.35fr auto;gap:.7rem;align-items:end;margin-top:.85rem}.kiosk-returning-customer label{display:grid;gap:.35rem;text-align:left;font-weight:750}.kiosk-returning-customer input{box-sizing:border-box;width:100%;min-height:50px;padding:.75rem .85rem;border:1px solid #4a4a4a;border-radius:10px;background:#080808;color:#fff;font:inherit}@media(max-width:800px){.kiosk-returning-customer form{grid-template-columns:1fr}.kiosk-returning-customer .button{width:100%}}
+
+/* Personal Video customer entry.
+   Hidden entirely by the template when the event service is switched off. */
+.kiosk-personal-video-entry{
+  margin-top:1rem;
+  padding:1rem 1.15rem;
+  border:1px solid #353535;
+  border-radius:14px;
+  background:#0d0d0d;
+}
+.kiosk-personal-video-entry .eyebrow{
+  margin:0 0 .55rem;
+}
+.kiosk-personal-video-button{
+  width:100%;
+  box-sizing:border-box;
+  gap:.6rem;
+}
+
+.personal-video-page{
+  width:min(1050px,94vw);
+  margin:0 auto;
+  padding:32px 0 110px;
+}
+.personal-video-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+  margin-bottom:20px;
+}
+.personal-video-hero h1{
+  margin:.15rem 0 .35rem;
+}
+.personal-video-form{
+  display:grid;
+  gap:18px;
+}
+.personal-video-card{
+  padding:22px;
+  border:1px solid #36363b;
+  border-radius:20px;
+  background:linear-gradient(145deg,#18181b,#0d0d0f);
+}
+.personal-video-card h2,
+.personal-video-entry h3{
+  margin:.15rem 0 .75rem;
+}
+.personal-video-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:14px;
+}
+.personal-video-grid label{
+  display:grid;
+  gap:7px;
+  text-align:left;
+  font-weight:750;
+}
+.personal-video-grid input,
+.personal-video-grid select{
+  width:100%;
+  box-sizing:border-box;
+  min-height:52px;
+  padding:11px 13px;
+  border:1px solid #4a4a50;
+  border-radius:11px;
+  background:#08080a;
+  color:#fff;
+  font:inherit;
+}
+.personal-video-entry{
+  position:relative;
+  padding:18px;
+  margin:0 0 14px;
+  border:1px solid #333339;
+  border-radius:16px;
+  background:#111113;
+}
+.personal-video-entry header,
+.personal-video-section-heading,
+.personal-video-summary{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:18px;
+}
+.personal-video-remove{
+  border:1px solid #555;
+  border-radius:8px;
+  background:#202023;
+  color:#fff;
+  padding:8px 11px;
+  font-weight:750;
+}
+.personal-video-entry-price{
+  display:block;
+  margin-top:14px;
+  text-align:right;
+  font-size:1.15rem;
+}
+.personal-video-add,
+.personal-video-submit{
+  width:100%;
+  box-sizing:border-box;
+}
+.personal-video-total{
+  min-width:150px;
+  text-align:right;
+}
+.personal-video-total span,
+.personal-video-reference span{
+  display:block;
+  color:#bbb;
+}
+.personal-video-total strong{
+  display:block;
+  margin-top:4px;
+  font-size:2rem;
+}
+.personal-video-error{
+  padding:14px 16px;
+  border:1px solid #a94343;
+  border-radius:12px;
+  background:#431717;
+  color:#ffd1d1;
+  font-weight:800;
+}
+.personal-video-payment-note{
+  margin:0;
+  text-align:center;
+  color:#aaa;
+}
+.personal-video-reference{
+  margin:18px 0;
+  padding:16px;
+  border:1px solid #444;
+  border-radius:14px;
+  background:#111;
+}
+.personal-video-reference strong{
+  display:block;
+  margin-top:5px;
+  font-size:1.5rem;
+  letter-spacing:.04em;
+}
+.personal-video-success-mark{
+  display:grid;
+  place-items:center;
+  width:62px;
+  height:62px;
+  margin:0 auto 14px;
+  border-radius:50%;
+  background:#24733f;
+  color:#fff;
+  font-size:2rem;
+  font-weight:900;
+}
+@media(max-width:700px){
+  .personal-video-hero,
+  .personal-video-section-heading,
+  .personal-video-summary{
+    display:block;
+  }
+  .personal-video-grid{
+    grid-template-columns:1fr;
+  }
+  .personal-video-hero .button{
+    margin-top:12px;
+  }
+  .personal-video-total{
+    margin-top:16px;
+    text-align:left;
+  }
+}
+
+.personal-video-payment-options {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1rem;
+}
+
+.personal-video-payment-option {
+  display: flex;
+  gap: 0.9rem;
+  align-items: flex-start;
+  padding: 1rem;
+  border: 1px solid currentColor;
+  border-radius: 14px;
+  cursor: pointer;
+}
+
+.personal-video-payment-option input {
+  margin-top: 0.25rem;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.personal-video-payment-option span {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.personal-video-payment-option small {
+  display: block;
+  opacity: 0.8;
+}
+
+.personal-video-full {
+  grid-column: 1 / -1;
+}
+
+.personal-video-example {
+  padding: 1rem;
+  border: 1px solid #39393f;
+  border-radius: 12px;
+  background: #111114;
+}
+
+.personal-video-example p {
+  margin-bottom: 0;
+}
+
+.personal-video-payment-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.personal-video-payment-summary > div {
+  padding: 1rem;
+  border: 1px solid #3b3b41;
+  border-radius: 14px;
+  background: #0d0d0f;
+}
+
+.personal-video-payment-summary span {
+  display: block;
+  opacity: 0.75;
+}
+
+.personal-video-payment-summary strong {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 1.5rem;
+}
+
+.personal-video-options-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.ballroom-event-identification,
+.ballroom-filming-block {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #333338;
+}
+
+.ballroom-filming-detail {
+  padding: 0.75rem 1rem;
+  border-left: 3px solid currentColor;
+}
+
+.ballroom-filming-detail select,
+.ballroom-filming-detail textarea,
+.personal-video-notes {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 48px;
+  padding: 11px 13px;
+  border: 1px solid #4a4a50;
+  border-radius: 11px;
+  background: #08080a;
+  color: #fff;
+  font: inherit;
+}
+
+.personal-video-policy-accept {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+  margin-top: 1rem;
+  font-weight: 700;
+}
+
+.personal-video-policy-accept input {
+  width: 1.3rem;
+  height: 1.3rem;
+}
+
+@media(max-width:700px) {
+  .personal-video-payment-summary,
+  .personal-video-options-grid {
+    grid-template-columns: 1fr;
+  }
+}

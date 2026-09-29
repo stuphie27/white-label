@@ -407,6 +407,8 @@ def build_gallery_router(templates: Jinja2Templates) -> APIRouter:
         if media == "videos" and not int(video_asset_count or 0):
             target = f"/g/{slug}?media=photos" if int(photo_asset_count or 0) else f"/g/{slug}"
             return RedirectResponse(target, status_code=303)
+        verified_profile = None
+
         activity_folder_key = (
             f"pirouette_activity_last_folder_{gallery.id}"
         )

@@ -1,0 +1,456 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'approved_hours' %}
+
+{% block title %}
+Approved Hours | Stuphie Online
+{% endblock %}
+
+{% block control_title %}
+APPROVED HOURS
+{% endblock %}
+
+{% block content %}
+
+<section class="approved-hours-heading">
+
+  <div>
+
+    <p class="team-eyebrow">
+      PAYROLL HANDOFF
+    </p>
+
+    <h2>Approved Hours</h2>
+
+    <p>
+      Approved attendance grouped into Pirouette
+      payroll weeks ready for controlled handoff.
+    </p>
+
+  </div>
+
+  <div class="approved-hours-state">
+
+    <span>PAYROLL STATUS</span>
+
+    <strong>{% set released_groups =
+            payroll_groups
+            |selectattr('existing_payroll_status', 'equalto', 'emailed')
+            |list
+          %}
+          {% set submitted_groups =
+            payroll_groups
+            |selectattr('existing_payroll_status', 'equalto', 'submitted')
+            |list
+          %}
+          {% if submitted_groups %}
+            EMPLOYEE SUBMITTED
+          {% elif released_groups %}
+            RELEASED TO EMPLOYEE
+          {% elif existing_groups %}
+            DRAFT CREATED
+          {% else %}
+            PREVIEW ONLY
+          {% endif %}</strong>
+
+  </div>
+
+</section>
+
+
+<section class="approved-hours-summary">
+
+  <article>
+    <span>APPROVED SHIFTS</span>
+    <strong>{{ rows|length }}</strong>
+  </article>
+
+  <article>
+    <span>APPROVED HOURS</span>
+    <strong>
+      {{ total_minutes // 60 }}h
+      {{ total_minutes % 60 }}m
+    </strong>
+  </article>
+
+  <article>
+    <span>PAYROLL GROUPS</span>
+    <strong>{{ payroll_groups|length }}</strong>
+  </article>
+
+</section>
+
+
+<section class="approved-hours-panel">
+
+  <div class="approved-hours-panel-heading">
+
+    <div>
+      <p class="team-eyebrow">
+        CONTROLLED HANDOFF
+      </p>
+
+      <h3>
+        PAYROLL WEEK PREVIEW
+      </h3>
+    </div>
+
+    <span>
+      {{ payroll_groups|length }} GROUPS
+    </span>
+
+  </div>
+
+
+  <div class="payroll-handoff-groups">
+
+  {% for group in payroll_groups %}
+
+    <article class="payroll-handoff-group">
+
+      <div class="payroll-handoff-group-head">
+
+        <div>
+
+          <strong>
+            {{ group.member.preferred_name
+               or group.member.staff_name }}
+          </strong>
+
+          <span>
+            {{ group.week_start.strftime('%d %b %Y') }}
+            –
+            {{ group.week_end.strftime('%d %b %Y') }}
+          </span>
+
+        </div>
+
+        {% if group.existing_payroll_status == 'submitted' %}
+
+          <span class="payroll-handoff-draft">
+            SUBMITTED
+          </span>
+
+        {% elif group.existing_payroll_status == 'emailed' %}
+
+          <span class="payroll-handoff-draft">
+            EMAILED
+          </span>
+
+        {% elif group.existing_payroll_status == 'draft' %}
+
+          <span class="payroll-handoff-draft">
+            DRAFT
+          </span>
+
+        {% elif group.existing_payroll_status %}
+
+          <span class="payroll-handoff-draft">
+            {{ group.existing_payroll_status|upper }}
+          </span>
+
+        {% elif group.ready %}
+
+          <span class="payroll-handoff-ready">
+            READY
+          </span>
+
+        {% else %}
+
+          <span class="payroll-handoff-blocked">
+            BLOCKED
+          </span>
+
+        {% endif %}
+
+      </div>
+
+
+      <div class="payroll-handoff-meta">
+
+        <div>
+          <span>SHIFTS</span>
+          <strong>{{ group.rows|length }}</strong>
+        </div>
+
+        <div>
+          <span>APPROVED HOURS</span>
+          <strong>
+            {{ group.worked_minutes // 60 }}h
+            {{ group.worked_minutes % 60 }}m
+          </strong>
+        </div>
+
+        <div>
+          <span>FUTURE PAYROLL REF</span>
+          <strong>
+            {{ group.source_ref }}
+          </strong>
+        </div>
+
+      </div>
+
+
+      {% if group.duplicate_dates %}
+
+        <div class="payroll-handoff-blocker">
+
+          <strong>
+            HANDOFF BLOCKED
+          </strong>
+
+          <span>
+            More than one approved shift exists on
+            the same payroll date:
+            {{ group.duplicate_dates|join(', ') }}.
+            This must be resolved before Payroll handoff.
+          </span>
+
+        </div>
+
+      {% endif %}
+
+
+      <div class="payroll-handoff-shifts">
+
+      {% for row in group.rows %}
+
+        <div class="payroll-handoff-shift">
+
+          <div>
+            <span>EVENT</span>
+            <strong>{{ row.event.name }}</strong>
+          </div>
+
+          <div>
+            <span>DATE</span>
+            <strong>
+              {{ row.shift.shift_date.strftime('%d %b %Y') }}
+            </strong>
+          </div>
+
+          <div>
+            <span>CLOCK IN</span>
+            <strong>
+              {{ row.shift.actual_clock_in.strftime('%H:%M') }}
+            </strong>
+          </div>
+
+          <div>
+            <span>CLOCK OUT</span>
+            <strong>
+              {{ row.shift.actual_clock_out.strftime('%H:%M') }}
+            </strong>
+          </div>
+
+          <div>
+            <span>BREAK</span>
+            <strong>
+              {{ row.shift.break_minutes or 0 }} min
+            </strong>
+          </div>
+
+          <div>
+            <span>WORKED</span>
+            <strong>
+              {{ row.worked_minutes // 60 }}h
+              {{ row.worked_minutes % 60 }}m
+            </strong>
+          </div>
+
+        </div>
+
+      {% endfor %}
+
+      </div>
+
+
+      <div class="payroll-handoff-action">
+
+        {% if group.existing_payroll_status %}
+
+          <div class="payroll-handoff-existing">
+
+            <div>
+              <span>
+                PAYROLL DRAFT EXISTS
+              </span>
+
+              <strong>
+                {{ group.existing_payroll_status|upper }}
+              </strong>
+            </div>
+
+            <a
+              href="/staff/payroll/{{ group.existing_payroll_id }}"
+              class="payroll-handoff-review-button"
+            >
+              REVIEW PAYROLL DRAFT
+            </a>
+
+            {% if group.existing_payroll_status == 'draft' %}
+
+              <form
+                method="post"
+                action="/staff/team/approved-hours/release-payroll"
+                class="payroll-handoff-release-form"
+              >
+
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="payroll_id"
+                  value="{{ group.existing_payroll_id }}"
+                >
+
+                <button
+                  type="submit"
+                  class="payroll-handoff-create-button"
+                  onclick="return confirm(
+                    'Release this payroll to the employee? This will email their private payroll link.'
+                  );"
+                >
+                  RELEASE TO EMPLOYEE
+                </button>
+
+              </form>
+
+            {% elif group.existing_payroll_status == 'emailed' %}
+
+              <strong>
+                RELEASED TO EMPLOYEE
+              </strong>
+
+            {% elif group.existing_payroll_status == 'submitted' %}
+
+              <strong>
+                EMPLOYEE SUBMITTED
+              </strong>
+
+            {% endif %}
+
+          </div>
+
+        {% elif group.ready %}
+
+          <div class="staff-payroll-ready-state">
+
+            <div class="staff-payroll-ready-icon">
+              ✓
+            </div>
+
+            <div>
+              <strong>
+                APPROVED HOURS COMPLETE
+              </strong>
+
+              <span>
+                Your approved hours are ready for payroll processing.
+              </span>
+
+              <small>
+                No further action is required from you.
+              </small>
+            </div>
+
+          </div>
+
+        {% else %}
+
+          <span>
+            RESOLVE BLOCKER BEFORE HANDOFF
+          </span>
+
+        {% endif %}
+
+      </div>
+
+    </article>
+
+  {% else %}
+
+    <div class="approved-hours-empty">
+
+      <strong>
+        No approved payroll groups waiting.
+      </strong>
+
+    </div>
+
+  {% endfor %}
+
+  </div>
+
+</section>
+
+
+<section class="approved-hours-warning">
+
+  {% set existing_groups =
+      payroll_groups
+      |selectattr('existing_payroll_status')
+      |list
+  %}
+
+  {% set released_groups =
+      payroll_groups
+      |selectattr('existing_payroll_status', 'equalto', 'emailed')
+      |list
+  %}
+
+  {% if submitted_groups %}
+
+    <strong>
+      EMPLOYEE PAYROLL SUBMITTED
+    </strong>
+
+    <span>
+      The employee has submitted this payroll week.
+      The submission is locked and ready for management review.
+    </span>
+
+  {% elif released_groups %}
+
+    <strong>
+      PAYROLL RELEASED TO EMPLOYEE
+    </strong>
+
+    <span>
+      The payroll draft has been securely released to the
+      employee. It is now awaiting employee completion and
+      has not yet been submitted.
+    </span>
+
+  {% elif existing_groups %}
+
+    <strong>
+      PAYROLL DRAFT CREATED
+    </strong>
+
+    <span>
+      The approved hours have been handed to Payroll
+      as a draft. No payroll email has been sent and
+      the payroll submission has not been submitted.
+    </span>
+
+  {% else %}
+
+    <strong>
+      APPROVED HOURS RECORDED
+    </strong>
+
+    <span>
+      Your approved hours are safely recorded.
+      Payroll processing is handled privately by management.
+    </span>
+
+  {% endif %}
+
+</section>
+
+{% endblock %}

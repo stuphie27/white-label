@@ -1,0 +1,333 @@
+{% extends "customer_base.html" %}
+
+{% block title %}My favourites | {{ gallery.name }}{% endblock %}
+
+{% block content %}
+
+<main
+  class="viewer-shell protected-gallery cloud-ipad-gallery cloud-favourites-shell favourites-only-page saved-media-page"
+  data-favourites-page
+>
+
+  <header class="viewer-hero favourites-parity-hero">
+
+    <div>
+      <p class="eyebrow">MY FAVOURITES</p>
+
+      <h1>Your saved media</h1>
+
+      <p>
+        Photographs you have saved from
+        <strong>{{ gallery.name }}</strong>.
+      </p>
+    </div>
+
+    <div class="favourites-hero-count">
+      <strong>{{ assets|length }}</strong>
+      <span>
+        saved item{% if assets|length != 1 %}s{% endif %}
+      </span>
+    </div>
+
+  </header>
+
+  {% if favourite_session %}
+
+  <section class="favourites-parity-status">
+
+    <span>
+      <strong>
+        {% if favourite_session.extension_paid
+              and favourite_session.retention_choice == 'extension_70' %}
+          70-day access
+        {% elif favourite_session.extension_paid %}
+          35-day access
+        {% elif favourite_session.extension_requested
+              and favourite_session.retention_choice == 'extension_70' %}
+          70-day extension in basket
+        {% elif favourite_session.extension_requested %}
+          35-day extension in basket
+        {% else %}
+          Free 5-day favourites
+        {% endif %}
+      </strong>
+
+      {% if favourite_session.expires_at %}
+        · Available until
+        {{ favourite_session.expires_at.strftime('%d %B %Y') }}
+      {% else %}
+        · Starts when the event closes
+      {% endif %}
+    </span>
+
+  </section>
+
+  {% endif %}
+
+  <nav
+    class="saved-media-actions cloud-favourites-actions favourites-parity-actions"
+    aria-label="Favourites actions"
+  >
+
+    {% if not protected_favourites %}
+    <a
+      class="customer-secondary-button"
+      href="/g/{{ gallery.slug }}?media=photos"
+    >
+      ← Continue browsing photos
+    </a>
+    {% endif %}
+
+    {% if favourite_session
+          and protected_favourites
+          and not favourite_session.extension_paid %}
+
+    <a
+      class="customer-secondary-button favourites-upgrade-button"
+      href="/g/{{ gallery.slug }}/favourites/open/{{ favourite_session.token }}?upgrade=35"
+    >
+      Keep for 35 days — £15
+    </a>
+
+    <a
+      class="customer-secondary-button favourites-upgrade-button"
+      href="/g/{{ gallery.slug }}/favourites/open/{{ favourite_session.token }}?upgrade=70"
+    >
+      Keep for 70 days — £25
+    </a>
+
+    {% endif %}
+
+  </nav>
+
+  {% if assets %}
+
+  <section class="gallery-section favourites-gallery-section">
+
+    <div class="section-heading">
+
+      <div>
+        <p class="eyebrow">SAVED MEDIA</p>
+        <h2>Your favourites</h2>
+      </div>
+
+      <span>
+        {{ assets|length }} saved
+      </span>
+
+    </div>
+
+    <section
+      class="viewer-grid pirouette-gallery-grid favourites-grid"
+    >
+
+      {% for asset in assets %}
+
+      <article
+        class="viewer-photo pirouette-media-card favourite-media-card"
+        id="favourite-{{ asset.id }}"
+      >
+
+        {% if asset.media_kind == 'videos' %}
+
+        <video
+          controls
+          preload="none"
+          playsinline
+          src="{{ favourite_asset_urls.get(
+            asset.id|string,
+            '/g/' ~ gallery.slug ~ '/assets/' ~ asset.id
+          ) }}"
+        ></video>
+
+        {% else %}
+
+        <span class="protected-customer-image">
+
+          <img
+            class="protected-customer-image-file"
+            src="{{ favourite_asset_urls.get(
+              asset.id|string,
+              '/g/' ~ gallery.slug ~ '/assets/' ~ asset.id
+            ) }}"
+            alt="Saved event photograph"
+            loading="lazy"
+            decoding="async"
+            draggable="false"
+          >
+
+        </span>
+
+        {% endif %}
+
+        <div class="favourite-card-copy">
+
+          <span class="favourite-card-meta">
+
+            <strong>
+              {{ asset.filename }}
+            </strong>
+
+            <small>
+              {% if asset.media_kind == 'videos' %}
+                Saved video
+              {% else %}
+                Watermarked customer preview
+              {% endif %}
+            </small>
+
+          </span>
+
+          <span class="photo-actions favourites-card-actions">
+
+            {% if not protected_favourites %}
+
+            <form
+              method="post"
+              action="/g/{{ gallery.slug }}/favourites/{{ asset.id }}"
+            >
+
+              <input
+                type="hidden"
+                name="return_to"
+                value="/g/{{ gallery.slug }}/favourites"
+              >
+
+              <button
+                type="submit"
+                class="customer-secondary-button favourite-remove-button"
+                aria-label="Remove from favourites"
+              >
+                ♥ Remove
+              </button>
+
+            </form>
+
+            {% endif %}
+
+            {% if asset.media_kind != 'videos' %}
+
+            <form
+              method="post"
+              action="/g/{{ gallery.slug }}/basket/add"
+            >
+
+              <input
+                type="hidden"
+                name="return_to"
+                value="/g/{{ gallery.slug }}/favourites"
+              >
+
+              <input
+                type="hidden"
+                name="asset_id"
+                value="{{ asset.id }}"
+              >
+
+              <button
+                type="submit"
+                class="add-basket favourites-add-basket"
+                aria-label="Add photograph to basket"
+                title="Add to basket"
+              >
+                🛒 Add
+              </button>
+
+            </form>
+
+            {% endif %}
+
+          </span>
+
+        </div>
+
+      </article>
+
+      {% endfor %}
+
+    </section>
+
+  </section>
+
+  {% else %}
+
+  <section class="favourites-empty-card">
+
+    <span class="favourites-empty-heart">♡</span>
+
+    <p class="eyebrow">MY FAVOURITES</p>
+
+    <h2>No favourites yet</h2>
+
+    <p>
+      Return to the event and tap the heart on photographs
+      you would like to keep.
+    </p>
+
+    {% if not protected_favourites %}
+
+    <a
+      class="customer-primary-button"
+      href="/g/{{ gallery.slug }}?media=photos"
+    >
+      Find photographs
+    </a>
+
+    {% endif %}
+
+  </section>
+
+  {% endif %}
+
+  <dialog
+    class="basket-drawer"
+    data-basket-drawer
+    data-basket-url="/g/{{ gallery.slug }}/basket?panel=1"
+  >
+    <div class="basket-drawer-loading">
+      Loading your basket…
+    </div>
+  </dialog>
+
+</main>
+
+<nav
+  class="customer-bottom-bar"
+  aria-label="Customer navigation"
+>
+
+  <a
+    class="customer-bottom-action customer-bottom-favourites is-active"
+    href="/g/{{ gallery.slug }}/favourites"
+  >
+    <span class="customer-bottom-icon">♥</span>
+    <span class="customer-bottom-label">Favourites</span>
+  </a>
+
+  <a
+    class="customer-bottom-action customer-bottom-basket"
+    href="/g/{{ gallery.slug }}/basket"
+    data-open-basket
+  >
+    <span class="customer-bottom-icon">🛒</span>
+    <span class="customer-bottom-label">Basket</span>
+  </a>
+
+  <form
+  method="post"
+  action="/customer/logout"
+  class="customer-bottom-end-form"
+>
+  <button
+    type="submit"
+    class="customer-bottom-action customer-bottom-end"
+    aria-label="End customer session"
+  >
+    <span class="customer-bottom-icon" aria-hidden="true">↪</span>
+    <span class="customer-bottom-label">End Session</span>
+  </button>
+</form>
+
+</nav>
+
+{% endblock %}

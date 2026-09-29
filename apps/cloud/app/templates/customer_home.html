@@ -1,0 +1,225 @@
+{% extends "customer_base.html" %}
+
+{% block title %}My Sophie’s Photography{% endblock %}
+
+{% block content %}
+<main class="customer-account-v2">
+  <section class="customer-account-welcome">
+    <p class="eyebrow">MY SOPHIE’S PHOTOGRAPHY</p>
+    <h1>Your photographs, orders and favourites</h1>
+    <p>Everything connected to your verified customer account, all in one place.</p>
+  </section>
+
+<section class="customer-account-shell">
+  <div class="customer-account-hero">
+    <p class="eyebrow">MY SOPHIE’S PHOTOGRAPHY</p>
+    <h1>
+      {% if first_name %}
+        Hi {{ first_name }}
+      {% else %}
+        Welcome
+      {% endif %}
+    </h1>
+    <p>
+      Your photographs, favourites, orders and downloads
+      in one place.
+    </p>
+  </div>
+
+  {% if current_event %}
+  <section class="customer-account-section">
+    <div class="customer-account-heading">
+      <div>
+        <p class="eyebrow">CURRENT EVENT</p>
+        <h2>{{ current_event.event.name }}</h2>
+      </div>
+      <span class="customer-live-pill">LIVE</span>
+    </div>
+
+    {% if current_event.event.venue %}
+    <p class="customer-account-muted">
+      {{ current_event.event.venue }}
+    </p>
+    {% endif %}
+
+    <div class="customer-account-actions">
+      <a
+        class="customer-account-primary"
+        href="/g/{{ current_event.gallery.slug }}?media=photos"
+      >
+        View photographs
+      </a>
+
+      <a
+        class="customer-account-secondary"
+        href="/g/{{ current_event.gallery.slug }}/favourites"
+      >
+        My favourites
+      </a>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="customer-account-section">
+    <div class="customer-account-heading">
+      <div>
+        <p class="eyebrow">MY ORDERS</p>
+        <h2>Orders</h2>
+      </div>
+      <span class="customer-account-count">
+        {{ orders|length }}
+      </span>
+    </div>
+
+    {% if orders %}
+      <div class="customer-account-list">
+        {% for order in orders %}
+        <a
+          class="customer-account-row"
+          href="/orders/{{ order.order_reference }}"
+        >
+          <div>
+            <strong>
+              {{ order.order_reference or "Order" }}
+            </strong>
+            <span>
+              {{ order.created_at.strftime("%d %b %Y") }}
+            </span>
+          </div>
+
+          <div class="customer-account-row-right">
+            <strong>
+              £{{ "%.2f"|format(order.payment_amount_pence / 100) }}
+            </strong>
+            <span>
+              {{ (order.status or order.payment_status)|replace("_", " ")|title }}
+            </span>
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="customer-account-empty">
+        You do not have any orders yet.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="customer-account-section">
+    <div class="customer-account-heading">
+      <div>
+        <p class="eyebrow">MY DOWNLOADS</p>
+        <h2>Digital photographs</h2>
+      </div>
+      <span class="customer-account-count">
+        {{ deliveries|length }}
+      </span>
+    </div>
+
+    {% if deliveries %}
+      <div class="customer-account-list">
+        {% for delivery in deliveries %}
+        <div class="customer-account-row">
+          <div>
+            <strong>
+              {{ delivery.event_name or delivery.order_reference }}
+            </strong>
+            <span>
+              {{ delivery.item_count }} photograph{% if delivery.item_count != 1 %}s{% endif %}
+            </span>
+          </div>
+
+          <div class="customer-account-row-right">
+            <strong>
+              {{ delivery.status|replace("_", " ")|title }}
+            </strong>
+            <span>
+              {% if delivery.downloaded_at %}
+                Downloaded
+              {% elif delivery.emailed_at %}
+                Email sent
+              {% else %}
+                Preparing
+              {% endif %}
+            </span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <p class="customer-account-note">
+        Secure download links are sent to your verified email
+        address when your digital photographs are ready.
+      </p>
+    {% else %}
+      <p class="customer-account-empty">
+        You do not have any digital deliveries yet.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="customer-account-section">
+    <div class="customer-account-heading">
+      <div>
+        <p class="eyebrow">PREVIOUS EVENTS</p>
+        <h2>Your events</h2>
+      </div>
+      <span class="customer-account-count">
+        {{ customer_events|length }}
+      </span>
+    </div>
+
+    {% if customer_events %}
+      <div class="customer-event-grid">
+        {% for item in customer_events %}
+        <a
+          class="customer-event-card"
+          href="/g/{{ item.gallery.slug }}/favourites"
+        >
+          <strong>{{ item.event.name }}</strong>
+
+          {% if item.event.venue %}
+          <span>{{ item.event.venue }}</span>
+          {% endif %}
+
+          <span>
+            {{ item.event.start_date.strftime("%d %b %Y") }}
+          </span>
+
+          <b>View favourites →</b>
+        </a>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="customer-account-empty">
+        Your saved events will appear here.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="customer-account-section">
+    <p class="eyebrow">ACCOUNT</p>
+    <h2>
+      {{ customer.first_name }}
+      {{ customer.last_name }}
+    </h2>
+
+    <p class="customer-account-muted">
+      {{ customer.email }}
+    </p>
+
+    <p class="customer-account-verified">
+      ✓ Verified email
+    </p>
+
+    <form method="post" action="/customer/logout">
+      <button
+        class="customer-account-signout"
+        type="submit"
+      >
+        Sign out
+      </button>
+    </form>
+  </section>
+</section>
+</main>\n{% endblock %}

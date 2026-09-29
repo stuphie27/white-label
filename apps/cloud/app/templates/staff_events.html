@@ -1,0 +1,390 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'staff_events' %}
+{% block title %}Events | Staff Hub{% endblock %}
+{% block content %}
+
+<section class="pf-events-hero staff-readonly-events-hero">
+  <div>
+    <p class="section-kicker">SOPHIE'S PHOTOGRAPHY · STAFF EVENTS</p>
+    <h1>Events</h1>
+    <p>View all upcoming events, set your availability, and see when management has confirmed you to work.</p>
+  </div>
+  <div class="pf-events-hero-actions">
+    <a class="ghost-button staff-calendar-top-link" href="/staff/team/events/calendar">Calendar</a>
+    <a class="ghost-button" href="/staff/team/my-work">My Assigned Work</a>
+  </div>
+</section>
+
+{% if not member %}
+<section class="my-work-empty-card">
+  <strong>STAFF PROFILE NOT LINKED</strong>
+  <p>Your login is not currently linked to a Staff Master record.</p>
+</section>
+{% else %}
+
+<section class="staff-events-summary">
+  <article><span>UPCOMING EVENTS</span><strong>{{ events|length }}</strong></article>
+  <article><span>AVAILABLE FOR</span><strong>{{ interest_event_ids|length }}</strong></article>
+  <article><span>CONFIRMED FOR YOU</span><strong>{{ event_rows|selectattr('is_confirmed')|list|length }}</strong></article>
+</section>
+
+<section class="staff-event-list-intro">
+  <div>
+    <p class="team-eyebrow">UPCOMING EVENTS</p>
+    <h2>Events in date order</h2>
+    <p>All upcoming events are shown in date order. Open an event to view the details and set your availability.</p>
+  </div>
+</section>
+
+<div class="pf-event-stack staff-readonly-event-stack">
+{% for row in event_rows %}
+{% set event = row.event %}
+{% set open_event = request.query_params.get('open') == event.id|string %}
+<article class="pf-event-tile staff-readonly-event-tile {% if row.is_confirmed %}ready{% elif row.is_interested %}complete{% else %}staff-neutral{% endif %}" id="event-{{ event.id }}">
+  <details {% if open_event %}open{% endif %}>
+    <summary class="pf-event-summary">
+      <div class="pf-date-block">
+        <strong>{{ event.start_date.strftime('%d') }}</strong>
+        <span>{{ event.start_date.strftime('%m') }}</span>
+        <small>{{ event.start_date.strftime('%Y') }}</small>
+      </div>
+      <div class="pf-summary-main">
+        <span class="pf-event-state">{% if event.status == 'live' %}LIVE EVENT{% else %}UPCOMING EVENT{% endif %}</span>
+        <h2>{{ event.name }}</h2>
+        <div class="pf-summary-facts">
+          <span><b>LOCATION</b>{{ event.venue or 'To be confirmed' }}</span>
+          <span><b>STYLE</b>{{ event.dance_style or 'To be confirmed' }}</span>
+          <span><b>STAFF</b>{{ row.truly_confirmed_staff|length }}{% if event.staff_required is not none %}/{{ event.staff_required }}{% endif %} confirmed</span>
+          <span>
+            <b>DATES</b>
+            {% if event.end_date != event.start_date %}
+              {{ event.start_date.strftime('%d %b %Y') }}
+              – {{ event.end_date.strftime('%d %b %Y') }}
+            {% else %}
+              {{ event.start_date.strftime('%d %B %Y') }}
+            {% endif %}
+          </span>
+        </div>
+      </div>
+      <div class="pf-summary-status">
+        {% if row.is_confirmed %}
+          <span class="staff-event-state-badge confirmed">
+            ✓ CONFIRMED TO WORK
+          </span>
+        {% elif row.is_waiting_confirmation %}
+          <span class="staff-event-state-badge unset">
+            ◷ SELECTED · WAITING FOR YOUR CONFIRMATION
+          </span>
+        {% elif row.is_unavailable %}
+          <span class="staff-event-state-badge unset">
+            ✕ UNAVAILABLE · NOT CONFIRMED
+          </span>
+        {% elif row.is_email_failed %}
+          <span class="staff-event-state-badge unset">
+            ! EMAIL FAILED · NOT CONFIRMED
+          </span>
+        {% elif row.is_interested %}
+          <span class="staff-event-state-badge available">
+            ✓ AVAILABLE · AWAITING SELECTION
+          </span>
+        {% else %}
+          <span class="staff-event-state-badge unset">
+            AVAILABILITY NOT SET
+          </span>
+        {% endif %}
+        <span class="pf-open-hint">Open details <b>⌄</b></span>
+      </div>
+    </summary>
+
+    <div class="pf-event-expanded staff-readonly-expanded">
+      <section class="staff-my-event-status
+        {% if row.is_confirmed %}
+          confirmed
+        {% elif row.is_interested %}
+          available
+        {% else %}
+          unset
+        {% endif %}
+      ">
+        <div>
+          <span class="staff-my-event-status-label">YOUR STATUS</span>
+
+          {% if row.is_confirmed %}
+            <strong>✓ Confirmed to work</strong>
+            <p>
+              You have confirmed your availability and management
+              has selected you for this event.
+              It is now part of your confirmed work schedule.
+            </p>
+
+          {% elif row.is_waiting_confirmation %}
+            <strong>◷ Selected — confirmation required</strong>
+            <p>
+              Management has selected you for this event,
+              but you have not yet confirmed that you are available.
+              Please use your availability request to respond.
+            </p>
+
+          {% elif row.is_unavailable %}
+            <strong>✕ You are not confirmed</strong>
+            <p>
+              Management selected you for this event, but your
+              latest availability response says you are unavailable.
+            </p>
+
+          {% elif row.is_email_failed %}
+            <strong>! Confirmation request problem</strong>
+            <p>
+              Management selected you, but the confirmation request
+              could not be delivered. You are not confirmed.
+            </p>
+
+          {% elif row.is_interested %}
+            <strong>✓ You are available</strong>
+            <p>
+              Management can see that you are available.
+              You are currently awaiting team selection.
+            </p>
+
+          {% else %}
+            <strong>Availability not set</strong>
+            <p>
+              You have not yet told management that you are
+              available for this event.
+            </p>
+          {% endif %}
+        </div>
+
+        {% if row.is_confirmed %}
+          <span class="staff-my-event-status-pill confirmed">
+            CONFIRMED
+          </span>
+        {% elif row.is_waiting_confirmation %}
+          <span class="staff-my-event-status-pill unset">
+            CONFIRMATION REQUIRED
+          </span>
+        {% elif row.is_unavailable %}
+          <span class="staff-my-event-status-pill unset">
+            UNAVAILABLE
+          </span>
+        {% elif row.is_email_failed %}
+          <span class="staff-my-event-status-pill unset">
+            EMAIL FAILED
+          </span>
+        {% elif row.is_interested %}
+          <span class="staff-my-event-status-pill available">
+            AVAILABLE
+          </span>
+        {% else %}
+          <span class="staff-my-event-status-pill unset">
+            NOT SET
+          </span>
+        {% endif %}
+      </section>
+
+      <section class="pf-form-section">
+        <header><small>01</small><h3>Event details</h3></header>
+        <div class="staff-readonly-grid">
+          <div class="span-2"><span>EVENT NAME</span><strong>{{ event.name }}</strong></div>
+          <div class="span-2"><span>LOCATION / VENUE</span><strong>{{ event.venue or 'To be confirmed' }}</strong></div>
+          <div><span>EVENT STYLE</span><strong>{{ event.dance_style or 'To be confirmed' }}</strong></div>
+          <div><span>STAFF REQUIRED</span><strong>{{ event.staff_required if event.staff_required is not none else 'To be confirmed' }}</strong></div>
+        </div>
+      </section>
+
+      <section class="pf-form-section">
+        <header><small>02</small><h3>Times & travel</h3></header>
+        <div class="staff-readonly-grid four">
+          <div><span>START DATE</span><strong>{{ event.start_date.strftime('%d %B %Y') }}</strong></div>
+          <div><span>START TIME</span><strong>{{ event.event_start_time.strftime('%H:%M') if event.event_start_time else 'To be confirmed' }}</strong></div>
+          <div><span>END DATE</span><strong>{{ event.end_date.strftime('%d %B %Y') }}</strong></div>
+          <div><span>END TIME</span><strong>{{ event.event_end_time.strftime('%H:%M') if event.event_end_time else 'To be confirmed' }}</strong></div>
+          <div><span>TRAVEL TIME</span><strong>{% if event.travel_time_minutes is not none %}{{ event.travel_time_minutes }} minutes{% else %}To be confirmed{% endif %}</strong></div>
+          <div><span>HOTEL</span><strong>{{ 'Required' if event.hotel_required else 'Not required' }}</strong></div>
+          {% if event.hotel_info %}<div class="span-2"><span>HOTEL INFORMATION</span><strong>{{ event.hotel_info }}</strong></div>{% endif %}
+        </div>
+      </section>
+
+      <section class="pf-form-section">
+        <header><small>03</small><h3>Promoter</h3></header>
+        <div class="staff-readonly-grid three">
+          <div><span>NAME</span><strong>{{ event.promoter_name or 'To be confirmed' }}</strong></div>
+          <div><span>EMAIL</span><strong>{{ event.promoter_email or 'To be confirmed' }}</strong></div>
+          <div><span>PHONE</span><strong>{{ event.promoter_phone or 'To be confirmed' }}</strong></div>
+        </div>
+      </section>
+
+      <section class="pf-form-section">
+        <header><small>04</small><h3>Planning notes</h3></header>
+        <div class="staff-readonly-notes">{{ event.planning_notes or 'No event notes have been added yet.' }}</div>
+      </section>
+
+      <section class="pf-form-section">
+        <header><small>05</small><h3>Services & equipment</h3></header>
+        <div class="staff-readonly-services">
+          <span class="{{ 'on' if event.photography_enabled else '' }}">Photography</span>
+          <span class="{{ 'on' if event.video_enabled else '' }}">Video</span>
+          <span class="{{ 'on' if event.printing_enabled else '' }}">Printing</span>
+          <span class="{{ 'on' if event.customer_kiosk_enabled else '' }}">Customer iPads</span>
+        </div>
+      </section>
+
+      <section class="pf-form-section pf-staffing-control staff-readonly-staffing">
+        <header><small>06</small><h3>Staffing</h3></header>
+        <div class="pf-staff-cards">
+          <div><span>REQUIRED</span><strong>{{ event.staff_required if event.staff_required is not none else '—' }}</strong></div>
+          <div><span>CONFIRMED</span><strong>{{ row.truly_confirmed_staff|length }}</strong></div>
+          <div><span>AVAILABLE</span><strong>{{ row.interested_staff|length }}</strong></div>
+        </div>
+
+        <div class="pf-staffing-columns">
+          <div class="pf-staff-container">
+            <div class="pf-staff-container-heading">
+              <div><h4>Available Staff</h4><p>Staff who have told management they are available and are awaiting selection.</p></div>
+              <span>{{ row.interested_staff|length }} interested</span>
+            </div>
+            {% if row.interested_staff %}
+            <div class="pf-interest-list">
+              {% for interest, staff in row.interested_staff %}
+              <div class="pf-person-row interested">
+                <div class="pf-person-avatar">{{ (staff.preferred_name or staff.staff_name)[:1]|upper }}</div>
+                <div class="pf-person-copy"><strong>{{ staff.preferred_name or staff.staff_name }}</strong><span>{{ staff.default_role or 'Photography Staff' }}</span></div>
+                <span class="staff-interest-success">AVAILABLE</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}<div class="pf-staff-empty">No staff are currently waiting for selection.</div>{% endif %}
+          </div>
+
+          <div class="pf-staff-container">
+            <div class="pf-staff-container-heading">
+              <div><h4>Confirmed Staff</h4><p>Staff selected by management who have confirmed they are available.</p></div>
+              <span>{{ row.truly_confirmed_staff|length }} confirmed</span>
+            </div>
+            {% if row.truly_confirmed_staff %}
+            <div class="pf-assigned-list">
+              {% for assignment, staff in row.truly_confirmed_staff %}
+              <div class="pf-person-row assigned">
+                <div class="pf-person-avatar">{{ (staff.preferred_name or staff.staff_name)[:1]|upper }}</div>
+                <div class="pf-person-copy"><strong>{{ staff.preferred_name or staff.staff_name }}</strong><span>{{ assignment.role or staff.default_role or 'Photography Staff' }}</span></div>
+                <span class="pf-linked-badge">CONFIRMED</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}<div class="pf-staff-empty">No staff confirmed yet.</div>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      {% if not row.is_confirmed %}
+      <section class="pf-form-section staff-interest-action">
+        <header>
+          <small>07</small>
+          <h3>Your availability</h3>
+        </header>
+
+        <div class="staff-availability-action-box">
+
+          {% if row.is_interested %}
+
+            <div>
+              <strong>✓ You have marked yourself available</strong>
+              <p>
+                Management can see your availability.
+                You will see CONFIRMED TO WORK above if you
+                are selected for the team.
+              </p>
+            </div>
+
+            <form
+              method="post"
+              action="/staff/team/events/{{ event.id }}/interest">
+
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}">
+
+              <input
+                type="hidden"
+                name="action"
+                value="withdraw">
+
+              <button
+                class="ghost-button"
+                type="submit">
+                Withdraw availability
+              </button>
+            </form>
+
+          {% else %}
+
+            <div>
+              <strong>Are you available for this event?</strong>
+              <p>
+                Tell management that you can work this event.
+                This does not confirm you to the team until
+                management selects you.
+              </p>
+            </div>
+
+            <form
+              method="post"
+              action="/staff/team/events/{{ event.id }}/interest">
+
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}">
+
+              <input
+                type="hidden"
+                name="action"
+                value="register">
+
+              <button
+                class="primary-button"
+                type="submit">
+                I am available
+              </button>
+            </form>
+
+          {% endif %}
+
+        </div>
+      </section>
+
+      {% else %}
+
+      <section class="pf-form-section staff-confirmed-work-section">
+        <header>
+          <small>07</small>
+          <h3>Your assignment</h3>
+        </header>
+
+        <div class="staff-confirmed-work-box">
+          <strong>✓ You are confirmed to work this event</strong>
+          <p>
+            Management has selected you for the event team.
+            Check My Assigned Work for your confirmed schedule.
+          </p>
+
+          <a
+            class="primary-button"
+            href="/staff/team/my-work">
+            View My Assigned Work
+          </a>
+        </div>
+      </section>
+
+      {% endif %}
+    </div>
+  </details>
+</article>
+{% else %}
+<section class="my-work-empty-card"><strong>NO UPCOMING EVENTS</strong><p>There are no current events to show.</p></section>
+{% endfor %}
+</div>
+
+{% endif %}
+{% endblock %}

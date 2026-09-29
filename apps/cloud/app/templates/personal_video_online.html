@@ -1,0 +1,47 @@
+{% extends "customer_base.html" %}
+
+{% block title %}
+{{ booking_type_label }} Personal Video | Sophie’s Photography
+{% endblock %}
+
+{% block content %}
+<main class="personal-video-page">
+  <section class="personal-video-hero">
+    <div>
+      <p class="eyebrow">SOPHIE'S PHOTOGRAPHY</p>
+      <h1>{{ booking_type_label }} Personal Video</h1>
+      <p>
+        {{ event.name }}
+        {% if event.venue %}
+          · {{ event.venue }}
+        {% endif %}
+      </p>
+    </div>
+  </section>
+
+  <section class="personal-video-card">
+    <p class="eyebrow">PERSONAL VIDEO</p>
+    <h2>Book your performance videos online</h2>
+
+    <p>
+      Personal Video booking is available for this event.
+      You can book from home or while you are at the event.
+    </p>
+
+    <div class="status-message">
+      <strong>{{ booking_type_label }} booking</strong>
+      <p>
+        Continue below to enter your performance details.
+      </p>
+    </div>
+
+      <a
+        class="button personal-video-submit"
+        href="/personal-video/{{ booking_type }}"
+      >
+        Continue to {{ booking_type_label }} Booking
+      </a>
+
+  </section>
+</main>
+{% endblock %}

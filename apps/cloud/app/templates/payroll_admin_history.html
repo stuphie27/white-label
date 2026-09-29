@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <meta
+    name="robots"
+    content="noindex,nofollow,noarchive"
+  >
+
+  <title>Payroll History | Stuphie Ltd</title>
+
+  <link
+    rel="stylesheet"
+    href="/static/cloud.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}"
+  >
+</head>
+
+<body class="payroll-admin-page">
+
+<main class="shell">
+
+  <header class="top">
+    <div>
+      <a
+        class="back"
+        href="/staff/payroll"
+      >
+        ← Payroll Admin
+      </a>
+
+      <div class="eyebrow">
+        STUPHIE LTD
+      </div>
+
+      <h1>Payroll History</h1>
+
+      <div class="muted">
+        Completed and paid payroll records ·
+        {{ staff_email }}
+      </div>
+    </div>
+
+    <div class="payroll-header-actions">
+
+      <a
+        class="button"
+        href="/staff/payroll/monthly"
+      >
+        Outstanding Payroll
+      </a>
+
+    </div>
+  </header>
+
+  <section class="panel">
+
+    {% if rows %}
+
+    <table>
+      <thead>
+        <tr>
+          <th>Staff member</th>
+          <th>Week</th>
+          <th>Hours</th>
+          <th>Gross pay</th>
+          <th>Expenses</th>
+          <th>Total paid</th>
+          <th>Approved</th>
+          <th>Paid</th>
+          <th>Payment reference</th>
+          <th></th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+      {% for row in rows %}
+
+        <tr>
+
+          <td>
+            <strong>
+              {{ row.staff_name }}
+            </strong><br>
+
+            <span class="muted">
+              {{ row.staff_email }}
+            </span>
+          </td>
+
+          <td>
+            {{ row.week_start.strftime('%d %b %Y') }}
+          </td>
+
+          <td>
+            {{ row.hours }}
+          </td>
+
+          <td>
+            £{{ row.gross_pay }}
+          </td>
+
+          <td>
+            £{{ row.expenses }}
+          </td>
+
+          <td>
+            <strong>
+              £{{ row.total_due }}
+            </strong>
+          </td>
+
+          <td>
+            {% if row.approved_at %}
+              {{ row.approved_at.strftime('%d %b %Y %H:%M') }}
+              <br>
+              <span class="muted">
+                {{ row.approved_by }}
+              </span>
+            {% else %}
+              —
+            {% endif %}
+          </td>
+
+          <td>
+            <span class="status">
+              PAID
+            </span>
+
+            <br>
+
+            {{ row.paid_at.strftime('%d %b %Y %H:%M') }}
+
+            <br>
+
+            <span class="muted">
+              {{ row.paid_by }}
+            </span>
+          </td>
+
+          <td>
+            {{ row.payment_reference or '—' }}
+          </td>
+
+          <td>
+            <a
+              class="button"
+              href="/staff/payroll/{{ row.id }}"
+            >
+              Open
+            </a>
+          </td>
+
+        </tr>
+
+      {% endfor %}
+
+      </tbody>
+    </table>
+
+    {% else %}
+
+      <div class="empty">
+        <strong>
+          No completed payroll yet.
+        </strong>
+
+        <p class="muted">
+          Payroll will appear here after management
+          approval and payment have been recorded.
+        </p>
+      </div>
+
+    {% endif %}
+
+  </section>
+
+</main>
+
+</body>
+</html>

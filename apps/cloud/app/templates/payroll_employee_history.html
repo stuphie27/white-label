@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>My Payroll | Pirouette</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet" href="/static/payroll-employee.css?v={{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}">
+</head>
+<body class="payroll-admin-page">
+<main class="shell">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">STUPHIE LTD · STAFF PAYROLL</div>
+      <h1>My Payroll</h1>
+      <div class="muted">
+        {% if staff_name %}
+          {{ staff_name }} ·
+        {% endif %}
+        Your submitted timesheets and expenses
+      </div>
+    </div>
+
+    <form method="post" action="/my-payroll/logout">
+      <button type="submit">Sign out</button>
+    </form>
+  </header>
+
+  <section class="panel">
+    <h2>Payroll history</h2>
+
+    {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          <th>Week starting</th>
+          <th>Status</th>
+          <th>Hours</th>
+          <th>Expenses</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>
+            <strong>
+              {{ row.week_start.strftime('%d %B %Y') }}
+            </strong>
+          </td>
+          <td>
+            <span class="status status-{{ row.status|lower|replace('_', '-') }}">
+              {{ row.status|title }}
+            </span>
+          </td>
+          <td>{{ row.hours }}</td>
+          <td>£{{ row.expenses }}</td>
+          <td>
+            {% if row.submitted_at %}
+              {{ row.submitted_at.strftime('%d %b %Y %H:%M') }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td>
+            <a
+              class="button"
+              href="/my-payroll/submissions/{{ row.id }}"
+            >View</a>
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">
+        <strong>No payroll submissions yet</strong>
+        <span class="muted">
+          Your submitted weeks will appear here.
+        </span>
+      </div>
+    {% endif %}
+  </section>
+
+</main>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Event availability · Sophie’s Photography</title>
+  <link rel="stylesheet" href="/static/event_availability.css">
+</head>
+<body>
+<main class="availability-shell">
+  <header class="availability-brand">
+    <img src="/static/images/sophies-dashboard-logo.png" alt="Sophie’s Photography">
+    <div class="availability-brand-copy"><p class="availability-eyebrow">STUPHIE LTD</p><strong>Staff Availability</strong></div>
+  </header>
+  <section class="availability-card">
+    <p class="availability-eyebrow">UPCOMING EVENT</p>
+    <h1>{{ row.event_name }}</h1>
+    <p class="availability-intro">Hello {{ row.staff_name }}. Please tell Stuphie Ltd whether you are available to work this event.</p>
+    <div class="availability-meta">
+      <div><small>Date</small>{{ row.start_date.strftime('%d %B %Y') }}{% if row.end_date != row.start_date %} – {{ row.end_date.strftime('%d %B %Y') }}{% endif %}</div>
+      <div><small>Venue</small>{{ row.venue or 'To be confirmed' }}</div>
+    </div>
+    <p class="availability-lock">Please respond by <strong>{{ row.lock_date.strftime('%d %B %Y') }}</strong>. After the one-month deadline, changes must be made by management.</p>
+    {% if error %}<p class="availability-error">{{ error }}</p>{% endif %}
+    <form method="post">
+      <div class="availability-choice">
+        <label><input type="radio" name="availability_status" value="available" required><strong>Available</strong><span>I can work this event.</span></label>
+        <label><input type="radio" name="availability_status" value="unavailable" required><strong>Unavailable</strong><span>I cannot work this event.</span></label>
+      </div>
+      <label class="availability-field">Optional note<textarea name="response_notes" placeholder="Anything management should know about your availability"></textarea></label>
+      <button class="availability-button" type="submit">Send my response</button>
+    </form>
+    <p class="availability-muted">This private link closes after your response is successfully submitted.</p>
+  </section>
+  <p class="availability-footer">Sophie’s Photography · Stuphie Ltd</p>
+</main>
+</body>
+</html>

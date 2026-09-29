@@ -1,0 +1,103 @@
+{% extends "customer_base.html" %}
+
+{% block title %}Before you continue | {{ brand.display_name }}{% endblock %}
+
+{% block content %}
+<section class="customer-access-shell">
+  <div class="customer-access-card">
+    <p class="customer-access-eyebrow">ONE LAST STEP</p>
+
+    <h1>Before you view your photographs</h1>
+
+    <p class="customer-access-intro">
+      Please confirm the following so we can securely provide
+      your {{ brand.display_name }} customer experience.
+    </p>
+
+    {% if error %}
+      <div class="customer-access-error" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" action="/customer/consent">
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <label class="customer-access-consent">
+        <input
+          type="checkbox"
+          name="accept_terms"
+          value="yes"
+          required
+        >
+        <span>
+          I accept the {{ brand.display_name }} Terms of Use.
+        </span>
+      </label>
+
+      <label class="customer-access-consent">
+        <input
+          type="checkbox"
+          name="accept_privacy"
+          value="yes"
+          required
+        >
+        <span>
+          I have read and accept the Privacy Notice and understand
+          that my verified email is used to reconnect my favourites,
+          orders and downloads across my devices.
+        </span>
+      </label>
+
+      <div class="customer-copyright-warning">
+        <strong>Copyright &amp; Image Protection</strong>
+        <p>
+          Please respect our photography. Gallery previews are supplied
+          solely so you can view, favourite and purchase your event images.
+          Gallery access and session activity may be monitored for security
+          and image protection.
+        </p>
+      </div>
+
+      <label class="customer-access-consent customer-access-consent-copyright">
+        <input
+          type="checkbox"
+          name="accept_copyright"
+          value="yes"
+          required
+        >
+        <span>
+          <strong>Required:</strong>
+          I understand that all gallery preview images are copyright protected
+          and remain the property of {{ brand.display_name }}. I agree not to
+          screenshot, screen-record, photograph, copy, save, reproduce or
+          redistribute gallery previews without permission. I understand that
+          unauthorised copying or use may constitute copyright infringement
+          and/or a breach of the gallery terms, and that {{ brand.display_name }}
+          may investigate misuse, restrict access and take appropriate action
+          where necessary. Purchased files are supplied separately according
+          to the product purchased.
+        </span>
+      </label>
+
+      <button
+        class="customer-access-button"
+        type="submit"
+      >
+        Accept and view gallery
+      </button>
+    </form>
+
+    <p class="customer-access-small">
+      Consent versions:
+      Terms {{ terms_version }},
+      Privacy {{ privacy_version }},
+      Copyright {{ copyright_version }}.
+    </p>
+  </div>
+</section>
+{% endblock %}

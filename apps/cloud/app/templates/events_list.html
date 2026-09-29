@@ -1,0 +1,428 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'events' %}
+{% block title %}Events | Stuphie Online{% endblock %}
+
+{% block content %}
+<section class="pf-events-hero">
+  <div>
+    <p class="section-kicker">STUPHIE ONLINE · EVENT PLANNING</p>
+    <h1>Events</h1>
+    <p>Plan, prepare and manage every event from booking through live operation and permanent history.</p>
+    <div class="pf-events-legend">
+      <span><i class="red"></i> Information required</span>
+      <span><i class="grey"></i> Planning complete — awaiting Event Ready</span>
+      <span><i class="green"></i> Event Ready</span>
+    </div>
+  </div>
+  <div class="pf-events-hero-actions">
+    <a class="ghost-button" href="/staff/events/calendar">Calendar</a>
+    <a class="primary-button" href="/staff/events/new">＋ New Event</a>
+  </div>
+</section>
+
+<section class="pf-events-toolbar">
+  <form method="get" action="/staff/events">
+    <input name="q" value="{{ query }}" placeholder="Search event, venue, promoter or photographer">
+    <select name="status_filter">
+      <option value="">All current events</option>
+      {% for status in statuses %}
+      <option value="{{ status }}" {{ 'selected' if status_filter == status else '' }}>{{ status|title }}</option>
+      {% endfor %}
+    </select>
+    <button class="ghost-button" type="submit">Filter</button>
+    {% if query or status_filter %}<a class="ghost-button" href="/staff/events">Clear</a>{% endif %}
+  </form>
+  <a href="/staff/events/completed">Completed events →</a>
+</section>
+
+<div class="pf-event-stack">
+{% for row in event_rows %}
+{% set event = row.event %}
+{% set ready = row.readiness %}
+{% set staffing = row.staffing %}
+{% set open_event = request.query_params.get('open') == event.id|string %}
+
+<article class="pf-event-tile {% if ready.ready %}ready{% elif ready.needs_attention %}attention{% else %}complete{% endif %}" id="event-{{ event.id }}">
+  <details {% if open_event %}open{% endif %}>
+    <summary class="pf-event-summary">
+      <div class="pf-date-block">
+        <strong>{{ event.start_date.strftime('%d') }}</strong>
+        <span>{{ event.start_date.strftime('%m') }}</span>
+        <small>{{ event.start_date.strftime('%Y') }}</small>
+      </div>
+
+      <div class="pf-summary-main">
+        <span class="pf-event-state">{% if event.status == 'live' %}LIVE EVENT{% else %}UPCOMING EVENT{% endif %}</span>
+        <h2>{{ event.name }}</h2>
+
+        <div class="pf-summary-facts">
+          <span><b>LOCATION</b>{{ event.venue or 'Not entered' }}</span>
+          <span><b>STYLE</b>{{ event.dance_style or 'Not entered' }}</span>
+          <span><b>STAFF</b>{{ staffing.assigned }}/{{ staffing.required }} assigned{% if staffing.available %} · {{ staffing.available }} available{% endif %}</span>
+          <span><b>DATES</b>{{ event.start_date.isoformat() }}{% if event.end_date != event.start_date %} → {{ event.end_date.isoformat() }}{% endif %}</span>
+        </div>
+      </div>
+
+      <div class="pf-summary-status">
+        {% if ready.ready %}
+          <span class="pf-ready-badge ready">EVENT READY</span>
+        {% elif ready.missing %}
+          <span class="pf-ready-badge attention">{{ ready.missing|length }} ITEMS REQUIRED</span>
+        {% else %}
+          <span class="pf-ready-badge complete">READY FOR REVIEW</span>
+        {% endif %}
+        <span class="pf-open-hint">Open details <b>⌄</b></span>
+      </div>
+    </summary>
+
+    <div class="pf-event-expanded">
+      {% if request.query_params.get('saved') == event.id|string %}
+      <div class="pf-save-message">✓ Event information saved. Review Event Ready again when planning is complete.</div>
+      {% endif %}
+
+      {% if open_event and request.query_params.get('inline_error') %}
+      <div class="pf-error-message">The event could not be saved. Check the information and try again.</div>
+      {% endif %}
+
+      {% if ready.missing %}
+      <section class="pf-attention-panel">
+        <div>
+          <strong>Information required before this event can be ready</strong>
+          <p>STUPHIE will keep this tile outlined red until these requirements are completed.</p>
+        </div>
+        <div class="pf-missing-chips">
+          {% for item in ready.missing %}<span>{{ item }}</span>{% endfor %}
+        </div>
+      </section>
+      {% elif not ready.ready %}
+      <section class="pf-review-panel">
+        <strong>Planning information is complete.</strong>
+        <span>Review the event and mark it Event Ready when you are happy it is prepared.</span>
+      </section>
+      {% endif %}
+
+      <form id="event-planning-{{ event.id }}" method="post" action="/staff/events/{{ event.id }}/planning-inline" class="pf-planning-form">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <section class="pf-form-section">
+          <header><small>01</small><h3>Event details</h3></header>
+          <div class="pf-form-grid">
+            <label class="span-2">Event name<input name="name" value="{{ event.name or '' }}" required></label>
+            <label class="span-2">Location / venue<input name="venue" value="{{ event.venue or '' }}" placeholder="Venue and town"></label>
+            <label>Event style<input name="dance_style" value="{{ event.dance_style or '' }}" placeholder="Ballroom, Freestyle, Theatre..."></label>
+            <label>Staff required<input type="number" min="0" name="staff_required" value="{{ event.staff_required if event.staff_required is not none else '' }}" placeholder="Not set"></label>
+          </div>
+        </section>
+
+        <section class="pf-form-section">
+          <header><small>02</small><h3>Times & travel</h3></header>
+          <div class="pf-form-grid four">
+            <label>Start date<input type="date" name="start_date" value="{{ event.start_date.isoformat() }}" required></label>
+            <label>Start time<input type="time" name="event_start_time" value="{{ event.event_start_time.strftime('%H:%M') if event.event_start_time else '' }}"></label>
+            <label>End date<input type="date" name="end_date" value="{{ event.end_date.isoformat() }}" required></label>
+            <label>End time<input type="time" name="event_end_time" value="{{ event.event_end_time.strftime('%H:%M') if event.event_end_time else '' }}"></label>
+            <label>Travel time (minutes)<input type="number" min="0" name="travel_time_minutes" value="{{ event.travel_time_minutes if event.travel_time_minutes is not none else '' }}" placeholder="e.g. 120"></label>
+            <label>Hotel requirement
+              <select name="hotel_required">
+                <option value="0" {{ 'selected' if not event.hotel_required else '' }}>No hotel required</option>
+                <option value="1" {{ 'selected' if event.hotel_required else '' }}>Hotel required</option>
+              </select>
+            </label>
+            <label class="span-2">Hotel information<input name="hotel_info" value="{{ event.hotel_info or '' }}" placeholder="Hotel, booking reference, check-in notes..."></label>
+          </div>
+        </section>
+
+        <section class="pf-form-section">
+          <header><small>03</small><h3>Promoter</h3></header>
+          <div class="pf-form-grid three">
+            <label>Promoter name<input name="promoter_name" value="{{ event.promoter_name or '' }}"></label>
+            <label>Promoter email<input type="email" name="promoter_email" value="{{ event.promoter_email or '' }}"></label>
+            <label>Promoter phone<input name="promoter_phone" value="{{ event.promoter_phone or '' }}"></label>
+          </div>
+        </section>
+
+        <section class="pf-form-section">
+          <header><small>04</small><h3>Planning notes</h3></header>
+          <label class="pf-notes">Event notes<textarea name="planning_notes" rows="4" placeholder="Access, parking, promoter requests, equipment or other planning notes...">{{ event.planning_notes or '' }}</textarea></label>
+        </section>
+
+        <section class="pf-form-section">
+          <header><small>05</small><h3>Services & equipment</h3></header>
+          <div class="pf-service-grid">
+            <label><input type="checkbox" name="photography_enabled" value="1" {{ 'checked' if event.photography_enabled else '' }}> Photography</label>
+            <label><input type="checkbox" name="video_enabled" value="1" {{ 'checked' if event.video_enabled else '' }}> Video</label>
+            <label><input type="checkbox" name="printing_enabled" value="1" {{ 'checked' if event.printing_enabled else '' }}> Printing</label>
+            <label><input type="checkbox" name="customer_kiosk_enabled" value="1" {{ 'checked' if event.customer_kiosk_enabled else '' }}> Customer iPads</label>
+          </div>
+        </section>
+
+        <div class="pf-save-row">
+          <button class="primary-button" type="submit" form="event-planning-{{ event.id }}">Save Event Information</button>
+          <span>Saving planning information removes the previous Event Ready confirmation so it can be reviewed again.</span>
+        </div>
+      </form>
+
+        <section class="pf-form-section pf-staffing-control">
+          <header><small>06</small><h3>Staffing</h3></header>
+
+          {% if request.query_params.get('staff_saved') and open_event %}
+          {% set staffing_result = request.query_params.get('staff_saved') %}
+          <div class="pf-save-message">
+            {% if staffing_result.startswith('confirmation_sent') %}
+              ✓ Staff member selected. Confirmation email sent — waiting for their response.
+            {% elif staffing_result.startswith('assigned_email_pending') %}
+              Staff member selected, but the confirmation email failed. They are NOT CONFIRMED — please check their email details.
+            {% else %}
+              ✓ Staffing updated.
+            {% endif %}
+
+            {% if '_closed_' in staffing_result %}
+              Remaining unselected expressions of interest have been cleared from this event.
+            {% endif %}
+          </div>
+          {% endif %}
+
+          <div class="pf-staff-cards">
+            <div><span>REQUIRED</span><strong>{{ staffing.required }}</strong></div>
+            <div><span>ASSIGNED</span><strong>{{ staffing.assigned }}</strong></div>
+            <div><span>INTERESTED</span><strong>{{ row.interests|length }}</strong></div>
+            <div><span>OUTSTANDING</span><strong>{{ ready.shortfall }}</strong></div>
+          </div>
+
+          <div class="pf-staffing-columns">
+
+            <div class="pf-staff-container">
+              <div class="pf-staff-container-heading">
+                <div>
+                  <h4>Assigned to this event</h4>
+                  <p>
+                    Assigned staff are linked to the event and appear in
+                    their STUPHIE schedule. A confirmation email is sent
+                    when they are selected.
+                  </p>
+                </div>
+                <span>{{ row.assignments|length }} assigned</span>
+              </div>
+
+              {% if row.assignments %}
+              <div class="pf-assigned-list">
+                {% for assignment, staff in row.assignments %}
+                <div class="pf-person-row assigned">
+                  <div class="pf-person-avatar">
+                    {{ (staff.preferred_name or staff.staff_name)[:1]|upper }}
+                  </div>
+
+                  <div class="pf-person-copy">
+                    <strong>{{ staff.preferred_name or staff.staff_name }}</strong>
+                    <span>{{ assignment.role or staff.default_role or 'Photography Staff' }}</span>
+                    {% if assignment.notes %}
+                    <small>{{ assignment.notes }}</small>
+                    {% endif %}
+                  </div>
+
+                  {% set availability_key = staff.staff_source_ref or '' %}
+                  {% set availability_state = row.availability_statuses.get(availability_key, 'waiting') %}
+                  {% if availability_state == 'available' %}
+                  <span class="pf-linked-badge">CONFIRMED</span>
+                  {% elif availability_state == 'unavailable' %}
+                  <span class="pf-linked-badge">UNAVAILABLE</span>
+                  {% elif availability_state == 'email_failed' %}
+                  <span class="pf-linked-badge">EMAIL FAILED - NOT CONFIRMED</span>
+                  {% else %}
+                  <span class="pf-linked-badge">NOT CONFIRMED - WAITING AVAILABILITY</span>
+                  {% endif %}
+
+                  <form
+                    method="post"
+                    action="/staff/events/{{ event.id }}/staff/{{ staff.id }}/remove-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <button class="pf-remove-staff" type="submit">Remove</button>
+                  </form>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="pf-staff-empty">No staff assigned yet.</div>
+              {% endif %}
+            </div>
+
+            <div class="pf-staff-container">
+              <div class="pf-staff-container-heading">
+                <div>
+                  <h4>Expressed an interest</h4>
+                  <p>
+                    Staff who have registered interest and are not already
+                    assigned to this event.
+                  </p>
+                </div>
+                <span>{{ row.interests|length }} interested</span>
+              </div>
+
+              {% if row.interests %}
+              <div class="pf-interest-list">
+                {% for interest, staff in row.interests %}
+                <div class="pf-person-row interested">
+                  <div class="pf-person-avatar">
+                    {{ (staff.preferred_name or staff.staff_name)[:1]|upper }}
+                  </div>
+
+                  <div class="pf-person-copy">
+                    <strong>{{ staff.preferred_name or staff.staff_name }}</strong>
+                    <span>{{ staff.default_role or 'Photography Staff' }}</span>
+                    <small>
+                      Interested
+                      {{ interest.updated_at.strftime('%d %b %Y') }}
+                    </small>
+                  </div>
+
+                  <form
+                    method="post"
+                    action="/staff/events/{{ event.id }}/staff-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+                    <input type="hidden" name="staff_member_id" value="{{ staff.id }}">
+                    <input type="hidden" name="role" value="{{ staff.default_role or '' }}">
+                    <input type="hidden" name="notes" value="">
+                    <button class="primary-button pf-use-staff" type="submit">
+                      Use for event
+                    </button>
+                  </form>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="pf-staff-empty">
+                No unassigned staff have expressed an interest yet.
+              </div>
+              {% endif %}
+            </div>
+
+          </div>
+
+          <div class="pf-assign-other">
+            <div>
+              <strong>Assign another staff member</strong>
+              <span>
+                Use this if the person has not expressed an interest.
+              </span>
+            </div>
+
+            {% if row.assignable_staff %}
+            <form
+              method="post"
+              action="/staff/events/{{ event.id }}/staff-inline">
+
+              <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+              <select name="staff_member_id" required>
+                <option value="">Choose staff member</option>
+                {% for staff in row.assignable_staff %}
+                <option value="{{ staff.id }}">
+                  {{ staff.preferred_name or staff.staff_name }}
+                  {% if staff.default_role %} — {{ staff.default_role }}{% endif %}
+                </option>
+                {% endfor %}
+              </select>
+
+              <input
+                name="role"
+                placeholder="Role - optional">
+
+              <input
+                name="notes"
+                placeholder="Notes - optional">
+
+              <button class="primary-button" type="submit">
+                + Assign Staff
+              </button>
+            </form>
+            {% else %}
+            <span class="pf-all-assigned">All active staff are already assigned.</span>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="pf-form-section pf-workflow-section">
+          <header><small>07</small><h3>Event workflow</h3></header>
+
+          <div class="pf-workflow-readout">
+            <div>
+              <span class="current">{{ event.status|title }}</span>
+              <p>
+                Current operational state. Planning and staffing are now
+                managed directly from this event tile.
+              </p>
+            </div>
+
+            {% if ready.ready %}
+            <div class="pf-event-ready-confirmed">
+              ✓ EVENT READY
+            </div>
+
+            {% elif not ready.missing %}
+            <form
+              method="post"
+              action="/staff/events/{{ event.id }}/ready"
+              onsubmit="return confirm('Mark {{ event.name|e }} as Event Ready?');">
+
+              <input
+                type="hidden"
+                name="csrf_token"
+                value="{{ csrf_token }}">
+
+              <button
+                type="submit"
+                class="pf-event-ready-button">
+                Mark Event Ready
+              </button>
+            </form>
+
+            {% else %}
+            <div class="pf-event-ready-blocked">
+              Complete the outstanding requirements first
+            </div>
+            {% endif %}
+          </div>
+        </section>
+
+        <section class="pf-form-section pf-danger-zone">
+          <header><small>08</small><h3>Cancellation</h3></header>
+
+          <div class="pf-danger-content">
+            <div>
+              <strong>Cancel this event</strong>
+              <p>
+                Remove this event from active planning and prevent it being
+                handed to Pirouette Offline. The event record is retained
+                for history.
+              </p>
+            </div>
+
+            <form
+              method="post"
+              action="/staff/events/{{ event.id }}/cancel-inline"
+              onsubmit="return confirm('Are you sure you want to cancel {{ event.name|e }}?');">
+
+              <input type="hidden"
+                     name="csrf_token"
+                     value="{{ csrf_token }}">
+
+              <button type="submit"
+                      class="pf-danger-button">
+                Cancel & Remove Event
+              </button>
+            </form>
+          </div>
+        </section>
+
+    </div>
+  </details>
+</article>
+
+{% else %}
+<div class="pf-events-empty">
+  <strong>No current or upcoming events</strong>
+  <p>Create a new event or adjust your filters.</p>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

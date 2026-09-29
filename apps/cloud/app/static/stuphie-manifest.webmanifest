@@ -1,0 +1,30 @@
+{
+  "id": "/staff",
+  "name": "STUPHIE",
+  "short_name": "STUPHIE",
+  "description": "Sophie’s Photography staff and event management",
+  "start_url": "/staff/login",
+  "scope": "/staff",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070708",
+  "theme_color": "#070708",
+  "categories": [
+    "business",
+    "productivity"
+  ],
+  "icons": [
+    {
+      "src": "/static/images/stuphie-app-192.png?v=2",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/stuphie-app-512.png?v=2",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

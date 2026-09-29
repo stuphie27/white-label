@@ -1,0 +1,764 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'team' %}
+
+{% block title %}Staff Hub | Stuphie Ltd{% endblock %}
+{% block control_title %}STAFF HUB{% endblock %}
+
+{% block content %}
+
+<section class="stuphie-staff-hub">
+
+  <header class="stuphie-staff-hub-hero">
+
+    <div>
+      <p class="team-eyebrow">
+        PEOPLE · TIME · DOCUMENTS
+      </p>
+
+      <h1>Staff Hub</h1>
+
+      <p>
+        Staff information, timesheets, company documents
+        and your Stuphie team in one place.
+      </p>
+    </div>
+
+  </header>
+
+
+  <section class="stuphie-hub-tiles">
+
+    <a class="stuphie-hub-tile"
+       href="/staff/team/my-work">
+
+      <span class="stuphie-hub-icon">◷</span>
+
+      <div>
+        <small>STAFF SELF SERVICE</small>
+
+        <strong>
+          Timesheets &amp; Expenses
+        </strong>
+
+        <p>
+          Events, working hours and payroll submissions.
+        </p>
+      </div>
+
+    </a>
+
+
+    <a class="stuphie-hub-tile"
+       href="#documents">
+
+      <span class="stuphie-hub-icon">▤</span>
+
+      <div>
+        <small>POLICIES &amp; DOCUMENTS</small>
+
+        <strong>Staff Library</strong>
+
+        <p>
+          Policies, procedures, forms and staff guidance.
+        </p>
+      </div>
+
+    </a>
+
+
+    <a class="stuphie-hub-tile"
+       href="#staff-directory">
+
+      <span class="stuphie-hub-icon">♟</span>
+
+      <div>
+        <small>STAFF DIRECTORY</small>
+
+        <strong>
+          {{
+            members
+            |selectattr('active')
+            |list
+            |length
+          }}
+        </strong>
+
+        <p>
+          Active staff members and contact details.
+        </p>
+      </div>
+
+    </a>
+
+  </section>
+
+
+  <section class="stuphie-staff-section"
+           id="staff-directory">
+
+    <div class="stuphie-section-heading">
+
+      <div>
+        <p class="team-eyebrow">PEOPLE</p>
+
+        <h2>Staff Directory</h2>
+
+        <p>
+          Contact details for the active Stuphie team.
+        </p>
+      </div>
+
+      <a
+        href="/staff/team/new"
+        class="stuphie-add-staff-button"
+      >
+        + Add Staff Member
+      </a>
+
+    </div>
+
+
+    <div class="stuphie-directory-grid">
+
+      {% for member in members %}
+
+        {% if member.active %}
+
+        {% set status =
+          profile_status.get(
+            member.id,
+            'not_invited'
+          )
+        %}
+
+        <article class="stuphie-person-card">
+
+          <div class="stuphie-person-photo">
+
+            {% if is_super_admin %}
+{% if
+              directory_photo_available.get(
+                member.id,
+                false
+              )
+            %}
+
+            <img
+              src="/staff/team/{{ member.id }}/directory-photo"
+              alt="{{ member.preferred_name or member.staff_name }}"
+              loading="lazy"
+            >
+
+            {% else %}
+
+            <span>
+              {{
+                (
+                  member.preferred_name
+                  or member.staff_name
+                  or '?'
+                )[:1]
+                |upper
+              }}
+            </span>
+
+            {% endif %}
+{% endif %}
+
+          </div>
+
+
+          <div class="stuphie-person-content">
+
+            <div class="stuphie-person-title">
+
+              <div>
+
+                <h3>
+                  {{
+                    member.preferred_name
+                    or member.staff_name
+                  }}
+                </h3>
+
+                <p>
+                  {{
+                    member.default_role
+                    or 'Photography Staff'
+                  }}
+                </p>
+
+              </div>
+
+
+              {% if status == 'complete' %}
+
+              <span class="stuphie-profile-badge complete">
+                ✓ PROFILE COMPLETE
+              </span>
+
+              {% elif status == 'sent' %}
+
+              <span class="stuphie-profile-badge invited">
+                ✉ INVITATION SENT
+              </span>
+
+              {% else %}
+
+              <span class="stuphie-profile-badge required">
+                ○ DETAILS REQUIRED
+              </span>
+
+              {% endif %}
+
+            </div>
+
+
+            <div class="stuphie-contact-line">
+
+              <span>☎</span>
+
+              {% set telephone =
+                directory_telephone.get(
+                  member.id,
+                  ''
+                )
+              %}
+
+              {% if telephone %}
+
+              <a href="tel:{{ telephone }}">
+                {{ telephone }}
+              </a>
+
+              {% else %}
+
+              <span class="stuphie-muted">
+                Telephone not supplied
+              </span>
+
+              {% endif %}
+
+            </div>
+
+
+            {% if is_super_admin %}
+
+            <a
+              class="stuphie-record-link"
+              href="/staff/team/{{ member.id }}"
+            >
+              View Full Staff Record →
+            </a>
+
+            {% endif %}
+
+          </div>
+
+        </article>
+
+        {% endif %}
+
+      {% else %}
+
+      <div class="stuphie-empty">
+        <strong>No staff members added yet.</strong>
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </section>
+
+
+  <section class="stuphie-staff-section"
+           id="documents">
+
+    <div class="stuphie-section-heading">
+
+      <div>
+        <p class="team-eyebrow">
+          REFERENCE LIBRARY
+        </p>
+
+        <h2>
+          Policies &amp; Documents
+        </h2>
+
+        <p>
+          Company policies, procedures, forms,
+          training and staff guidance.
+        </p>
+      </div>
+
+    </div>
+
+
+    {% if
+      request.query_params.get('document')
+      == 'uploaded'
+    %}
+
+    <p class="stuphie-doc-message">
+      ✓ Document uploaded successfully.
+    </p>
+
+    {% elif
+      request.query_params.get('document')
+      == 'archived'
+    %}
+
+    <p class="stuphie-doc-message">
+      ✓ Document archived.
+    </p>
+
+    {% elif
+      request.query_params.get('document')
+      == 'restored'
+    %}
+
+    <p class="stuphie-doc-message">
+      ✓ Document restored.
+    </p>
+
+    {% elif request.query_params.get('document') %}
+
+    <p class="stuphie-doc-error">
+      The document action could not be completed.
+    </p>
+
+    {% endif %}
+
+
+    {% if is_super_admin %}
+
+    <details class="stuphie-doc-admin">
+
+      <summary>
+        ＋ Upload Staff Document
+      </summary>
+
+      <form
+        method="post"
+        action="/staff/team/documents/upload"
+        enctype="multipart/form-data"
+        class="stuphie-doc-form"
+      >
+
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <label>
+          <span>Document title</span>
+
+          <input
+            name="title"
+            required
+            maxlength="240"
+          >
+        </label>
+
+        <label>
+          <span>Category</span>
+
+          <select
+            name="category"
+            required
+          >
+
+            {% for category in document_categories %}
+
+            <option value="{{ category }}">
+              {{ category }}
+            </option>
+
+            {% endfor %}
+
+          </select>
+        </label>
+
+        <label>
+          <span>Version</span>
+
+          <input
+            name="version"
+            value="1.0"
+            maxlength="40"
+          >
+        </label>
+
+        <label class="stuphie-doc-wide">
+          <span>Description</span>
+
+          <textarea
+            name="description"
+            rows="3"
+          ></textarea>
+        </label>
+
+        <label class="stuphie-doc-wide">
+          <span>File</span>
+
+          <input
+            type="file"
+            name="document"
+            required
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+          >
+
+          <small>
+            PDF, Word, Excel, JPG or PNG.
+            Maximum 25 MB.
+          </small>
+        </label>
+
+        <button
+          type="submit"
+          class="primary-button"
+        >
+          UPLOAD DOCUMENT
+        </button>
+
+      </form>
+
+    </details>
+
+    {% endif %}
+
+
+    {% if documents %}
+
+      {% for category in document_categories %}
+
+        {% set category_documents =
+          documents
+          |selectattr(
+            'category',
+            'equalto',
+            category
+          )
+          |list
+        %}
+
+        {% if category_documents %}
+
+        <div class="stuphie-doc-category">
+
+          <h3>{{ category }}</h3>
+
+          <div class="stuphie-doc-grid">
+
+            {% for document in category_documents %}
+
+            <article class="stuphie-doc-card">
+
+              <div class="stuphie-doc-copy">
+
+                <span class="stuphie-doc-icon">
+                  ▤
+                </span>
+
+                <div>
+
+                  <strong>
+                    {{ document.title }}
+                  </strong>
+
+                  {% if document.description %}
+
+                  <p>
+                    {{ document.description }}
+                  </p>
+
+                  {% endif %}
+
+                  <small>
+                    Version {{ document.version }}
+                  </small>
+
+                  {% if is_super_admin %}
+
+                  <div class="stuphie-doc-stats">
+
+                    <span>
+                      {{
+                        document_view_counts.get(
+                          document.id,
+                          0
+                        )
+                      }}
+                      view{{
+                        ''
+                        if document_view_counts.get(
+                          document.id,
+                          0
+                        ) == 1
+                        else 's'
+                      }}
+                    </span>
+
+                    <span>
+                      {{
+                        document_unique_viewers.get(
+                          document.id,
+                          0
+                        )
+                      }}
+                      staff viewed
+                    </span>
+
+                  </div>
+
+                  {% endif %}
+
+                </div>
+
+              </div>
+
+
+              <div class="stuphie-doc-actions">
+
+                <a
+                  class="primary-button"
+                  href="/staff/team/documents/{{ document.id }}/view"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  VIEW
+                </a>
+
+
+                {% if is_super_admin %}
+
+                <details class="stuphie-view-history">
+
+                  <summary>
+                    VIEW HISTORY
+                  </summary>
+
+                  <div class="stuphie-view-history-panel">
+
+                    {% for view in
+                      document_view_history.get(
+                        document.id,
+                        []
+                      )
+                    %}
+
+                    <div class="stuphie-view-row">
+
+                      <div>
+                        <strong>
+                          {{
+                            view.staff_name
+                            or view.staff_email
+                            or 'Staff Member'
+                          }}
+                        </strong>
+
+                        {% if view.staff_email %}
+                        <small>
+                          {{ view.staff_email }}
+                        </small>
+                        {% endif %}
+                      </div>
+
+                      <span>
+                        {{
+                          view.viewed_at.strftime(
+                            '%d %b %Y %H:%M'
+                          )
+                          if view.viewed_at
+                          else '—'
+                        }}
+                      </span>
+
+                    </div>
+
+                    {% else %}
+
+                    <p class="stuphie-muted">
+                      Nobody has viewed this document yet.
+                    </p>
+
+                    {% endfor %}
+
+                  </div>
+
+                </details>
+
+
+                <form
+                  method="post"
+                  action="/staff/team/documents/{{ document.id }}/archive"
+                >
+
+                  <input
+                    type="hidden"
+                    name="csrf_token"
+                    value="{{ csrf_token }}"
+                  >
+
+                  <button
+                    type="submit"
+                    class="ghost-button"
+                  >
+                    ARCHIVE
+                  </button>
+
+                </form>
+
+                {% endif %}
+
+              </div>
+
+            </article>
+
+            {% endfor %}
+
+          </div>
+
+        </div>
+
+        {% endif %}
+
+      {% endfor %}
+
+    {% else %}
+
+    <div class="stuphie-doc-coming">
+
+      <span>▤</span>
+
+      <div>
+        <strong>
+          No staff documents yet
+        </strong>
+
+        <p>
+          Policies, forms and staff guidance
+          will appear here when management uploads them.
+        </p>
+      </div>
+
+    </div>
+
+    {% endif %}
+
+
+    {% if
+      is_super_admin
+      and archived_documents
+    %}
+
+    <details class="stuphie-doc-archive">
+
+      <summary>
+        Archived Documents
+        ({{ archived_documents|length }})
+      </summary>
+
+      {% for document in archived_documents %}
+
+      <div class="stuphie-doc-archived-row">
+
+        <div>
+          <strong>
+            {{ document.title }}
+          </strong>
+
+          <small>
+            {{ document.category }}
+            · Version {{ document.version }}
+          </small>
+        </div>
+
+        <div class="stuphie-doc-actions">
+
+          <a
+            class="ghost-button"
+            href="/staff/team/documents/{{ document.id }}/view"
+            target="_blank"
+            rel="noopener"
+          >
+            VIEW
+          </a>
+
+          <form
+            method="post"
+            action="/staff/team/documents/{{ document.id }}/restore"
+          >
+
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="{{ csrf_token }}"
+            >
+
+            <button
+              type="submit"
+              class="primary-button"
+            >
+              RESTORE
+            </button>
+
+          </form>
+
+        </div>
+
+      </div>
+
+      {% endfor %}
+
+    </details>
+
+    {% endif %}
+
+  </section>
+
+
+</section>
+
+
+
+
+{% endblock %}
+
+
+<style>
+.stuphie-add-staff-button{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  padding:0 18px;
+  border:1px solid #e11d28;
+  border-radius:9px;
+  background:#d70f19;
+  color:#fff !important;
+  font-size:.9rem;
+  font-weight:800;
+  text-decoration:none !important;
+  white-space:nowrap;
+}
+
+.stuphie-add-staff-button:hover{
+  background:#ef1824;
+}
+
+@media(max-width:760px){
+  .stuphie-section-heading{
+    align-items:flex-start;
+  }
+
+  .stuphie-add-staff-button{
+    width:100%;
+    box-sizing:border-box;
+  }
+}
+</style>

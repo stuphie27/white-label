@@ -1,0 +1,9 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'transfers' %}
+{% block title %}Transfers | Stuphie Ltd{% endblock %}
+{% block content %}
+<section class="page-title-row dark-title-row"><div><p class="section-kicker">TEMPORARY DELIVERY</p><h1>Transfer Queue</h1><p class="page-summary">Customer downloads and Zenfolio publishing jobs. Files are temporary and must be removed within five days.</p></div></section>
+<section class="live-panel"><div class="panel-heading"><h3>TRANSFER JOBS</h3><form method="get" class="inline-filter"><select name="status_filter"><option value="">All statuses</option>{% for value in statuses %}<option value="{{ value }}" {{ 'selected' if status_filter == value else '' }}>{{ value|title }}</option>{% endfor %}</select><button class="ghost-button" type="submit">Filter</button></form></div>
+{% if jobs %}<div class="transfer-table">{% for job in jobs %}<a href="/staff/transfers/{{ job.id }}"><div><strong>{{ gallery_map[job.gallery_id].name if gallery_map.get(job.gallery_id) else 'Unknown gallery' }}</strong><small>{{ job.destination|title }} · {{ job.item_count }} items</small></div><span class="status-badge status-{{ job.status }}">{{ job.status|title }}</span><small>Expires {{ job.expires_at.strftime('%d %b %Y %H:%M') }}</small></a>{% endfor %}</div>{% else %}<div class="panel-empty-dark"><strong>No transfer jobs</strong><p>Create one from a gallery when a customer order is ready or when publishing to Zenfolio.</p><a href="/staff/galleries">Open Galleries</a></div>{% endif %}</section>
+<section class="live-panel"><h3>FIVE-DAY RULE</h3><ul class="check-list-dark"><li>No permanent photographs are stored by Stuphie Ltd</li><li>Each transfer expires no later than five days after creation</li><li>Expired transfer files must be deleted automatically by the storage worker</li><li>Only small audit records remain in PostgreSQL</li></ul></section>
+{% endblock %}

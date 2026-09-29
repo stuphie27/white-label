@@ -1,0 +1,425 @@
+{% extends "staff_base.html" %}
+
+{% block title %}Add Staff Member | Stuphie Ltd{% endblock %}
+
+{% block content %}
+
+<section class="stuphie-add-staff-page">
+
+  <header class="stuphie-add-staff-hero">
+    <div>
+      <p class="team-eyebrow">STAFF MANAGEMENT</p>
+      <h1>Add Staff Member</h1>
+      <p>
+        Create the basic Staff Master record now.
+        The staff member can complete their private information
+        and photograph through the secure profile invitation.
+      </p>
+    </div>
+
+    <a
+      href="/staff/team"
+      class="stuphie-add-staff-cancel"
+    >
+      ← Back to Staff
+    </a>
+  </header>
+
+  {% if form_error %}
+  <div class="stuphie-add-staff-error">
+
+    {% if form_error == 'missing' %}
+      Name and email address are required.
+
+    {% elif form_error == 'email' %}
+      Please enter a valid email address.
+
+    {% elif form_error == 'duplicate_email' %}
+      A staff member already exists with that email address.
+
+    {% elif form_error == 'duplicate_code' %}
+      That staff code is already in use.
+
+    {% elif form_error == 'invitation' %}
+      The staff record could not be created because the
+      profile invitation failed. Nothing was saved.
+
+    {% else %}
+      The staff member could not be created.
+    {% endif %}
+
+  </div>
+  {% endif %}
+
+  <form
+    method="post"
+    action="/staff/team/new"
+    class="stuphie-add-staff-form"
+  >
+
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+    <section class="stuphie-add-staff-panel">
+
+      <div class="stuphie-add-staff-heading">
+        <span class="stuphie-add-step">1</span>
+
+        <div>
+          <h2>Staff details</h2>
+          <p>
+            Enter the information needed for the Staff Directory
+            and operational Staff Master.
+          </p>
+        </div>
+      </div>
+
+      <div class="stuphie-add-staff-grid">
+
+        <label>
+          <span>Full name *</span>
+          <input
+            type="text"
+            name="staff_name"
+            maxlength="200"
+            autocomplete="name"
+            required
+            placeholder="e.g. Jane Smith"
+          >
+        </label>
+
+        <label>
+          <span>Preferred name</span>
+          <input
+            type="text"
+            name="preferred_name"
+            maxlength="200"
+            placeholder="e.g. Jane"
+          >
+        </label>
+
+        <label>
+          <span>Email address *</span>
+          <input
+            type="email"
+            name="email"
+            maxlength="320"
+            autocomplete="email"
+            required
+            placeholder="name@example.com"
+          >
+        </label>
+
+        <label>
+          <span>Telephone</span>
+          <input
+            type="tel"
+            name="telephone"
+            maxlength="80"
+            autocomplete="tel"
+            placeholder="07..."
+          >
+        </label>
+
+        <label>
+          <span>Role / job title</span>
+          <input
+            type="text"
+            name="default_role"
+            maxlength="160"
+            value="Photography Staff"
+            placeholder="Photography Staff"
+          >
+        </label>
+
+        <label>
+          <span>Staff code</span>
+          <input
+            type="text"
+            name="staff_code"
+            maxlength="80"
+            autocomplete="off"
+            placeholder="Optional"
+          >
+          <small>
+            Optional. Leave blank if you do not use a staff code.
+          </small>
+        </label>
+
+      </div>
+
+    </section>
+
+    <section class="stuphie-add-staff-panel">
+
+      <div class="stuphie-add-staff-heading">
+        <span class="stuphie-add-step">2</span>
+
+        <div>
+          <h2>Profile invitation</h2>
+          <p>
+            Their private address, emergency information and
+            photograph are completed securely by the staff member.
+          </p>
+        </div>
+      </div>
+
+      <label class="stuphie-add-invite">
+
+        <input
+          type="checkbox"
+          name="send_profile_invitation"
+          value="1"
+          checked
+        >
+
+        <span>
+          <strong>Send profile invitation now</strong>
+          <small>
+            Recommended. They will receive the existing secure
+            Stuphie profile-completion email.
+          </small>
+        </span>
+
+      </label>
+
+      <div class="stuphie-add-note">
+        <strong>Login access is separate.</strong>
+        <p>
+          After creating the staff member you can use their
+          Staff Record to send the existing secure login setup
+          email when you are ready.
+        </p>
+      </div>
+
+    </section>
+
+    <div class="stuphie-add-staff-actions">
+
+      <a
+        href="/staff/team"
+        class="stuphie-add-staff-cancel"
+      >
+        Cancel
+      </a>
+
+      <button
+        type="submit"
+        class="stuphie-add-staff-submit"
+      >
+        Create Staff Member
+      </button>
+
+    </div>
+
+  </form>
+
+</section>
+
+<style>
+.stuphie-add-staff-page{
+  max-width:1050px;
+  margin:0 auto;
+  padding:28px 0 50px;
+}
+
+.stuphie-add-staff-hero{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:24px;
+}
+
+.stuphie-add-staff-hero h1{
+  margin:4px 0 6px;
+  font-size:2.3rem;
+}
+
+.stuphie-add-staff-hero p{
+  margin:0;
+  max-width:720px;
+  color:#aeb7c0;
+}
+
+.stuphie-add-staff-panel{
+  margin-bottom:18px;
+  padding:24px;
+  border:1px solid #27333d;
+  border-radius:14px;
+  background:#101820;
+}
+
+.stuphie-add-staff-heading{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  margin-bottom:22px;
+}
+
+.stuphie-add-step{
+  display:flex;
+  flex:0 0 38px;
+  align-items:center;
+  justify-content:center;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  background:#fff;
+  color:#111;
+  font-weight:900;
+}
+
+.stuphie-add-staff-heading h2{
+  margin:0 0 4px;
+}
+
+.stuphie-add-staff-heading p{
+  margin:0;
+  color:#9da8b2;
+}
+
+.stuphie-add-staff-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:18px;
+}
+
+.stuphie-add-staff-grid label{
+  display:grid;
+  gap:7px;
+}
+
+.stuphie-add-staff-grid label>span{
+  color:#fff;
+  font-weight:750;
+}
+
+.stuphie-add-staff-grid input{
+  box-sizing:border-box;
+  width:100%;
+  min-height:48px;
+  padding:0 14px;
+  border:1px solid #384650;
+  border-radius:9px;
+  background:#090d11;
+  color:#fff;
+  font:inherit;
+}
+
+.stuphie-add-staff-grid small{
+  color:#7f8b95;
+}
+
+.stuphie-add-invite{
+  display:flex;
+  align-items:flex-start;
+  gap:14px;
+  padding:18px;
+  border:1px solid #285b3b;
+  border-radius:11px;
+  background:#0e2115;
+  cursor:pointer;
+}
+
+.stuphie-add-invite input{
+  width:20px;
+  height:20px;
+  margin-top:2px;
+  accent-color:#16a34a;
+}
+
+.stuphie-add-invite span{
+  display:grid;
+  gap:4px;
+}
+
+.stuphie-add-invite strong{
+  color:#fff;
+}
+
+.stuphie-add-invite small{
+  color:#a4b7a9;
+}
+
+.stuphie-add-note{
+  margin-top:14px;
+  padding:14px 16px;
+  border:1px solid #3a4148;
+  border-radius:9px;
+  background:#0b0f13;
+}
+
+.stuphie-add-note p{
+  margin:4px 0 0;
+  color:#9ca6af;
+}
+
+.stuphie-add-staff-error{
+  margin-bottom:18px;
+  padding:14px 16px;
+  border:1px solid #a52a34;
+  border-radius:10px;
+  background:#2b1014;
+  color:#fff;
+  font-weight:700;
+}
+
+.stuphie-add-staff-actions{
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  gap:12px;
+}
+
+.stuphie-add-staff-submit,
+.stuphie-add-staff-cancel{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:46px;
+  box-sizing:border-box;
+  padding:0 20px;
+  border-radius:9px;
+  font:inherit;
+  font-weight:800;
+  text-decoration:none;
+}
+
+.stuphie-add-staff-submit{
+  border:1px solid #e51b26;
+  background:#d70f19;
+  color:#fff;
+  cursor:pointer;
+}
+
+.stuphie-add-staff-cancel{
+  border:1px solid #39434c;
+  background:#10161b;
+  color:#fff;
+}
+
+@media(max-width:760px){
+  .stuphie-add-staff-hero{
+    display:grid;
+  }
+
+  .stuphie-add-staff-grid{
+    grid-template-columns:1fr;
+  }
+
+  .stuphie-add-staff-actions{
+    display:grid;
+  }
+
+  .stuphie-add-staff-submit,
+  .stuphie-add-staff-cancel{
+    width:100%;
+  }
+}
+</style>
+
+{% endblock %}

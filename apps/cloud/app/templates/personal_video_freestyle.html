@@ -1,0 +1,320 @@
+{% extends "customer_base.html" %}
+{% block title %}Freestyle Video Booking | Sophie's Photography{% endblock %}
+
+{% block content %}
+<main class="personal-video-page">
+  <section class="personal-video-hero">
+    <div>
+      <p class="eyebrow">SOPHIE'S PHOTOGRAPHY</p>
+      <h1>Freestyle Video Booking</h1>
+      <p>{{ event.venue or 'Current Event' }}</p>
+    </div>
+
+    <a
+      class="button secondary"
+      href="/personal-video"
+    >
+      Back
+    </a>
+  </section>
+
+  <form method="post" action="/personal-video/freestyle">
+    {% if form_error %}
+    <div class="personal-video-error" role="alert">
+      {{ form_error }}
+    </div>
+    {% endif %}
+
+    <section class="personal-video-card">
+      <p class="eyebrow">YOUR DETAILS</p>
+      <h2>Who is making the booking?</h2>
+
+      <div class="personal-video-grid">
+        <label>
+          <span>Name</span>
+          <input
+            name="customer_name"
+            required
+            maxlength="100"
+            autocomplete="name"
+          >
+        </label>
+
+        <label>
+          <span>Email address</span>
+          <input
+            name="customer_email"
+            type="email"
+            required
+            maxlength="200"
+            autocomplete="email"
+          >
+        </label>
+
+        <label>
+          <span>Mobile number</span>
+          <input
+            name="customer_phone"
+            type="tel"
+            maxlength="40"
+            autocomplete="tel"
+          >
+        </label>
+
+      </div>
+
+      <p class="field-help">
+        Enter your details once. You can add siblings and additional
+        Spot Dances below without entering them again.
+      </p>
+    </section>
+
+    <section class="personal-video-card">
+      <div class="personal-video-section-heading">
+        <div>
+          <p class="eyebrow">SPOT DANCES</p>
+          <h2>Your dancers &amp; dances</h2>
+        </div>
+
+        <strong>£23 each</strong>
+      </div>
+
+      <div id="freestyle-entries"></div>
+
+      <button
+        class="button secondary personal-video-add"
+        type="button"
+        id="add-freestyle-entry"
+      >
+        + Add Another Dancer / Spot Dance
+      </button>
+    </section>
+
+    <section class="personal-video-card personal-video-summary">
+      <div>
+        <p class="eyebrow">BOOKING SUMMARY</p>
+        <h2>Freestyle Video</h2>
+        <p>
+          Freestyle Spot Dances are filmed by advance booking.
+          Payment will be required in full before the booking is confirmed.
+        </p>
+      </div>
+
+      <div class="personal-video-total">
+        <span>Total</span>
+        <strong id="freestyle-total">£23.00</strong>
+      </div>
+    </section>
+
+    <input
+      type="hidden"
+      name="entries_json"
+      id="freestyle-entries-json"
+    >
+
+    <section class="personal-video-card">
+      <p class="eyebrow">PAYMENT</p>
+      <h2>How would you like to pay?</h2>
+
+      <div class="personal-video-payment-options">
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="online"
+            checked
+          >
+          <span>
+            <strong>Pay securely online now</strong>
+            <small>
+              Pay by card using our secure SumUp checkout.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="stand"
+          >
+          <span>
+            <strong>Pay at Sophie’s Photography Stand</strong>
+            <small>
+              Pay by cash or card using SumUp Solo at the stand.
+              Your dances are confirmed for filming once payment
+              has been received.
+            </small>
+          </span>
+        </label>
+
+      </div>
+    </section>
+
+    <button class="button personal-video-submit" type="submit">
+      Continue to Booking
+    </button>
+
+    <p class="personal-video-payment-note">
+      No payment is taken on this screen yet.
+    </p>
+  </form>
+</main>
+
+<template id="freestyle-entry-template">
+  <article class="personal-video-entry">
+    <header>
+      <div>
+        <p class="eyebrow">SPOT DANCE</p>
+        <h3 data-entry-title>Spot Dance</h3>
+      </div>
+      <button
+        class="personal-video-remove"
+        type="button"
+        data-remove-entry
+      >
+        Remove
+      </button>
+    </header>
+
+    <div class="personal-video-grid">
+      <label>
+        <span>Dancer name / dancers</span>
+        <input data-field="dancer_name" required maxlength="200">
+      </label>
+
+      <label>
+        <span>Dancer number</span>
+        <input
+          data-field="dancer_number"
+          required
+          maxlength="40"
+        >
+      </label>
+
+      <label>
+        <span>Dance style</span>
+        <select data-field="dance_style" required>
+          {% for item in styles %}
+          <option value="{{ item }}">{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        <span>Category</span>
+        <select data-field="category" required>
+          {% for item in categories %}
+          <option value="{{ item }}">{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        <span>Age group</span>
+        <select data-field="age_group" required>
+          {% for item in age_groups %}
+          <option value="{{ item }}">{{ item }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label>
+        <span>Date of dance</span>
+        <input
+          data-field="performance_date"
+          type="date"
+          required
+          min="{{ event.start_date }}"
+          max="{{ event.end_date }}"
+        >
+      </label>
+
+      <label>
+        <span>Approximate time <small>(optional)</small></span>
+        <input
+          data-field="performance_time"
+          type="time"
+        >
+      </label>
+    </div>
+
+    <strong class="personal-video-entry-price">£23.00</strong>
+  </article>
+</template>
+
+<script>
+(() => {
+  const container = document.getElementById('freestyle-entries');
+  const template = document.getElementById('freestyle-entry-template');
+  const addButton = document.getElementById('add-freestyle-entry');
+  const form = document.getElementById('freestyle-video-form');
+  const hidden = document.getElementById('freestyle-entries-json');
+  const total = document.getElementById('freestyle-total');
+
+  function rows() {
+    return [...container.querySelectorAll('.personal-video-entry')];
+  }
+
+  function update() {
+    const entries = rows();
+
+    entries.forEach((row, index) => {
+      row.querySelector('[data-entry-title]').textContent =
+        `Spot Dance ${index + 1}`;
+
+      const remove = row.querySelector('[data-remove-entry]');
+      remove.hidden = entries.length === 1;
+    });
+
+    total.textContent = `£${(entries.length * 23).toFixed(2)}`;
+  }
+
+  function addEntry() {
+    const fragment = template.content.cloneNode(true);
+    container.appendChild(fragment);
+
+    const row = container.lastElementChild;
+
+    row.querySelector('[data-remove-entry]').addEventListener(
+      'click',
+      () => {
+        row.remove();
+        update();
+      }
+    );
+
+    update();
+  }
+
+  addButton.addEventListener('click', addEntry);
+
+  form.addEventListener('submit', event => {
+    const entries = rows().map(row => {
+      const value = name =>
+        row.querySelector(`[data-field="${name}"]`).value.trim();
+
+      return {
+        dancer_number: value('dancer_number'),
+        dancer_name: value('dancer_name'),
+        dance_style: value('dance_style'),
+        category: value('category'),
+        age_group: value('age_group'),
+        performance_date: value('performance_date'),
+        performance_time: value('performance_time')
+      };
+    });
+
+    if (!entries.length) {
+      event.preventDefault();
+      return;
+    }
+
+    hidden.value = JSON.stringify(entries);
+  });
+
+  addEntry();
+})();
+</script>
+{% endblock %}

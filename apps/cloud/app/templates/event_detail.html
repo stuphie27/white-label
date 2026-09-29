@@ -1,0 +1,900 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'events' %}
+{% block title %}{{ event.name }} | Stuphie Online{% endblock %}
+
+{% block content %}
+
+<section class="event-control-header">
+  <div>
+    <p class="section-kicker">STUPHIE ONLINE · EVENT CONTROL</p>
+    <h1>{{ event.name }}</h1>
+    <p>
+      {{ event.venue or event.client_name or 'Venue not set' }}
+      <i></i>
+      {{ event.start_date.strftime('%d %b %Y') }}
+    </p>
+  </div>
+
+  <div class="button-group">
+    {% if event.event_ready %}
+      <span class="status-badge status-live large">EVENT READY</span>
+    {% else %}
+      <span class="status-badge status-draft large">PLANNING</span>
+    {% endif %}
+
+    <a class="primary-button"
+       href="/staff/events/{{ event.id }}/edit">
+      Edit Event
+    </a>
+  </div>
+</section>
+
+<section class="sp-event-readiness-strip
+                {{ 'ready' if readiness.ready else 'attention' }}">
+
+  <div class="sp-readiness-state">
+
+    {% if readiness.ready %}
+
+      <strong>✓ EVENT READY</strong>
+      <span>
+        Planning and staffing requirements are complete.
+      </span>
+
+    {% elif readiness.complete %}
+
+      <strong>READY FOR CONFIRMATION</strong>
+      <span>
+        All required information is complete.
+      </span>
+
+    {% else %}
+
+      <strong>ITEMS REQUIRED</strong>
+      <span>
+        {{ readiness.missing|length }}
+        item{{ '' if readiness.missing|length == 1 else 's' }}
+        still need attention.
+      </span>
+
+    {% endif %}
+
+  </div>
+
+  {% if readiness.missing %}
+
+  <div class="sp-readiness-missing">
+
+    {% for item in readiness.missing %}
+    <span>• {{ item }}</span>
+    {% endfor %}
+
+  </div>
+
+  {% endif %}
+
+  <div class="sp-readiness-action">
+
+    {% if readiness.complete and not event.event_ready %}
+
+    <form
+      method="post"
+      action="/staff/events/{{ event.id }}/ready">
+
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}">
+
+      <button class="primary-button" type="submit">
+        Mark Event Ready
+      </button>
+
+    </form>
+
+    {% elif event.event_ready %}
+
+    <form
+      method="post"
+      action="/staff/events/{{ event.id }}/not-ready">
+
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}">
+
+      <button class="ghost-button" type="submit">
+        Return to Planning
+      </button>
+
+    </form>
+
+    {% else %}
+
+    <a
+      class="ghost-button"
+      href="/staff/events/{{ event.id }}/edit">
+      Complete Event Details
+    </a>
+
+    {% endif %}
+
+  </div>
+
+</section>
+
+
+<section class="event-detail-grid dark-detail-grid">
+
+  <article class="live-panel promoter-compact-panel">
+    <div class="event-compact-panel-heading">
+      <h3>PROMOTER</h3>
+      <a href="/staff/events/{{ event.id }}/edit">Edit</a>
+    </div>
+
+    <dl class="detail-list dark-detail-list">
+      <dt>Name</dt>
+      <dd>{{ event.promoter_name or 'Not set' }}</dd>
+
+      <dt>Email</dt>
+      <dd>{{ event.promoter_email or 'Not set' }}</dd>
+
+      <dt>Phone</dt>
+      <dd>{{ event.promoter_phone or 'Not set' }}</dd>
+    </dl>
+  </article>
+
+<article class="live-panel wide-panel event-overview-panel">
+    <div class="event-compact-panel-heading">
+      <h3>EVENT DETAILS</h3>
+      <a href="/staff/events/{{ event.id }}/edit">Edit</a>
+    </div>
+
+    <dl class="detail-list dark-detail-list">
+      <dt>Client / school</dt>
+      <dd><span>{{ event.client_name or 'Not set' }}</span><a class="inline-edit-link" href="/staff/events/{{ event.id }}/edit">Edit</a></dd>
+
+      <dt>Principal / contact</dt>
+      <dd><span>{{ event.principal_name or 'Not set' }}</span><a class="inline-edit-link" href="/staff/events/{{ event.id }}/edit">Edit</a></dd>
+
+      <dt>Dates</dt>
+      <dd>
+        {{ event.start_date.strftime('%d %B %Y') }}
+        {% if event.end_date != event.start_date %}
+          – {{ event.end_date.strftime('%d %B %Y') }}
+        {% endif %}
+      </dd>
+
+      <dt>Venue</dt>
+      <dd><span>{{ event.venue or 'Not set' }}</span><a class="inline-edit-link" href="/staff/events/{{ event.id }}/edit">Edit</a></dd>
+
+      <dt>Event type</dt>
+      <dd><span>{{ event.dance_style or 'Not set' }}</span><a class="inline-edit-link" href="/staff/events/{{ event.id }}/edit">Edit</a></dd>
+
+      <dt>Arrival</dt>
+      <dd>
+        {{ event.arrival_time.strftime('%H:%M') if event.arrival_time else 'Not set' }}
+      </dd>
+
+      <dt>Event time</dt>
+      <dd>
+        {% if event.event_start_time %}
+          {{ event.event_start_time.strftime('%H:%M') }}
+        {% else %}
+          Not set
+        {% endif %}
+
+        {% if event.event_end_time %}
+          – {{ event.event_end_time.strftime('%H:%M') }}
+        {% endif %}
+      </dd>
+
+      <dt>Lead photographer</dt>
+      <dd><span>{{ event.photographer_name or 'Not assigned' }}</span><a class="inline-edit-link" href="/staff/events/{{ event.id }}/edit">Edit</a></dd>
+    </dl>
+  </article>
+
+
+
+
+
+
+  <article class="live-panel wide-panel staff-interest-management-panel">
+
+    <div class="panel-heading">
+      <h3>STAFF INTEREST</h3>
+
+      <span>
+        {{ staff_interest_rows|length }}
+        interested
+      </span>
+    </div>
+
+    {% if staff_interest_rows %}
+
+    <div class="staff-interest-management-list">
+
+      {% for interest, staff in staff_interest_rows %}
+
+      <div>
+
+        <strong>
+          {{ staff.preferred_name or staff.staff_name }}
+        </strong>
+
+        <span>
+          {{ staff.default_role or 'Photography Staff' }}
+        </span>
+
+        <small>
+          Registered
+          {{ interest.updated_at.strftime('%d %b %Y %H:%M') }}
+        </small>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="staffing-empty-state">
+      No staff have registered interest yet.
+    </div>
+
+    {% endif %}
+
+  </article>
+
+<article class="live-panel staffing-control-panel staffing-compact-panel" id="staffing">
+    <div class="staffing-panel-heading">
+      <div>
+        <h3>STAFFING</h3>
+        <p>
+          <strong>{{ staff_summary.assigned }} of {{ staff_summary.required }} assigned</strong>
+          {% if staff_summary.outstanding > 0 %}
+            · {{ staff_summary.outstanding }} still required
+          {% else %}
+            · Team complete
+          {% endif %}
+        </p>
+      </div>
+
+      {% if staff_summary.outstanding > 0 %}
+        <span class="staffing-status staffing-status-warning">
+          {{ staff_summary.outstanding }} outstanding
+        </span>
+      {% else %}
+        <span class="staffing-status staffing-status-ready">
+          Fully staffed
+        </span>
+      {% endif %}
+    </div>
+
+    <div class="staffing-metrics">
+      <div class="staffing-metric">
+        <span class="staffing-metric-label">Required</span>
+        <strong>{{ staff_summary.required }}</strong>
+      </div>
+
+      <div class="staffing-metric">
+        <span class="staffing-metric-label">Assigned</span>
+        <strong>{{ staff_summary.assigned }}</strong>
+      </div>
+
+      <div class="staffing-metric staffing-metric-outstanding">
+        <span class="staffing-metric-label">Outstanding</span>
+        <strong>{{ staff_summary.outstanding }}</strong>
+      </div>
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-heading">
+        <h4>Assigned staff</h4>
+        <span>{{ staff_summary.assigned }} assigned</span>
+      </div>
+
+      {% if staff_assignments %}
+        <div class="staffing-assignment-list">
+          {% for assignment, staff in staff_assignments %}
+            {% set availability = staff_availability.get(staff.id, 'unknown') %}
+            <div class="staffing-assignment-card staffing-availability-{{ availability }}">
+              <div class="staffing-person">
+                <div class="staffing-avatar">
+                  {{ (staff.preferred_name or staff.staff_name)[:1]|upper }}
+                </div>
+
+                <div class="staffing-person-copy">
+                  <strong>{{ staff.preferred_name or staff.staff_name }}</strong>
+                  <span class="staffing-role-badge">{{ assignment.role }}</span>
+
+                  {% set worked = staff_hours.get(staff.id, 0) %}
+
+                  <span class="staffing-hours-total">
+                    {% if worked > 0 %}
+                      {{ worked // 60 }}h
+                      {% if worked % 60 %}
+                        {{ worked % 60 }}m
+                      {% endif %}
+                      worked
+                    {% else %}
+                      No hours entered
+                    {% endif %}
+                  </span>
+
+                  {% if availability == 'available' %}
+                    <span class="staffing-availability-badge available">
+                      ✓ AVAILABLE
+                    </span>
+                  {% elif availability == 'unavailable' %}
+                    <span class="staffing-availability-badge unavailable">
+                      ✕ UNAVAILABLE
+                    </span>
+                  {% else %}
+                    <span class="staffing-availability-badge awaiting">
+                      ◷ AWAITING RESPONSE
+                    </span>
+                  {% endif %}
+
+                  {% if assignment.notes %}
+                    <small>{{ assignment.notes }}</small>
+                  {% endif %}
+                </div>
+              </div>
+
+              <form
+                method="post"
+                action="/staff/events/{{ event.id }}/staff/{{ staff.id }}/remove"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token }}"
+                >
+
+                <button
+                  type="submit"
+                  class="staffing-remove-button"
+                >
+                  Remove
+                </button>
+              </form>
+            </div>
+
+
+
+{% endfor %}
+        </div>
+      {% else %}
+        <div class="staffing-empty-state">
+          No staff assigned to this event yet.
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="staffing-section">
+      <div class="staffing-section-heading">
+        <h4>Assign staff</h4>
+        <span>Add someone to this event</span>
+      </div>
+
+      {% if available_staff %}
+        <form
+          method="post"
+          action="/staff/events/{{ event.id }}/staff"
+          class="staffing-assign-form"
+        >
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token }}"
+          >
+
+          <label class="staffing-field staffing-field-wide">
+            <span>Staff member</span>
+
+            <select name="staff_member_id" required>
+              <option value="">Choose staff member</option>
+
+              {% for staff in available_staff %}
+                {% set availability = staff_availability.get(staff.id, 'unknown') %}
+                <option value="{{ staff.id }}">
+                  {{ staff.preferred_name or staff.staff_name }}
+                  {% if staff.default_role %}
+                    — {{ staff.default_role }}
+                  {% endif %}
+                  {% if availability == 'available' %}
+                    — AVAILABLE
+                  {% elif availability == 'unavailable' %}
+                    — UNAVAILABLE
+                  {% else %}
+                    — NO RESPONSE
+                  {% endif %}
+                </option>
+              {% endfor %}
+            </select>
+          </label>
+
+          <label class="staffing-field">
+            <span>Role for this event</span>
+
+            <input
+              type="text"
+              name="role"
+              placeholder="Use default role"
+            >
+          </label>
+
+          <label class="staffing-field">
+            <span>Assignment notes</span>
+
+            <input
+              type="text"
+              name="notes"
+              placeholder="Optional"
+            >
+          </label>
+
+          <button
+            type="submit"
+            class="staffing-assign-button"
+          >
+            + Assign Staff
+          </button>
+        </form>
+      {% else %}
+        <div class="staffing-empty-state">
+          No active Staff Master records are available yet.
+        </div>
+      {% endif %}
+    </div>
+
+    <div class="staffing-section staffing-travel-section">
+      <div class="staffing-section-heading">
+        <div>
+          <h4>Travel & accommodation</h4>
+          <span>Event logistics</span>
+        </div>
+        <a class="staffing-small-edit"
+           href="/staff/events/{{ event.id }}/edit">Edit</a>
+      </div>
+    </div>
+
+    <div class="staffing-logistics-grid">
+      <div class="staffing-logistics-item">
+        <span>Travel</span>
+
+        <strong>
+          {% if event.travel_time_minutes is not none %}
+            {{ event.travel_time_minutes // 60 }}h
+            {{ event.travel_time_minutes % 60 }}m
+          {% else %}
+            Not set
+          {% endif %}
+        </strong>
+      </div>
+
+      <div class="staffing-logistics-item">
+        <span>Hotel</span>
+        <strong>
+          {{ 'Required' if event.hotel_required else 'Not required' }}
+        </strong>
+      </div>
+
+      <div class="staffing-logistics-item staffing-logistics-wide">
+        <span>Hotel information</span>
+        <strong>{{ event.hotel_info or 'Not set' }}</strong>
+      </div>
+    </div>
+  </article>
+
+
+  <article class="live-panel services-compact-panel">
+    <div class="event-compact-panel-heading">
+      <h3>SERVICES</h3>
+      <a href="/staff/events/{{ event.id }}/edit">Edit</a>
+    </div>
+
+    <dl class="detail-list dark-detail-list">
+      <dt>Photography</dt>
+      <dd>{{ '✓ Enabled' if event.photography_enabled else '— Not required' }}</dd>
+
+      <dt>Video</dt>
+      <dd>{{ '✓ Enabled' if event.video_enabled else '— Not required' }}</dd>
+
+      <dt>Printing</dt>
+      <dd>{{ '✓ Enabled' if event.printing_enabled else '— Not required' }}</dd>
+
+      <dt>Customer iPads</dt>
+      <dd>{{ '✓ Enabled' if event.customer_kiosk_enabled else '— Not required' }}</dd>
+    </dl>
+  </article>
+
+
+
+
+
+  <article class="live-panel wide-panel">
+    <h3>PLANNING NOTES</h3>
+
+    <p>
+      {{ event.planning_notes or 'No planning notes added.' }}
+    </p>
+
+    <h3>INTERNAL NOTES</h3>
+
+    <p>
+      {{ event.internal_notes or 'No internal notes added.' }}
+    </p>
+  </article>
+
+
+  <article class="live-panel production-checklist-panel"
+           id="production-checklist">
+
+    <div class="panel-heading">
+      <h3>PRODUCTION CHECKLIST</h3>
+      <span>
+        {{ checklist_completed }}/{{ checklist_total }} complete
+      </span>
+    </div>
+
+    <div class="checklist-progress"
+         aria-label="Production checklist {{ checklist_percentage }} percent complete">
+      <span style="width: {{ checklist_percentage }}%"></span>
+    </div>
+
+    <p class="checklist-progress-label">
+      {{ checklist_percentage }}% complete
+    </p>
+
+    <div class="production-checklist">
+
+      {% for field, label in production_checklist %}
+      {% set is_complete = event|attr(field) %}
+
+      <form
+        method="post"
+        action="/staff/events/{{ event.id }}/checklist"
+        class="checklist-row {{ 'complete' if is_complete else '' }}">
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token }}">
+
+        <input type="hidden"
+               name="task"
+               value="{{ field }}">
+
+        <input type="hidden"
+               name="completed"
+               value="{{ '0' if is_complete else '1' }}">
+
+        <button type="submit">
+          <span class="check-box">
+            {{ '✓' if is_complete else '' }}
+          </span>
+
+          <span>{{ label }}</span>
+        </button>
+
+      </form>
+
+      {% endfor %}
+
+    </div>
+  </article>
+
+
+  <article class="live-panel">
+    <h3>EVENT WORKFLOW</h3>
+
+    {% if event.status != 'archived' %}
+
+    <div class="status-action-grid">
+
+      {% for status in ['draft','live','processing','complete'] %}
+
+      <form method="post"
+            action="/staff/events/{{ event.id }}/status">
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token }}">
+
+        <input type="hidden"
+               name="event_status"
+               value="{{ status }}">
+
+        <button
+          class="status-action status-action-{{ status }} {{ 'current' if event.status == status else '' }}"
+          type="submit"
+          {% if event.status == status %}disabled{% endif %}>
+
+          {{ status|title }}
+
+          {% if event.status == status %}
+          <small>Current</small>
+          {% endif %}
+
+        </button>
+      </form>
+
+      {% endfor %}
+    </div>
+
+    {% else %}
+
+    <div class="alert-banner">
+      <strong>EVENT COMPLETED</strong>
+      <span>
+        This event is locked in the completed archive.
+        Use Reopen Event below if further changes are required.
+      </span>
+    </div>
+
+    {% endif %}
+  </article>
+
+
+  <article class="live-panel quick-panel">
+    <h3>EVENT ACTIONS</h3>
+
+    <div class="quick-actions-links">
+
+      <a href="/staff/events/{{ event.id }}/edit">
+        ⚙ Edit Event Details
+      </a>
+
+      <form method="post"
+            action="/staff/events/{{ event.id }}/duplicate">
+
+        <input type="hidden"
+               name="csrf_token"
+               value="{{ csrf_token }}">
+
+        <button class="quick-action-button"
+                type="submit">
+          ⧉ Duplicate Event
+        </button>
+      </form>
+
+      <span>
+        ⇅ Publish to Stuphie Offline
+        <small>Coming next</small>
+      </span>
+
+      <a href="/staff/events">
+        ▣ Back to Events
+      </a>
+
+    </div>
+  </article>
+
+
+  <article
+    class="live-panel danger-panel event-close-readiness"
+    id="complete-event"
+  >
+
+    <div class="event-close-heading">
+
+      <div>
+        <span class="event-close-kicker">EVENT COMPLETION</span>
+        <h3>COMPLETE EVENT</h3>
+      </div>
+
+      {% if event.status != 'archived' %}
+
+        {% if readiness.missing %}
+        <span class="event-close-count is-blocked">
+          {{ readiness.missing|length }}
+          item{% if readiness.missing|length != 1 %}s{% endif %}
+          to complete
+        </span>
+        {% else %}
+        <span class="event-close-count is-ready">
+          ✓ Ready to complete
+        </span>
+        {% endif %}
+
+      {% endif %}
+
+    </div>
+
+    <p>
+      Completing removes the event from active planning while keeping
+      its full historical record.
+    </p>
+
+    {% if event.status != 'archived' %}
+
+      {% if request.query_params.get('close_error') %}
+      <div class="event-close-server-warning">
+        ⚠ This event was not completed because required information
+        is still outstanding.
+      </div>
+      {% endif %}
+
+
+      {% if readiness.missing %}
+
+      <section class="event-close-blocked">
+
+        <div class="event-close-blocked-title">
+          <div class="event-close-warning-icon">!</div>
+
+          <div>
+            <strong>
+              This event cannot be completed yet
+            </strong>
+
+            <span>
+              Finish the following
+              {{ readiness.missing|length }}
+              item{% if readiness.missing|length != 1 %}s{% endif %}
+              first.
+            </span>
+          </div>
+        </div>
+
+
+        <div class="event-close-checklist">
+
+          {% for item in readiness.missing %}
+
+          <div class="event-close-check-row">
+
+            <div class="event-close-check-state">
+              <span>×</span>
+
+              <div>
+                <strong>{{ item }}</strong>
+
+                {% if item.startswith('Staffing shortfall') %}
+                <small>
+                  Assign enough available staff to cover this event.
+                </small>
+
+                {% elif item == 'Hotel information' %}
+                <small>
+                  Hotel is required but its details have not been entered.
+                </small>
+
+                {% elif item == 'Promoter contact' %}
+                <small>
+                  Add either an email address or telephone number.
+                </small>
+
+                {% else %}
+                <small>
+                  This required event detail has not been completed.
+                </small>
+                {% endif %}
+              </div>
+            </div>
+
+            {% if item.startswith('Staffing shortfall') %}
+
+            <a href="#staffing">
+              Manage Staff →
+            </a>
+
+            {% else %}
+
+            <a href="/staff/events/{{ event.id }}/edit">
+              Fix →
+            </a>
+
+            {% endif %}
+
+          </div>
+
+          {% endfor %}
+
+        </div>
+
+
+        <div class="event-close-disabled-action">
+          <button
+            type="button"
+            disabled
+            aria-disabled="true"
+          >
+            Complete Event
+          </button>
+
+          <span>
+            Complete the items above to unlock this action.
+          </span>
+        </div>
+
+      </section>
+
+
+      {% else %}
+
+      <section class="event-close-ready">
+
+        <div class="event-close-ready-icon">✓</div>
+
+        <div class="event-close-ready-copy">
+          <strong>Ready to complete</strong>
+
+          <span>
+            All required Event Master information and staffing checks
+            are complete.
+          </span>
+        </div>
+
+      </section>
+
+      <form
+        method="post"
+        action="/staff/events/{{ event.id }}/archive"
+        class="event-close-submit"
+      >
+
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <button
+          class="danger-button"
+          type="submit"
+        >
+          Complete Event
+        </button>
+
+      </form>
+
+      {% endif %}
+
+
+    {% else %}
+
+    <div class="event-close-completed">
+
+      <div class="event-close-ready-icon">✓</div>
+
+      <div>
+        <strong>Event completed</strong>
+
+        <span>
+          This event has been removed from active planning and retained
+          in the historical record.
+        </span>
+      </div>
+
+    </div>
+
+    <form
+      method="post"
+      action="/staff/events/{{ event.id }}/reopen"
+    >
+
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <button
+        class="ghost-button"
+        type="submit"
+      >
+        Reopen Event
+      </button>
+
+    </form>
+
+    {% endif %}
+
+  </article>
+
+</section>
+
+{% endblock %}

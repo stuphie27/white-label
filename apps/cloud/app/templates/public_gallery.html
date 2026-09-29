@@ -1,0 +1,443 @@
+{% extends "customer_base.html" %}
+{% block title %}{{ gallery.name }} | {{ brand.display_name }}{% endblock %}
+{% block content %}
+{% from "pirouette_components.html" import gallery_hero %}
+
+<main
+  class="viewer-shell protected-gallery pirouette-customer-shell cloud-ipad-gallery"
+  data-pirouette-interface="shared-customer-gallery"
+  data-gallery-slug="{{ gallery.slug }}"
+  data-known-count="{{ total_asset_count }}"
+  data-known-folders="{{ total_folder_count|default(0) }}"
+  data-verified-customer="{{ 'true' if verified_customer|default(false) else 'false' }}"
+>
+
+  {{ gallery_hero(
+      "",
+      gallery.name,
+      "Find your photos or videos from this event.",
+      false,
+      ""
+  ) }}
+
+  {% if unlocked %}
+
+  <header class="viewer-hero viewer-controls">
+    {% if media != 'videos' %}
+    <span id="viewer-status" class="viewer-status">
+      {% if event and event.status == 'live' %}Live{% else %}Online{% endif %}
+    </span>
+
+    <form class="viewer-toolbar" method="get">
+      <input type="hidden" name="media" value="photos">
+      {% if current_folder %}
+      <input type="hidden" name="folder" value="{{ current_folder }}">
+      {% endif %}
+
+      <label class="viewer-search">
+        <span>Find your photos</span>
+        <input
+          id="photo-search"
+          name="q"
+          type="search"
+          value="{{ query|default('') }}"
+          placeholder="Search name, surname, club or A-panel"
+          autocomplete="off"
+          inputmode="search"
+          autocapitalize="none"
+        >
+      </label>
+
+      <button
+        class="button viewer-search-button"
+        type="submit"
+        data-i18n="search"
+      >
+        Search
+      </button>
+    </form>
+    {% endif %}
+  </header>
+
+  <nav class="customer-media-tabs pirouette-media-tabs" aria-label="Photos and videos">
+    {% if photo_storage_available %}
+    <a
+      class="customer-media-tab pirouette-media-tab{% if media == 'photos' %} active{% endif %}"
+      href="/g/{{ gallery.slug }}?media=photos"
+    >Photos</a>
+    {% endif %}
+
+    {% if video_storage_available %}
+    <a
+      class="customer-media-tab pirouette-media-tab{% if media == 'videos' %} active{% endif %}"
+      href="/g/{{ gallery.slug }}?media=videos"
+    >Videos</a>
+    {% endif %}
+  </nav>
+
+  {% if not media %}
+  <section class="folder-section storage-library-picker" aria-labelledby="storage-heading">
+    <div class="section-heading">
+      <div>
+        <h2 id="storage-heading">What would you like to view?</h2>
+      </div>
+    </div>
+
+    <div class="folder-card-grid">
+      {% if photo_storage_available %}
+      <a class="desktop-folder storage-library-card" href="/g/{{ gallery.slug }}?media=photos">
+        <span class="desktop-folder-icon"><span></span></span>
+        <span class="folder-card-copy">
+          <strong>Photos</strong>
+          <span class="desktop-folder-path">Browse event photos</span>
+        </span>
+      </a>
+      {% endif %}
+
+      {% if video_storage_available %}
+      <a class="desktop-folder storage-library-card" href="/g/{{ gallery.slug }}?media=videos">
+        <span class="desktop-folder-icon video-storage-icon"><span></span></span>
+        <span class="folder-card-copy">
+          <strong>Videos</strong>
+          <span class="desktop-folder-path">Browse event videos</span>
+        </span>
+      </a>
+      {% endif %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if media %}
+
+  <nav class="viewer-breadcrumbs" aria-label="Folder path">
+    <a href="/g/{{ gallery.slug }}">
+      {{ gallery.name }}
+    </a>
+    <span aria-hidden="true">›</span>
+
+    <a href="/g/{{ gallery.slug }}?media={{ media }}">
+      {% if media == 'photos' %}Photos{% else %}Videos{% endif %}
+    </a>
+
+    {% for crumb in breadcrumbs %}
+      <span aria-hidden="true">›</span>
+      {% if not loop.last %}
+      <a href="/g/{{ gallery.slug }}?media={{ media }}&amp;folder={{ crumb.path|urlencode }}">
+        {{ crumb.name }}
+      </a>
+      {% else %}
+      <strong>{{ crumb.name }}</strong>
+      {% endif %}
+    {% endfor %}
+  </nav>
+
+  {% if folders %}
+  <section class="folder-section" aria-labelledby="folder-heading">
+    <div class="section-heading">
+      <div>
+        <h2 id="folder-heading">
+          {% if query %}
+            Matching folders
+          {% elif current_folder %}
+            Choose a folder
+          {% else %}
+            {% if media == 'photos' %}Choose a day{% else %}Choose a video folder{% endif %}
+          {% endif %}
+        </h2>
+      </div>
+    </div>
+
+    <div class="folder-card-grid" aria-label="Event folders">
+      {% for item in folders %}
+      <a
+        class="desktop-folder"
+        href="/g/{{ gallery.slug }}?media={{ media }}&amp;folder={{ item.path|urlencode }}"
+        aria-label="Open {{ item.name }}"
+      >
+        <span class="desktop-folder-icon" aria-hidden="true"><span></span></span>
+        <span class="folder-card-copy">
+          <strong>{{ item.name }}</strong>
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% if media == 'photos' and image_assets %}
+  <section class="gallery-section" aria-labelledby="gallery-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">GALLERY</p>
+        <h2 id="gallery-heading">
+          {% if query %}
+            Search results for “{{ query }}”
+          {% elif current_folder and breadcrumbs %}
+            {{ breadcrumbs[-1].name }}
+          {% else %}
+            Photographs at the top level
+          {% endif %}
+        </h2>
+      </div>
+      <span>{{ image_assets|length }} shown</span>
+    </div>
+
+    <section class="viewer-grid pirouette-gallery-grid">
+      {% for asset in image_assets %}
+      <article
+        id="photo-{{ asset.id }}"
+        class="viewer-photo pirouette-media-card"
+        data-cloud-photo
+        data-search="{{ asset.filename|lower }}"
+      >
+        <span class="protected-customer-image">
+          <img
+            class="protected-customer-image-file"
+            src="/g/{{ gallery.slug }}/assets/{{ asset.id }}"
+            alt="Event photograph"
+            loading="lazy"
+            draggable="false"
+          >
+        </span>
+
+        <div>
+          <span>
+            <strong>{{ asset.filename }}</strong>
+            <small>Watermarked customer preview</small>
+          </span>
+
+          <span class="photo-actions">
+            <form
+              method="post"
+              action="/g/{{ gallery.slug }}/favourites/{{ asset.id }}"
+              data-cloud-favourite-form
+              data-asset-id="{{ asset.id }}"
+            >
+              <input
+                type="hidden"
+                name="return_to"
+                value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}"
+              >
+              <button
+                type="submit"
+                class="favourite{% if asset.id|string in favourite_ids %} is-active{% endif %}"
+                aria-label="{% if asset.id|string in favourite_ids %}Remove favourite{% else %}Save favourite{% endif %}"
+              >{% if asset.id|string in favourite_ids %}♥{% else %}♡{% endif %}</button>
+            </form>
+
+            <form method="post" action="/g/{{ gallery.slug }}/basket/add">
+              <input
+                type="hidden"
+                name="return_to"
+                value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}"
+              >
+              <input
+                type="hidden"
+                name="asset_id"
+                value="{{ asset.id }}"
+              >
+              <button
+                type="submit"
+                class="add-basket"
+                aria-label="Add photograph to basket"
+              >
+                Add
+              </button>
+            </form>
+          </span>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+
+    {% if gallery_page > 1 or has_more_assets %}
+    <nav class="gallery-pagination" aria-label="Photograph pages">
+      {% if gallery_page > 1 %}
+      <a
+        class="customer-secondary-button"
+        href="/g/{{ gallery.slug }}?media=photos{% if current_folder %}&amp;folder={{ current_folder|urlencode }}{% endif %}{% if query %}&amp;q={{ query|urlencode }}{% endif %}&amp;page={{ gallery_page - 1 }}"
+      >← Previous photographs</a>
+      {% endif %}
+
+      <span class="gallery-page-number">Page {{ gallery_page }}</span>
+
+      {% if has_more_assets %}
+      <a
+        class="customer-primary-button"
+        href="/g/{{ gallery.slug }}?media=photos{% if current_folder %}&amp;folder={{ current_folder|urlencode }}{% endif %}{% if query %}&amp;q={{ query|urlencode }}{% endif %}&amp;page={{ gallery_page + 1 }}"
+      >Next photographs →</a>
+      {% endif %}
+    </nav>
+    {% endif %}
+  </section>
+  {% endif %}
+
+  {% if media == 'videos' and video_assets %}
+  <section class="gallery-section video-library" aria-labelledby="video-heading">
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">VIDEO LIBRARY</p>
+        <h2 id="video-heading">
+          {% if current_folder and breadcrumbs %}
+            {{ breadcrumbs[-1].name }}
+          {% else %}
+            Videos at the top level
+          {% endif %}
+        </h2>
+      </div>
+      <span>{{ video_assets|length }} video{% if video_assets|length != 1 %}s{% endif %}</span>
+    </div>
+
+    <section class="video-grid">
+      {% for asset in video_assets %}
+      <article class="video-tile">
+        <video
+          controls
+          preload="metadata"
+          playsinline
+          src="/g/{{ gallery.slug }}/assets/{{ asset.id }}"
+        ></video>
+
+        <div class="video-tile-copy">
+          <span>
+            <strong>{{ asset.filename }}</strong>
+            <small>Video preview · £23.00</small>
+          </span>
+
+          <span class="video-tile-actions">
+            <form
+              method="post"
+              action="/g/{{ gallery.slug }}/favourites/{{ asset.id }}"
+              data-cloud-favourite-form
+              data-asset-id="{{ asset.id }}"
+            >
+              <input
+                type="hidden"
+                name="return_to"
+                value="{{ request.url.path }}{% if request.url.query %}?{{ request.url.query }}{% endif %}"
+              >
+              <button
+                type="submit"
+                class="video-favourite{% if asset.id|string in favourite_ids %} is-active{% endif %}"
+              >{% if asset.id|string in favourite_ids %}♥{% else %}♡{% endif %}</button>
+            </form>
+          </span>
+        </div>
+      </article>
+      {% endfor %}
+    </section>
+  </section>
+  {% endif %}
+
+  {% if media and not folders and not assets %}
+  <p class="viewer-empty">There is nothing to view in this folder yet.</p>
+  {% endif %}
+
+  <p class="capture-notice">
+    Customer previews are visibly watermarked. Please do not photograph or screenshot preview images.
+  </p>
+
+  {% endif %}
+
+  <dialog class="cloud-favourite-setup" data-cloud-favourite-setup>
+    <form class="cloud-favourite-setup-card" data-cloud-favourite-profile-form>
+      <button type="button" class="dialog-close" data-cloud-favourite-close aria-label="Close">×</button>
+      <p class="eyebrow">YOUR FAVOURITES</p>
+      <h2>Save your favourites</h2>
+      <p>Your favourites are saved free for 5 days after the event closes.</p>
+      <label><span>Your name</span><input name="customer_name" autocomplete="name" required></label>
+      <label><span>Email address</span><input name="customer_email" type="email" autocomplete="email" required></label>
+      <label class="favourites-extension-choice">
+        <input type="checkbox" name="extend_35_days" value="true">
+        <span>
+          <strong>Keep my favourites for 35 days — £15</strong>
+          <small>Optional. Added to your basket and paid at checkout.</small>
+        </span>
+      </label>
+      <p class="form-error" data-favourite-profile-error hidden></p>
+      <button class="customer-primary-button" type="submit">Save favourite and continue browsing</button>
+    </form>
+  </dialog>
+
+  <nav class="customer-bottom-bar" aria-label="Customer navigation">
+    <a
+      class="customer-bottom-action customer-bottom-favourites"
+      href="/g/{{ gallery.slug }}/favourites"
+      aria-label="Open my favourites"
+    >
+      <span class="customer-bottom-icon" aria-hidden="true">♥</span>
+      <span
+        class="customer-bottom-label"
+        data-favourites-bottom-label
+        data-label="Favourites"
+      >Favourites{% if favourite_count %} ({{ favourite_count }}){% endif %}</span>
+    </a>
+
+    <a
+      class="customer-bottom-action customer-bottom-basket"
+      href="/g/{{ gallery.slug }}/basket"
+      aria-label="Open basket and checkout"
+    >
+      <span class="customer-bottom-icon" aria-hidden="true">🛒</span>
+      <span class="customer-bottom-label">Basket{% if basket_photo_count %} ({{ basket_photo_count }}){% endif %}</span>
+    </a>
+
+    <form
+  method="post"
+  action="/customer/logout"
+  class="customer-bottom-end-form"
+>
+  <button
+    type="submit"
+    class="customer-bottom-action customer-bottom-end"
+    aria-label="End customer session"
+  >
+    <span class="customer-bottom-icon" aria-hidden="true">↪</span>
+    <span class="customer-bottom-label">End Session</span>
+  </button>
+</form>
+  </nav>
+
+  {% else %}
+
+  <form class="public-access-form checkout-card" method="post" action="/g/{{ gallery.slug }}/unlock">
+    <p class="eyebrow">PRIVATE EVENT GALLERY</p>
+    <h1>{{ gallery.name }}</h1>
+
+    {% if error %}
+    <p class="form-error">{{ error }}</p>
+    {% endif %}
+
+    <label>
+      Access code
+      <input type="password" name="access_code" autocomplete="one-time-code" required>
+    </label>
+
+    <button class="button" type="submit">Open gallery</button>
+  </form>
+
+  {% endif %}
+
+</main>
+
+<style>
+.gallery-pagination{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-wrap:wrap;
+  gap:1rem;
+  margin:2rem 0 1rem;
+}
+.gallery-page-number{
+  color:#aeb7c0;
+  font-size:.9rem;
+  font-weight:700;
+}
+</style>
+
+{% endblock %}
+
+
+
+{% block scripts %}{% if unlocked %}<script>window.setInterval(async()=>{try{const r=await fetch('/g/{{ gallery.slug }}/status',{cache:'no-store'});if(!r.ok)return;const d=await r.json();const shell=document.querySelector('[data-gallery-slug]');if(d.available&&(Number(shell.dataset.knownCount)!==d.asset_count||Number(shell.dataset.knownFolders)!==d.folder_count))location.reload();}catch(_){ }},30000);</script>{% endif %}{% endblock %}\n

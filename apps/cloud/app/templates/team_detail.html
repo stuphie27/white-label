@@ -1,0 +1,760 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'team' %}
+
+{% block title %}
+{{ member.preferred_name or member.staff_name }} | Team
+
+<script id="stuphie-profile-management-cleanup">
+document.addEventListener("DOMContentLoaded", function () {
+  const profileComplete = {{ 'true' if profile_complete else 'false' }};
+  const showOnboarding = {{ 'true' if show_onboarding_controls else 'false' }};
+
+  const containers = Array.from(
+    document.querySelectorAll(
+      "article, section, .live-panel, .team-panel, .staff-panel"
+    )
+  );
+
+  function textOf(el) {
+    return (el.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+  }
+
+  /* --------------------------------------------------------
+     COMPLETED PROFILE
+     Collapse the management setup/profile-request area.
+     Admin can expand it when genuinely required.
+     -------------------------------------------------------- */
+  if (profileComplete) {
+    containers.forEach(function (panel) {
+      const text = textOf(panel);
+
+      if (
+        (
+          text.includes("profile") &&
+          (
+            text.includes("profile request") ||
+            text.includes("complete staff profile") ||
+            text.includes("send profile")
+          )
+        )
+        && !panel.dataset.stuphieProfileCollapsed
+      ) {
+        panel.dataset.stuphieProfileCollapsed = "1";
+
+        const wrapper = document.createElement("details");
+        wrapper.className = "stuphie-completed-profile-details";
+
+        const summary = document.createElement("summary");
+        summary.innerHTML =
+          '<span class="stuphie-profile-complete-dot">✓</span>' +
+          '<span><strong>Profile Complete</strong>' +
+          '<small>Staff member manages their own details. ' +
+          'Open for management options.</small></span>';
+
+        panel.parentNode.insertBefore(wrapper, panel);
+        wrapper.appendChild(summary);
+        wrapper.appendChild(panel);
+      }
+    });
+  }
+
+  /* --------------------------------------------------------
+     ONBOARDING ACTIONS
+     Enable Login / Setup Email only belong on NEW staff.
+     -------------------------------------------------------- */
+  if (!showOnboarding) {
+    document.querySelectorAll(
+      "button, a, input[type=submit]"
+    ).forEach(function (control) {
+      const text = (
+        control.textContent ||
+        control.value ||
+        ""
+      ).replace(/\s+/g, " ").trim().toLowerCase();
+
+      if (
+        text.includes("enable login") ||
+        text.includes("send setup") ||
+        text.includes("setup email") ||
+        text.includes("set up login")
+      ) {
+        const form = control.closest("form");
+
+        if (form) {
+          form.hidden = true;
+        } else {
+          control.hidden = true;
+        }
+      }
+    });
+  }
+});
+</script>
+
+{% endblock %}
+
+{% block control_title %}STAFF RECORD{% endblock %}
+
+{% block content %}
+
+<div class="team-back">
+  <a href="/staff/team">← Back to Team</a>
+</div>
+
+<section class="team-profile-header">
+
+  <div class="team-profile-avatar">
+    {{
+      (member.preferred_name or member.staff_name or '?')
+      [:1]
+      |upper
+    }}
+  </div>
+
+  <div class="team-profile-title">
+
+    <p class="team-eyebrow">STUPHIE STAFF MASTER</p>
+
+    <h2>
+      {{ member.preferred_name or member.staff_name }}
+    </h2>
+
+    {% if
+      member.preferred_name
+      and member.staff_name
+      and member.preferred_name != member.staff_name
+    %}
+    <p>{{ member.staff_name }}</p>
+    {% endif %}
+
+  </div>
+
+  <span
+    class="team-active-badge
+    {{ 'active' if member.active else 'inactive' }}"
+  >
+    {{ 'ACTIVE' if member.active else 'INACTIVE' }}
+  </span>
+
+</section>
+
+
+<section class="team-edit-panel">
+  <div class="team-edit-heading">
+    <div>
+      <p class="team-eyebrow">STAFF MASTER MANAGEMENT</p>
+      <h3>EDIT STAFF RECORD</h3>
+      <p>
+        Update the operational Staff Master record used by
+        Event Staffing.
+      </p>
+    </div>
+
+    <span class="team-edit-lock">
+      SOURCE ID LOCKED
+    </span>
+  </div>
+
+  <form
+    method="post"
+    action="/staff/team/{{ member.id }}/edit"
+    class="team-edit-form"
+  >
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+    <div class="team-edit-grid">
+
+      <label class="team-edit-field">
+        <span>Staff Code</span>
+        <input
+          type="text"
+          name="staff_code"
+          value="{{ member.staff_code or '' }}"
+          autocomplete="off"
+        >
+      </label>
+
+      <label class="team-edit-field">
+        <span>Full Name</span>
+        <input
+          type="text"
+          name="staff_name"
+          value="{{ member.staff_name or '' }}"
+          required
+        >
+      </label>
+
+      <label class="team-edit-field">
+        <span>Preferred Name</span>
+        <input
+          type="text"
+          name="preferred_name"
+          value="{{ member.preferred_name or '' }}"
+        >
+      </label>
+
+      <label class="team-edit-field">
+        <span>Email</span>
+        <input
+          type="email"
+          name="email"
+          value="{{ member.email or '' }}"
+          autocomplete="email"
+        >
+      </label>
+
+      <label class="team-edit-field">
+        <span>Default Role</span>
+        <input
+          type="text"
+          name="default_role"
+          value="{{ member.default_role or '' }}"
+        >
+      </label>
+
+      <div class="team-edit-field team-edit-source">
+        <span>Staff Source Ref</span>
+        <div class="team-locked-value">
+          {{ member.staff_source_ref }}
+        </div>
+        <small>
+          Permanent shared identity — cannot be edited here.
+        </small>
+      </div>
+
+    </div>
+
+    <div class="team-edit-footer">
+
+      <label class="team-active-control">
+        <input
+          type="checkbox"
+          name="active"
+          value="1"
+          {% if member.active %}checked{% endif %}
+        >
+        <span class="team-active-switch"></span>
+        <span>
+          Staff member is active
+        </span>
+      </label>
+
+      <button
+        type="submit"
+        class="team-save-button"
+      >
+        SAVE STAFF RECORD
+      </button>
+
+    </div>
+  </form>
+</section>
+
+<section class="team-edit-panel team-management-compact team-profile-control">
+
+  <div class="team-edit-heading">
+
+    <div>
+
+      <p class="team-eyebrow">
+        STAFF DETAILS
+      </p>
+
+      <h3>
+        PROFILE &amp; PHOTOGRAPH
+      </h3>
+
+      <p>
+        Send this staff member a secure Stuphie link to
+        complete or update their private details and upload
+        their photograph.
+      </p>
+
+    </div>
+
+
+    <span class="team-edit-lock">
+
+      {% if member.profile_completed_at %}
+
+        PROFILE COMPLETE
+
+      {% elif profile_request
+              and profile_request.status == 'sent' %}
+
+        INVITATION SENT
+
+      {% elif profile_request
+              and profile_request.status == 'email_failed' %}
+
+        EMAIL FAILED
+
+      {% else %}
+
+        DETAILS REQUIRED
+
+      {% endif %}
+
+    </span>
+
+  </div>
+
+
+  {% if
+    request.query_params.get('profile_request')
+    == 'sent'
+  %}
+
+  <p>
+    ✓ Secure profile request email sent successfully.
+  </p>
+
+  {% elif
+    request.query_params.get('profile_request')
+    == 'failed'
+  %}
+
+  <p>
+    The profile email could not be sent.
+    Please check the email configuration and try again.
+  </p>
+
+  {% elif
+    request.query_params.get('profile_request')
+    == 'invalid'
+  %}
+
+  <p>
+    This staff record needs an active status, email address
+    and Staff Source Ref before an invitation can be sent.
+  </p>
+
+  {% endif %}
+
+
+  {% if profile_request %}
+
+  <dl class="team-detail-list">
+
+    <div>
+      <dt>Profile Request</dt>
+
+      <dd>
+        {{
+          profile_request.status
+          |replace('_',' ')
+          |title
+        }}
+      </dd>
+    </div>
+
+    <div>
+      <dt>Last Emailed</dt>
+
+      <dd>
+        {{
+          profile_request.emailed_at
+          or '—'
+        }}
+      </dd>
+    </div>
+
+    <div>
+      <dt>Submitted</dt>
+
+      <dd>
+        {{
+          profile_request.submitted_at
+          or '—'
+        }}
+      </dd>
+    </div>
+
+  </dl>
+
+  {% endif %}
+
+
+  <form
+    method="post"
+    action="/staff/team/{{ member.id }}/send-profile-request"
+  >
+
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+    <button
+      type="submit"
+      class="team-save-button"
+      {% if
+        not member.active
+        or not member.email
+      %}disabled{% endif %}
+    >
+
+      {% if member.profile_completed_at %}
+        SEND PROFILE UPDATE REQUEST
+      {% elif profile_request %}
+        RESEND PROFILE REQUEST
+      {% else %}
+        SEND PROFILE REQUEST
+      {% endif %}
+
+    </button>
+
+  </form>
+
+</section>
+
+
+<section class="team-edit-panel team-management-compact team-login-control">
+  <div class="team-edit-heading">
+    <div>
+      <p class="team-eyebrow">STAFF LOGIN</p>
+      <h3>LOGIN ACCESS</h3>
+
+      {% if member.login_enabled %}
+      <p>
+        This staff member has completed password setup and
+        login access is enabled.
+      </p>
+      {% else %}
+      <p>
+        Login access is not yet enabled. Send a secure
+        one-time setup link to {{ member.email }}.
+      </p>
+      {% endif %}
+    </div>
+
+    <span class="team-edit-lock">
+      {{ 'ENABLED' if member.login_enabled else 'NOT ENABLED' }}
+    </span>
+  </div>
+
+  {% if request.query_params.get('login_setup') == 'sent' %}
+  <p>
+    ✓ Login setup email sent successfully.
+  </p>
+  {% endif %}
+
+  {% if not member.login_enabled %}
+  <form
+    method="post"
+    action="/staff/team/{{ member.id }}/send-login-setup"
+  >
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+    <button
+      type="submit"
+      class="team-save-button"
+      {% if not member.active or not member.email %}disabled{% endif %}
+    >
+      ENABLE LOGIN &amp; SEND SETUP EMAIL
+    </button>
+  </form>
+  {% else %}
+  <form
+    method="post"
+    action="/staff/team/{{ member.id }}/send-login-setup"
+  >
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+    <button
+      type="submit"
+      class="team-save-button"
+    >
+      SEND NEW PASSWORD SETUP LINK
+    </button>
+  </form>
+  {% endif %}
+</section>
+
+
+
+<section class="team-edit-panel team-management-compact team-payment-control">
+
+  <div class="team-edit-heading">
+
+    <div>
+
+      <p class="team-eyebrow">
+        PAYROLL ADMIN
+      </p>
+
+      <h3>
+        PRIVATE PAYMENT SETUP
+      </h3>
+
+      <p>
+        Manage this staff member's payment arrangement,
+        private hourly rate and effective-dated rate history.
+      </p>
+
+      <p>
+        Payment information is restricted to management and
+        is not shown in the staff member's self-service area.
+      </p>
+
+    </div>
+
+    <span class="team-edit-lock">
+      ADMIN ONLY
+    </span>
+
+  </div>
+
+  <div class="team-edit-footer">
+
+    <div>
+      <strong>
+        {{ member.preferred_name or member.staff_name }}
+      </strong>
+
+      <p>
+        Self-employed contractor or external payroll settings
+        are managed securely in Payroll Admin.
+      </p>
+    </div>
+
+    <a
+      href="/staff/payroll/staff-payment-setup#staff-{{ member.id }}"
+      class="team-save-button"
+    >
+      OPEN PAYMENT SETUP
+    </a>
+
+  </div>
+
+</section>
+
+
+<section class="team-detail-grid">
+
+  <article class="team-detail-panel">
+
+    <h3>STAFF IDENTITY</h3>
+
+    <dl class="team-detail-list">
+
+      <div>
+        <dt>Staff Code</dt>
+        <dd>{{ member.staff_code or '—' }}</dd>
+      </div>
+
+      <div>
+        <dt>Full Name</dt>
+        <dd>{{ member.staff_name or '—' }}</dd>
+      </div>
+
+      <div>
+        <dt>Preferred Name</dt>
+        <dd>{{ member.preferred_name or '—' }}</dd>
+      </div>
+
+      <div>
+        <dt>Email</dt>
+        <dd>{{ member.email or '—' }}</dd>
+      </div>
+
+      <div>
+        <dt>Default Role</dt>
+        <dd>{{ member.default_role or '—' }}</dd>
+      </div>
+
+      <div>
+        <dt>Staff Source Ref</dt>
+        <dd>{{ member.staff_source_ref }}</dd>
+      </div>
+
+    </dl>
+
+  </article>
+
+  <article class="team-detail-panel">
+
+    <h3>EVENT ASSIGNMENTS</h3>
+
+    <div class="team-history-list">
+
+      {% for assignment, event in assignment_rows %}
+
+      <a
+        class="team-history-row"
+        href="/staff/events/{{ event.id }}"
+      >
+
+        <div>
+          <strong>{{ event.name }}</strong>
+
+          <span>
+            {{ event.start_date }}
+            {% if
+              event.end_date
+              and event.end_date != event.start_date
+            %}
+              – {{ event.end_date }}
+            {% endif %}
+          </span>
+        </div>
+
+        <div>
+          <span class="team-role-badge">
+            {{ assignment.role }}
+          </span>
+
+          <small>
+            {{ assignment.assignment_status|replace('_',' ')|title }}
+          </small>
+        </div>
+
+      </a>
+
+      {% else %}
+
+      <p class="team-empty-message">
+        No event assignments recorded.
+      </p>
+
+      {% endfor %}
+
+    </div>
+
+  </article>
+
+</section>
+
+<section class="team-detail-panel team-availability-panel">
+
+  <h3>AVAILABILITY HISTORY</h3>
+
+  <div class="team-availability-table-wrap">
+
+    <table class="team-availability-table">
+
+      <thead>
+        <tr>
+          <th>Event</th>
+          <th>Dates</th>
+          <th>Response</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for availability in availability_rows %}
+
+        <tr>
+
+          <td>
+            <strong>{{ availability.event_name }}</strong>
+            {% if availability.venue %}
+            <small>{{ availability.venue }}</small>
+            {% endif %}
+          </td>
+
+          <td>
+            {{ availability.start_date }}
+            {% if
+              availability.end_date
+              != availability.start_date
+            %}
+              – {{ availability.end_date }}
+            {% endif %}
+          </td>
+
+          <td>
+            <span
+              class="team-availability
+              {{ availability.availability_status }}"
+            >
+              {% if
+                availability.availability_status
+                == 'available'
+              %}
+                ● AVAILABLE
+              {% elif
+                availability.availability_status
+                == 'unavailable'
+              %}
+                ● UNAVAILABLE
+              {% else %}
+                ● NO RESPONSE
+              {% endif %}
+            </span>
+          </td>
+
+          <td>
+            {{ availability.response_notes or '—' }}
+          </td>
+
+        </tr>
+
+        {% else %}
+
+        <tr>
+          <td colspan="4">
+            No availability responses recorded.
+          </td>
+        </tr>
+
+        {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+
+<script id="stuphie-compact-management-controls">
+document.addEventListener("DOMContentLoaded", function () {
+
+  document.querySelectorAll(
+    ".team-management-compact"
+  ).forEach(function (panel) {
+
+    panel.classList.add(
+      "stuphie-management-ready"
+    );
+
+  });
+
+  /*
+   * Once the staff profile is complete, keep the setup
+   * controls available but visually compact.
+   */
+  const profilePanel = document.querySelector(
+    ".team-profile-control"
+  );
+
+  if (
+    profilePanel &&
+    {{ 'true' if profile_complete else 'false' }}
+  ) {
+    profilePanel.classList.add(
+      "stuphie-profile-finished"
+    );
+  }
+
+});
+</script>
+
+{% endblock %}

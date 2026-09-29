@@ -1,0 +1,9 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'transfers' %}
+{% block title %}Transfer {{ job.id[:8] }} | Stuphie Ltd{% endblock %}
+{% block content %}
+<section class="page-title-row dark-title-row"><div><p class="section-kicker">TRANSFER JOB</p><h1>{{ gallery.name if gallery else 'Temporary delivery' }}</h1><p class="page-summary">{{ job.destination|title }} · created {{ job.created_at.strftime('%d %b %Y %H:%M') }}</p></div><div class="title-actions"><a class="ghost-button" href="/staff/transfers">Back to Queue</a></div></section>
+<section class="dark-detail-grid"><article class="live-panel"><h3>STATUS</h3><dl class="detail-list"><div><dt>State</dt><dd><span class="status-badge status-{{ job.status }}">{{ job.status|title }}</span></dd></div><div><dt>Destination</dt><dd>{{ job.destination|title }}</dd></div><div><dt>Images</dt><dd>{{ job.item_count }}</dd></div><div><dt>Transfer size</dt><dd>{{ job.bytes_transferred }} / {{ job.bytes_total }} bytes</dd></div><div><dt>Expires</dt><dd>{{ job.expires_at.strftime('%d %b %Y %H:%M') }}</dd></div></dl></article>
+<article class="live-panel"><h3>WORKFLOW</h3><form method="post" action="/staff/transfers/{{ job.id }}/status" class="status-action-grid"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">{% for value in statuses %}<button name="transfer_status" value="{{ value }}" class="{{ 'active' if job.status == value else '' }}" type="submit">{{ value|title }}</button>{% endfor %}</form><p class="muted-copy">This release records and supervises the workflow only. The next storage connector will move encrypted files through temporary object storage and erase them at expiry.</p></article></section>
+{% if job.error_message %}<div class="alert-banner error">{{ job.error_message }}</div>{% endif %}
+{% endblock %}

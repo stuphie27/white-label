@@ -1,0 +1,115 @@
+{% extends "customer_base.html" %}
+
+{% block title %}Event Galleries | {{ brand.display_name }}{% endblock %}
+
+{% block content %}
+<main class="viewer-shell protected-gallery pirouette-customer-shell cloud-gallery-index">
+
+  <section class="gallery-hero customer-events-hero">
+    <p class="eyebrow">{{ brand.display_name | upper }}</p>
+    <h1>Event Galleries</h1>
+    <p>
+      Select your event to view available photographs and videos.
+      Upcoming events will appear here before their galleries open.
+    </p>
+  </section>
+
+  <section class="folder-section" aria-labelledby="event-gallery-heading">
+
+    <div class="section-heading">
+      <div>
+        <p class="eyebrow">EVENTS</p>
+        <h2 id="event-gallery-heading">Our Events</h2>
+      </div>
+      <span>{{ event_cards|length }} EVENTS</span>
+    </div>
+
+    {% if event_cards %}
+
+    <div class="customer-event-grid">
+
+      {% for card in event_cards %}
+      {% set event = card.event %}
+      {% set gallery = card.gallery %}
+
+      <article class="customer-event-card{% if card.current_event %} customer-event-card-current{% endif %}">
+
+        <div class="customer-event-date">
+          <strong>{{ event.start_date.strftime('%d') }}</strong>
+          <span>{{ event.start_date.strftime('%b')|upper }}</span>
+          <small>{{ event.start_date.strftime('%Y') }}</small>
+        </div>
+
+        <div class="customer-event-logo-wrap">
+
+          {% if card.logo_url %}
+          <img
+            src="{{ card.logo_url }}"
+            alt="{{ event.name }} logo"
+            class="customer-event-logo">
+          {% else %}
+          <div class="customer-event-logo-fallback">
+            <strong>{{ brand.display_name }}</strong>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <div class="customer-event-copy">
+
+          <div class="customer-event-details">
+
+            {% if card.current_event %}
+            <p class="customer-event-current-label">
+              CURRENT EVENT
+            </p>
+            {% endif %}
+
+            <h3>{{ event.name }}</h3>
+
+            <p class="customer-event-full-date">
+              {{ event.start_date.strftime('%d %B %Y') }}
+              {% if event.end_date != event.start_date %}
+              – {{ event.end_date.strftime('%d %B %Y') }}
+              {% endif %}
+            </p>
+
+            {% if event.venue %}
+            <p class="customer-event-venue">{{ event.venue }}</p>
+            {% endif %}
+          </div>
+
+          <div class="customer-event-status-area">
+            {% if card.gallery_open %}
+            <a
+              class="primary-button customer-event-action"
+              href="/g/{{ gallery.slug }}">
+              {{ card.display_state }}
+            </a>
+            {% else %}
+            <span class="customer-event-state">
+              {{ card.display_state }}
+            </span>
+            {% endif %}
+          </div>
+
+        </div>
+
+      </article>
+      {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="viewer-empty">
+      <strong>No events are listed at the moment.</strong>
+      <p>Please check back shortly.</p>
+    </div>
+
+    {% endif %}
+
+  </section>
+
+</main>
+{% endblock %}

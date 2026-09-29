@@ -1,0 +1,402 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+
+  <meta
+    name="robots"
+    content="noindex,nofollow,noarchive"
+  >
+
+  <title>
+    Monthly Payment Report | Stuphie Ltd
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="/static/cloud.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}"
+  >
+</head>
+
+<body class="payroll-admin-page">
+
+<main class="shell">
+
+  <header class="top">
+
+    <div>
+
+      <a
+        class="back"
+        href="/staff/payroll"
+      >
+        ← Payroll Admin
+      </a>
+
+      <div class="eyebrow">
+        STUPHIE LTD
+      </div>
+
+      <h1>
+        Monthly Payment Report
+      </h1>
+
+      <div class="muted">
+        Private management report ·
+        {{ staff_email }}
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <section class="panel payroll-period-hero">
+
+    <div>
+
+      <div class="eyebrow">
+        PAYMENT PERIOD
+      </div>
+
+      <h2>
+        {{ period_start.strftime('%d %B %Y') }}
+        →
+        {{ period_end.strftime('%d %B %Y') }}
+      </h2>
+
+      <p class="muted">
+        Monthly cut-off is the 20th.
+        Final report becomes available on
+        {{ available_from.strftime('%d %B %Y') }}.
+      </p>
+
+      <div class="payroll-payday">
+        <span>PAYDAY</span>
+        <strong>
+          {{ payday.strftime('%A %d %B %Y') }}
+        </strong>
+      </div>
+
+    </div>
+
+    <div class="payroll-period-status">
+
+      {% if report_available %}
+
+        <strong class="status-badge status-ready">
+          REPORT READY
+        </strong>
+
+      {% else %}
+
+        <strong class="status-badge status-pending">
+          PREVIEW
+        </strong>
+
+        <span class="muted">
+          Final download unlocks on the 21st.
+        </span>
+
+      {% endif %}
+
+    </div>
+
+  </section>
+
+
+  <section class="panel payroll-month-controls">
+
+    <form
+      method="get"
+      action="/staff/payroll/monthly"
+    >
+
+      <label>
+
+        Payment period ending
+
+        <input
+          type="month"
+          name="month"
+          value="{{ month }}"
+        >
+
+      </label>
+
+      <button type="submit">
+        View period
+      </button>
+
+      {% if report_available %}
+
+        <a
+          class="button"
+          href="/staff/payroll/monthly/export.xlsx?month={{ month }}"
+        >
+          DOWNLOAD FULL REPORT
+        </a>
+
+      {% endif %}
+
+    </form>
+
+  </section>
+
+
+  <section class="payroll-period-summary">
+
+    <article class="panel">
+      <span>CONTRACTOR HOURS</span>
+      <strong>
+        {{ '%.2f' | format(
+          totals.contractor_hours
+        ) }}
+      </strong>
+    </article>
+
+    <article class="panel">
+      <span>CONTRACTOR AMOUNT DUE</span>
+      <strong>
+        £{{ '%.2f' | format(
+          totals.contractor_due
+        ) }}
+      </strong>
+    </article>
+
+    <article class="panel">
+      <span>EXTERNAL PAYROLL HOURS</span>
+      <strong>
+        {{ '%.2f' | format(
+          totals.external_hours
+        ) }}
+      </strong>
+    </article>
+
+    <article class="panel">
+      <span>RECORDED EXPENSES</span>
+      <strong>
+        £{{ '%.2f' | format(
+          totals.expenses
+        ) }}
+      </strong>
+    </article>
+
+    <article class="panel">
+      <span>STAFF IN REPORT</span>
+      <strong>
+        {{ totals.staff_count }}
+      </strong>
+    </article>
+
+  </section>
+
+
+  <section class="panel">
+
+    <div class="payroll-section-heading">
+
+      <div>
+        <div class="eyebrow">
+          PAYMENT STATEMENTS
+        </div>
+
+        <h2>
+          Self-Employed Contractors
+        </h2>
+      </div>
+
+      <span>
+        {{ contractor_rows|length }} CONTRACTORS
+      </span>
+
+    </div>
+
+
+    {% if contractor_rows %}
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Contractor</th>
+            <th>Hours</th>
+            <th>Approved work</th>
+            <th>Expenses</th>
+            <th>Amount due</th>
+            <th>Pending</th>
+            <th>Paid</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for row in contractor_rows %}
+
+            <tr>
+
+              <td>
+                <strong>
+                  {{ row.staff_name }}
+                </strong>
+                <br>
+                <span class="muted">
+                  {{ row.staff_email }}
+                </span>
+              </td>
+
+              <td>{{ row.hours }}</td>
+              <td>£{{ row.gross_pay }}</td>
+              <td>£{{ row.expenses }}</td>
+
+              <td>
+                <strong>
+                  £{{ row.total_due }}
+                </strong>
+              </td>
+
+              <td>
+                {% if row.pending_records %}
+                  <span class="status-badge status-pending">
+                    {{ row.pending_records }} PENDING
+                  </span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+              <td>
+                {{ row.paid_records }}
+              </td>
+
+            </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    {% else %}
+
+      <div class="empty">
+        No contractor records in this payment period.
+      </div>
+
+    {% endif %}
+
+  </section>
+
+
+  <section class="panel">
+
+    <div class="payroll-section-heading">
+
+      <div>
+        <div class="eyebrow">
+          ACCOUNTANT HOURS REPORT
+        </div>
+
+        <h2>
+          External Payroll
+        </h2>
+      </div>
+
+      <span>
+        {{ external_rows|length }} STAFF
+      </span>
+
+    </div>
+
+    <p class="muted">
+      Hours here are recorded for your external accountant.
+      Stuphie does not calculate contractor pay for these staff.
+    </p>
+
+    {% if external_rows %}
+
+      <table>
+
+        <thead>
+          <tr>
+            <th>Staff member</th>
+            <th>Hours</th>
+            <th>Expenses recorded</th>
+            <th>Approved records</th>
+            <th>Pending records</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          {% for row in external_rows %}
+
+            <tr>
+
+              <td>
+                <strong>
+                  {{ row.staff_name }}
+                </strong>
+                <br>
+                <span class="muted">
+                  {{ row.staff_email }}
+                </span>
+              </td>
+
+              <td>
+                <strong>
+                  {{ row.hours }}
+                </strong>
+              </td>
+
+              <td>
+                £{{ row.expenses }}
+              </td>
+
+              <td>
+                {{ row.approved_records }}
+              </td>
+
+              <td>
+                {% if row.pending_records %}
+                  <span class="status-badge status-pending">
+                    {{ row.pending_records }} PENDING
+                  </span>
+                {% else %}
+                  —
+                {% endif %}
+              </td>
+
+            </tr>
+
+          {% endfor %}
+
+        </tbody>
+
+      </table>
+
+    {% else %}
+
+      <div class="empty">
+        No external-payroll records in this payment period.
+      </div>
+
+    {% endif %}
+
+  </section>
+
+</main>
+
+</body>
+</html>

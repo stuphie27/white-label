@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  {% set page_brand = brand if brand is defined and brand else {
+      "display_name": "Sophie's Photography",
+      "logo_url": "/static/images/sophies-dashboard-logo.png",
+      "theme": {
+          "page_background": "#180305",
+          "header_background": "#090102",
+          "panel_background": "#2a070b",
+          "panel_secondary": "#200407",
+          "accent_colour": "#b20d1d",
+          "accent_hover": "#e31b2f",
+          "text_colour": "#ffffff",
+          "muted_text_colour": "#d5b9bc",
+          "border_colour": "#64202a"
+      }
+  } %}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="theme-color" content="{{ page_brand.theme.header_background }}">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="{{ page_brand.display_name }}">
+  <link rel="icon" href="/static/images/favicon.png" type="image/png">
+  <title>{% block title %}{{ page_brand.display_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/shared-ui/pirouette-interface.css?v={{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/customer-static/css/style.css?v={{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/customer-static/css/kiosk-mode.css?v={{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/cloud-customer.css?v=white-label-1-{{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/customer-access.css?v=white-label-1">
+  <style>
+    :root {
+      --brand-page-background: {{ page_brand.theme.page_background }};
+      --brand-header-background: {{ page_brand.theme.header_background }};
+      --brand-panel-background: {{ page_brand.theme.panel_background }};
+      --brand-panel-secondary: {{ page_brand.theme.panel_secondary }};
+      --brand-accent: {{ page_brand.theme.accent_colour }};
+      --brand-accent-hover: {{ page_brand.theme.accent_hover }};
+      --brand-text: {{ page_brand.theme.text_colour }};
+      --brand-muted: {{ page_brand.theme.muted_text_colour }};
+      --brand-border: {{ page_brand.theme.border_colour }};
+    }
+
+    body.customer-mode {
+      background: var(--brand-page-background);
+      color: var(--brand-text);
+    }
+
+    .customer-experience-header {
+      background: var(--brand-header-background);
+      border-color: var(--brand-border);
+    }
+  </style>
+</head>
+<body class="pirouette-interface customer-mode online-customer-mode brand-{{ page_brand.brand_id }}">
+  {% set cloud_profile = request.session.get('customer_profile_' ~ gallery.id, {}) if gallery is defined and gallery else {} %}
+  {% set cloud_customer_name = cloud_profile.get('name', '') if cloud_profile else (delivery.customer_name if delivery is defined and delivery else '') %}
+  <header class="customer-experience-header">
+    <a class="customer-experience-brand" href="{% if gallery is defined and gallery %}/g/{{ gallery.slug }}{% else %}/{% endif %}">
+      <img src="{{ page_brand.logo_url }}" alt="{{ page_brand.display_name }}">
+    </a>
+    <div class="customer-experience-copy">
+      {% if cloud_customer_name %}
+        <small>YOUR {{ page_brand.display_name | upper }} EXPERIENCE</small>
+        <strong>Welcome, {{ cloud_customer_name }}</strong>
+      {% else %}
+        <small>{{ page_brand.display_name | upper }}</small>
+        <strong>Your event photographs</strong>
+      {% endif %}
+    </div>
+    {% if gallery is defined and gallery %}<a class="customer-experience-home" href="/g/{{ gallery.slug }}">Gallery</a>{% endif %}
+
+<a
+  href="/customer/home"
+  class="customer-account-link"
+  aria-label="My {{ page_brand.display_name }}"
+>
+  My Account
+</a>
+
+</header>
+  <div class="language-control" data-language-control>
+    <button type="button" class="language-button" data-language-button aria-haspopup="dialog" aria-controls="language-dialog">🌐 <span data-i18n="language">Language</span></button>
+    <dialog id="language-dialog" class="language-dialog">
+      <div class="language-dialog-card"><button type="button" class="dialog-close" data-language-close aria-label="Close">×</button><p class="eyebrow">CHOOSE LANGUAGE</p><h2>Choose your language</h2><div class="language-grid" data-language-grid></div><p class="language-currency-note">All prices remain in pounds sterling (£).</p></div>
+    </dialog>
+  </div>
+  <main class="page-content">{% block content %}{% endblock %}</main>
+  <script src="/customer-static/js/i18n.js" defer></script>
+  <script src="/static/customer-gallery.js?v={{ request.app.state.settings.version }}" defer></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

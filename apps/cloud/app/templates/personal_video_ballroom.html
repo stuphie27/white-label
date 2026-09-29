@@ -1,0 +1,1074 @@
+{% extends "customer_base.html" %}
+{% block title %}Ballroom Personal Video Booking | Sophie's Photography
+<style>
+  .compact-two-column-options {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .compact-two-column-options .compact-choice-card {
+    min-height: 82px;
+    padding-top: 12px;
+    padding-bottom: 12px;
+    align-items: flex-start;
+  }
+
+  .compact-two-column-options .compact-choice-card small {
+    display: block;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+
+  @media (max-width: 760px) {
+    .compact-two-column-options {
+      grid-template-columns: 1fr;
+    }
+
+    .compact-two-column-options .compact-choice-card {
+      min-height: auto;
+    }
+  }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<main class="personal-video-page personal-video-ballroom">
+
+  <section class="personal-video-hero">
+    <div>
+      <p class="eyebrow">SOPHIE'S PHOTOGRAPHY</p>
+      <h1>Book your Personal Videos</h1>
+      <p>
+        {{ event.venue or 'Current Event' }}
+      </p>
+      <p>
+        Add one or more competition events to the same booking.
+        Personal Videos are <strong>£30 each</strong>.
+        Choose either a <strong>50% booking payment</strong>
+        or pay your <strong>minimum purchase commitment in full</strong>
+        when confirming the booking.
+      </p>
+    </div>
+
+    <a
+      class="button secondary"
+      href="/personal-video"
+    >
+      Back
+    </a>
+  </section>
+
+  {% if form_error %}
+  <div class="personal-video-error" role="alert">
+    {{ form_error }}
+  </div>
+  {% endif %}
+
+  <form method="post" action="/personal-video/ballroom">
+
+    <section class="personal-video-card">
+      <p class="eyebrow">YOUR BOOKING</p>
+      <h2>Contact &amp; identification</h2>
+
+      <p class="field-help">
+        Enter these details once, regardless of how many
+        competition events you add.
+      </p>
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Dancer/s names *</span>
+          <input
+            name="customer_name"
+            required
+            autocomplete="name"
+            maxlength="200"
+          >
+        </label>
+
+        <label>
+          <span>Email *</span>
+          <input
+            name="customer_email"
+            type="email"
+            required
+            autocomplete="email"
+            maxlength="200"
+          >
+        </label>
+
+        <label>
+          <span>Phone *</span>
+          <input
+            name="customer_phone"
+            type="tel"
+            required
+            autocomplete="tel"
+            maxlength="40"
+          >
+        </label>
+
+        <label>
+          <span>Partner email <small>(optional)</small></span>
+          <input
+            name="partner_email"
+            type="email"
+            autocomplete="email"
+            maxlength="200"
+          >
+        </label>
+
+      </div>
+    </section>
+
+    <section class="personal-video-card">
+
+      <div class="personal-video-section-heading">
+        <div>
+          <p class="eyebrow">COMPETITION DETAILS</p>
+          <h2>Events to be filmed</h2>
+          <p>
+            Add every event you would like us to try to film.
+          </p>
+        </div>
+      </div>
+
+      <div
+      class="status-message competition-details-later-reminder"
+    >
+      <strong>Do not have all your competition details yet?</strong>
+      <p>
+        You can book now without your Event Number, Event Name
+        or Dancer Number. Your confirmation email contains your
+        private manage-booking link. Please return and add each
+        event's missing details as soon as you receive them.
+      </p>
+    </div>
+
+    <div id="ballroom-events"></div>
+
+      <button
+        class="button secondary personal-video-add"
+        id="add-ballroom-event"
+        type="button"
+      >
+        + Add Another Event
+      </button>
+
+    </section>
+
+    <section class="personal-video-card">
+
+      <p class="eyebrow">PURCHASE COMMITMENT</p>
+
+      <h2>
+        Minimum Number of Personal Videos You Would Like
+        to Purchase
+      </h2>
+
+      <p>
+        This is the minimum number you agree to purchase,
+        provided we successfully capture at least that number
+        of suitable Personal Videos.
+      </p>
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Minimum number of Personal Videos *</span>
+          <input
+            id="ballroom-minimum"
+            name="minimum_video_count"
+            type="number"
+            min="1"
+            value="1"
+            required
+          >
+        </label>
+
+        <div class="personal-video-example">
+          <strong>Example</strong>
+          <p>
+            Commit to 10 and we capture 15: you purchase at
+            least 10 and later choose which 10. The other five
+            can be purchased optionally. If we capture only 8,
+            your final order is recalculated to 8.
+          </p>
+        </div>
+
+      </div>
+
+      <div class="personal-video-payment-summary">
+        <div>
+          <span>Minimum purchase value</span>
+          <strong id="ballroom-commitment-total">
+            £30.00
+          </strong>
+        </div>
+
+        <div>
+          <span id="ballroom-initial-label">
+            Amount due now — 50%
+          </span>
+          <strong id="ballroom-initial-payment">
+            £15.00
+          </strong>
+        </div>
+      </div>
+
+      <p class="field-help">
+        The initial payment is credited against the final
+        amount due after the competition.
+      </p>
+
+    </section>
+
+    <section class="personal-video-card">
+
+      <p class="eyebrow">FILMING GUIDANCE</p>
+
+      <h2>
+        How might you like to use your Personal Videos?
+      </h2>
+
+      <p>
+        Choose as many as you like. This does not commit you
+        to purchasing anything extra.
+      </p>
+
+      <div class="personal-video-options-grid filming-guidance-grid">
+
+        <label class="personal-video-payment-option filming-guidance-compact">
+          <input
+            type="checkbox"
+            name="intended_use"
+            value="Just for your own personal use"
+          >
+          <span>
+            <strong>Just for your own personal use</strong>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option filming-guidance-compact">
+          <input
+            type="checkbox"
+            name="intended_use"
+            value="I am not sure yet"
+          >
+          <span>
+            <strong>I am not sure yet</strong>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option filming-guidance-reel">
+          <input
+            type="checkbox"
+            name="intended_use"
+            value="Create a Creative Reel for social media"
+          >
+          <span>
+            <strong>
+              Create a Creative Reel for social media
+            </strong>
+            <small class="filming-guidance-charge">
+              Additional charges apply. You pay the Personal Video
+              price and then, if you would like this created into a
+              reel for social media, we will invoice you separately
+              for the upgrade <strong>+£20</strong>.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option filming-guidance-reel">
+          <input
+            type="checkbox"
+            name="intended_use"
+            value="Create a Bespoke Reel"
+          >
+          <span>
+            <strong>Create a Bespoke Reel</strong>
+            <small class="filming-guidance-charge">
+              Additional charges apply. You pay the Personal Video
+              price and then, if you would like this created into a
+              bespoke reel, we will invoice you separately for the
+              upgrade <strong>+£40</strong>.
+            </small>
+          </span>
+        </label>
+
+      </div>
+
+      <div class="filming-guidance-followup">
+        We will be in touch after the event if you choose a bespoke
+        or creative reel to understand your needs.
+      </div>
+
+      <style>
+        .filming-guidance-grid {
+          align-items: stretch;
+        }
+
+        .filming-guidance-compact {
+          min-height: 72px;
+          padding-top: 12px;
+          padding-bottom: 12px;
+        }
+
+        .filming-guidance-reel {
+          min-height: 168px;
+          align-items: flex-start;
+        }
+
+        .filming-guidance-charge {
+          display: block;
+          margin-top: 10px;
+          line-height: 1.45;
+          font-weight: 400;
+        }
+
+        .filming-guidance-charge strong {
+          display: inline;
+          font-weight: 800;
+        }
+
+        .filming-guidance-followup {
+          margin-top: 20px;
+          padding-top: 18px;
+          border-top: 1px solid rgba(255, 255, 255, 0.18);
+          line-height: 1.5;
+        }
+
+        @media (max-width: 760px) {
+          .filming-guidance-grid {
+            grid-template-columns: 1fr;
+          }
+
+          .filming-guidance-compact,
+          .filming-guidance-reel {
+            min-height: auto;
+          }
+        }
+      </style>
+
+    </section>
+
+    <section class="personal-video-card">
+
+      <p class="eyebrow">CAPTURE PREFERENCE</p>
+      <h2>Video format</h2>
+
+      <div class="personal-video-payment-options compact-two-column-options">
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="video_format"
+            value="Vertical"
+            required
+          >
+          <span>
+            <strong>Vertical</strong>
+            <small>
+              Best for social media and Creative Reels.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="video_format"
+            value="Horizontal"
+          >
+          <span>
+            <strong>Horizontal</strong>
+            <small>
+              Best for reviewing dances or watching on a larger screen.
+            </small>
+          </span>
+        </label>
+
+      </div>
+
+    </section>
+
+    <section class="personal-video-card">
+      <p class="eyebrow">ANYTHING ELSE?</p>
+      <h2>Customer notes</h2>
+
+      <textarea
+        class="personal-video-notes"
+        name="customer_notes"
+        rows="5"
+        maxlength="3000"
+        placeholder="Optional notes that may help our filming team"
+      ></textarea>
+    </section>
+
+    <section class="personal-video-card">
+
+      <p class="eyebrow">BOOKING PAYMENT</p>
+
+      <h2>How much would you like to pay now?</h2>
+
+      <div class="personal-video-payment-options compact-two-column-options">
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="ballroom_payment_plan"
+            value="half"
+            checked
+          >
+          <span>
+            <strong>Pay 50% now</strong>
+            <small>
+              Pay 50% now. Settle the balance after choosing
+              your finished videos.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="ballroom_payment_plan"
+            value="full"
+          >
+          <span>
+            <strong>Pay minimum commitment in full now</strong>
+            <small>
+              Pay your minimum commitment now.
+              Extra videos are charged later.
+            </small>
+          </span>
+        </label>
+
+      </div>
+
+      <h2>How would you like to make that payment?</h2>
+
+      <div class="personal-video-payment-options compact-two-column-options">
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="online"
+            checked
+          >
+          <span>
+            <strong>Pay securely online</strong>
+            <small>
+              Pay securely through our SumUp checkout.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option compact-choice-card">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="stand"
+          >
+          <span>
+            <strong>
+              Pay at Sophie’s Photography Stand
+            </strong>
+            <small>
+              Pay by cash or card at our stand.
+            </small>
+          </span>
+        </label>
+
+      </div>
+    </section>
+
+    <section class="personal-video-card">
+
+      <p class="eyebrow">RECORDING POLICY</p>
+      <h2>Personal Video Recording Policy &amp; Terms</h2>
+
+      <div class="status-message">
+        <p>
+          Sophie’s Photography will make every reasonable
+          effort to record your requested performances.
+          Competitions are live events and circumstances outside
+          our control, including an obstructed view or an
+          unavoidable timetable clash, can occasionally prevent
+          a successful recording.
+        </p>
+
+        <p>
+          Your selected minimum is your purchase commitment
+          where we can provide that number. If we cannot provide
+          your minimum number, you will only pay for the suitable
+          Personal Videos we can provide.
+        </p>
+      </div>
+
+      <label class="personal-video-policy-accept">
+        <input
+          type="checkbox"
+          name="terms_accepted"
+          value="yes"
+          required
+        >
+        <span>
+          I have read and accept the Sophie’s Photography
+          Personal Video Recording Policy &amp; Terms.
+        </span>
+      </label>
+
+    </section>
+
+    <input
+      type="hidden"
+      name="entries_json"
+      id="ballroom-entries-json"
+    >
+
+    <button
+      class="button personal-video-submit"
+      type="submit"
+    >
+      Save Booking &amp; Continue to Initial Payment
+    </button>
+
+    <p class="personal-video-payment-note">
+      Your booking and chosen payment option will be saved securely.
+      No payment is charged until the secure payment step
+      is connected.
+    </p>
+
+  </form>
+</main>
+
+<template id="ballroom-event-template">
+
+  <article class="personal-video-entry ballroom-event-card">
+
+    <header>
+      <div>
+        <p class="eyebrow">COMPETITION EVENT</p>
+        <h3 data-event-title>Event</h3>
+      </div>
+
+      <button
+        class="personal-video-remove"
+        type="button"
+        data-remove-event
+      >
+        Remove
+      </button>
+    </header>
+
+    <div class="personal-video-grid">
+
+      <label>
+        <span>Event Number — Optional</span>
+        <input
+          data-field="event_number"
+          maxlength="80"
+          placeholder="Can be added later"
+        >
+        <small>
+          Add this later from your private booking link if
+          you do not have it yet.
+        </small>
+      </label>
+
+      <label>
+        <span>Event Name — Optional</span>
+        <input
+          data-field="event_name"
+          maxlength="200"
+          placeholder="Can be added later"
+        >
+        <small>
+          Add this later from your private booking link if
+          you do not have it yet.
+        </small>
+      </label>
+
+      <label>
+        <span>Date *</span>
+        <input
+          data-field="performance_date"
+          type="date"
+          required
+        >
+      </label>
+
+      <label>
+        <span>Approximate Time</span>
+        <input
+          data-field="performance_time"
+          type="time"
+        >
+      </label>
+
+      <label>
+        <span>Dancer Number — Optional</span>
+        <input
+          data-field="dancer_number"
+          maxlength="80"
+          placeholder="Can be added later"
+        >
+        <small>
+          This can be different for each event. Add it later
+          from your private booking link if needed.
+        </small>
+      </label>
+
+      <label>
+        <span>Number of dances to film *</span>
+        <input
+          data-field="expected_video_count"
+          type="number"
+          min="1"
+          value="1"
+          required
+        >
+      </label>
+
+    </div>
+
+    <div class="ballroom-event-identification">
+
+      <h4>Identification for this event</h4>
+
+      <p class="field-help">
+        Only complete these if your outfit or appearance will
+        be different for this event. Leave blank to use the
+        main booking details above.
+      </p>
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Different outfit / dress description</span>
+          <input
+            data-field="outfit_description"
+            maxlength="1000"
+            placeholder="Optional"
+          >
+        </label>
+
+        <label>
+          <span>Photo for this event — Optional</span>
+          <input
+            data-event-photo
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+          >
+          <small>
+            You do not have to upload a photo.
+          </small>
+        </label>
+
+      </div>
+    </div>
+
+    <div class="ballroom-filming-block">
+
+      <h4>
+        Which performances would you like us to record?
+      </h4>
+
+      <p class="field-help">
+        This is your filming instruction, not your purchase
+        quantity.
+      </p>
+
+      <div class="personal-video-payment-options">
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            data-field="filming_instruction"
+            value="all"
+            required
+          >
+          <span>
+            <strong>All dances in this event</strong>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            data-field="filming_instruction"
+            value="from_round"
+          >
+          <span>
+            <strong>From a selected round onwards</strong>
+            <small>
+              We will attempt to capture your dances from that
+              round and every subsequent round you reach.
+            </small>
+          </span>
+        </label>
+
+        <div
+          class="ballroom-filming-detail"
+          data-from-round
+          hidden
+        >
+          <label>
+            <span>Start from</span>
+            <select data-field="from_round">
+              <option value="">Select round</option>
+              <option>First Round</option>
+              <option>Last 96</option>
+              <option>Last 48</option>
+              <option>Last 24</option>
+              <option>Semi-Final</option>
+              <option>Final</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            data-field="filming_instruction"
+            value="specific"
+          >
+          <span>
+            <strong>
+              Specific dance(s) and round(s)
+            </strong>
+          </span>
+        </label>
+
+        <div
+          class="ballroom-filming-detail"
+          data-specific
+          hidden
+        >
+          <label>
+            <span>Tell us which dance(s) and round(s)</span>
+            <textarea
+              data-field="specific_details"
+              rows="4"
+              placeholder="e.g. Waltz — Last 48 onwards; Tango — Semi-Final and Final"
+            ></textarea>
+          </label>
+        </div>
+
+      </div>
+
+    </div>
+
+  </article>
+</template>
+
+<script>
+(() => {
+  const container =
+    document.getElementById("ballroom-events");
+
+  const template =
+    document.getElementById(
+      "ballroom-event-template"
+    );
+
+  const addButton =
+    document.getElementById(
+      "add-ballroom-event"
+    );
+
+  const form =
+    document.getElementById(
+      "ballroom-video-form"
+    );
+
+  const hidden =
+    document.getElementById(
+      "ballroom-entries-json"
+    );
+
+  const minimum =
+    document.getElementById(
+      "ballroom-minimum"
+    );
+
+  const commitment =
+    document.getElementById(
+      "ballroom-commitment-total"
+    );
+
+  const initial =
+    document.getElementById(
+      "ballroom-initial-payment"
+    );
+
+  const initialLabel =
+    document.getElementById(
+      "ballroom-initial-label"
+    );
+
+  function rows() {
+    return [
+      ...container.querySelectorAll(
+        ".ballroom-event-card"
+      )
+    ];
+  }
+
+  function money(value) {
+    return `£${value.toFixed(2)}`;
+  }
+
+  function updatePrice() {
+    const quantity =
+      Math.max(
+        1,
+        parseInt(minimum.value || "1", 10)
+      );
+
+    const total = quantity * 30;
+
+    commitment.textContent =
+      money(total);
+
+    const paymentPlan =
+      document.querySelector(
+        'input[name="ballroom_payment_plan"]:checked'
+      );
+
+    const payFull =
+      paymentPlan
+      && paymentPlan.value === "full";
+
+    initial.textContent =
+      money(
+        payFull
+        ? total
+        : total / 2
+      );
+
+    initialLabel.textContent =
+      payFull
+      ? "Amount due now — full minimum"
+      : "Amount due now — 50%";
+  }
+
+  function updateRows() {
+    const entries = rows();
+
+    entries.forEach((row, index) => {
+      row.querySelector(
+        "[data-event-title]"
+      ).textContent =
+        `Event ${index + 1}`;
+
+      row.querySelector(
+        "[data-remove-event]"
+      ).hidden =
+        entries.length === 1;
+
+      const photo =
+        row.querySelector(
+          "[data-event-photo]"
+        );
+
+      photo.name =
+        `event_photo_${index}`;
+
+      row.querySelectorAll(
+        '[data-field="filming_instruction"]'
+      ).forEach(input => {
+        input.name =
+          `filming_instruction_${index}`;
+      });
+    });
+  }
+
+  function configureRow(row) {
+    const radios = [
+      ...row.querySelectorAll(
+        '[data-field="filming_instruction"]'
+      )
+    ];
+
+    const fromRound =
+      row.querySelector("[data-from-round]");
+
+    const specific =
+      row.querySelector("[data-specific]");
+
+    function updateConditional() {
+      const selected =
+        radios.find(item => item.checked);
+
+      const value =
+        selected ? selected.value : "";
+
+      fromRound.hidden =
+        value !== "from_round";
+
+      specific.hidden =
+        value !== "specific";
+    }
+
+    radios.forEach(input => {
+      input.addEventListener(
+        "change",
+        updateConditional
+      );
+    });
+
+    row.querySelector(
+      "[data-remove-event]"
+    ).addEventListener(
+      "click",
+      () => {
+        row.remove();
+        updateRows();
+      }
+    );
+
+    updateConditional();
+  }
+
+  function addEvent() {
+    const fragment =
+      template.content.cloneNode(true);
+
+    container.appendChild(fragment);
+
+    const row =
+      container.lastElementChild;
+
+    configureRow(row);
+    updateRows();
+  }
+
+  addButton.addEventListener(
+    "click",
+    addEvent
+  );
+
+  minimum.addEventListener(
+    "input",
+    updatePrice
+  );
+
+
+  document.querySelectorAll(
+    'input[name="ballroom_payment_plan"]'
+  ).forEach(input => {
+    input.addEventListener(
+      "change",
+      updatePrice
+    );
+  });
+
+  form.addEventListener(
+    "submit",
+    event => {
+      const entries =
+        rows().map(row => {
+
+          const value = name => {
+            const field =
+              row.querySelector(
+                `[data-field="${name}"]`
+              );
+
+            return field
+              ? String(field.value || "").trim()
+              : "";
+          };
+
+          const selected =
+            row.querySelector(
+              '[data-field="filming_instruction"]:checked'
+            );
+
+          const instruction =
+            selected
+              ? selected.value
+              : "";
+
+          let details = "";
+
+          if (instruction === "from_round") {
+            details =
+              value("from_round");
+          }
+
+          if (instruction === "specific") {
+            details =
+              value("specific_details");
+          }
+
+          return {
+            event_number:
+              value("event_number"),
+
+            event_name:
+              value("event_name"),
+
+            dancer_number:
+              value("dancer_number"),
+
+            performance_date:
+              value("performance_date"),
+
+            performance_time:
+              value("performance_time"),
+
+            expected_video_count:
+              parseInt(
+                value(
+                  "expected_video_count"
+                ) || "1",
+                10
+              ),
+
+            filming_instruction:
+              instruction,
+
+            filming_details:
+              details,
+
+            outfit_description:
+              value("outfit_description")
+          };
+        });
+
+      if (!entries.length) {
+        event.preventDefault();
+        return;
+      }
+
+      const invalid =
+        entries.some(item =>
+          !item.performance_date
+          || !item.filming_instruction
+        );
+
+      if (invalid) {
+        event.preventDefault();
+        alert(
+          "Please complete the required details for every event."
+        );
+        return;
+      }
+
+      hidden.value =
+        JSON.stringify(entries);
+    }
+  );
+
+  updatePrice();
+  addEvent();
+})();
+</script>
+{% endblock %}

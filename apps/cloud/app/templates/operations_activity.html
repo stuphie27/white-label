@@ -1,0 +1,7 @@
+{% extends "staff_base.html" %}{% block title %}Activity | Stuphie Ltd{% endblock %}{% block content %}
+<section class="page-heading"><div><p class="eyebrow">OPERATIONS & AUDIT</p><h1>Activity</h1><p>Payment, fulfilment, delivery and synchronisation events. Secrets and payment credentials are never recorded here.</p></div></section>
+<section class="panel"><div class="panel-heading"><h2>Latest Activity</h2></div>
+{% if activity_rows %}<div class="table-wrap"><table><thead><tr><th>Time</th><th>Order</th><th>Event</th><th>Actor</th><th>Status</th><th>Detail</th></tr></thead><tbody>
+{% for row in activity_rows %}<tr><td>{{ row.created_at.strftime('%d %b %Y %H:%M:%S') }}</td><td>{{ row.order_reference or '—' }}</td><td>{{ row.event_type|replace('_',' ')|title }}</td><td>{{ row.actor }}<br><small>{{ row.system }}</small></td><td>{{ row.old_status|replace('_',' ')|title }}{% if row.new_status %} → {{ row.new_status|replace('_',' ')|title }}{% endif %}</td><td>{{ row.detail or '—' }}</td></tr>{% endfor %}
+</tbody></table></div>{% else %}<div class="empty-state"><h3>No activity recorded yet</h3><p>New payment and fulfilment events will appear here.</p></div>{% endif %}</section>
+{% endblock %}

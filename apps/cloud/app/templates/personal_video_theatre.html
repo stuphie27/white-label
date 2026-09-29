@@ -1,0 +1,367 @@
+{% extends "customer_base.html" %}
+{% block title %}Theatre Video Booking | Sophie's Photography{% endblock %}
+
+{% block content %}
+<main class="personal-video-page">
+
+  <section class="personal-video-hero">
+    <div>
+      <p class="eyebrow">SOPHIE'S PHOTOGRAPHY</p>
+      <h1>Theatre Video Booking</h1>
+      <p>{{ event.venue or 'Current Event' }}</p>
+    </div>
+
+    <a
+      class="button secondary"
+      href="/personal-video"
+    >
+      Back
+    </a>
+  </section>
+
+  <form method="post" action="/personal-video/theatre">
+
+    {% if form_error %}
+    <div class="personal-video-error" role="alert">
+      {{ form_error }}
+    </div>
+    {% endif %}
+
+    <section class="personal-video-card">
+      <p class="eyebrow">YOUR DETAILS</p>
+      <h2>Who is making the booking?</h2>
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Name *</span>
+          <input
+            name="customer_name"
+            required
+            maxlength="100"
+            autocomplete="name"
+          >
+        </label>
+
+        <label>
+          <span>Email address *</span>
+          <input
+            name="customer_email"
+            type="email"
+            required
+            maxlength="200"
+            autocomplete="email"
+          >
+        </label>
+
+        <label>
+          <span>Mobile number *</span>
+          <input
+            name="customer_phone"
+            type="tel"
+            required
+            maxlength="40"
+            autocomplete="tel"
+          >
+        </label>
+
+      </div>
+
+      <p class="field-help">
+        Enter your details once. You can add siblings,
+        additional dancers or group performances below.
+      </p>
+    </section>
+
+    <section class="personal-video-card">
+
+      <div class="personal-video-section-heading">
+        <div>
+          <p class="eyebrow">PERFORMANCES</p>
+          <h2>Your Theatre performances</h2>
+        </div>
+
+        <strong>£23 each</strong>
+      </div>
+
+      <div class="status-message">
+        <strong>Please use the official programme.</strong>
+        Enter the dance name and category exactly as they appear
+        in the event programme so our filming team can identify
+        the correct performance.
+      </div>
+
+      <div id="theatre-entries"></div>
+
+      <button
+        class="button secondary personal-video-add"
+        type="button"
+        id="add-theatre-entry"
+      >
+        + Add Another Dancer / Performance
+      </button>
+
+    </section>
+
+    <section class="personal-video-card personal-video-summary">
+      <div>
+        <p class="eyebrow">BOOKING SUMMARY</p>
+        <h2>Theatre Video</h2>
+        <p>
+          Theatre performances are filmed by advance booking.
+          Payment is required in full when the booking is made.
+        </p>
+      </div>
+
+      <div class="personal-video-total">
+        <span>Total</span>
+        <strong id="theatre-total">£23.00</strong>
+      </div>
+    </section>
+
+    <input
+      type="hidden"
+      name="entries_json"
+      id="theatre-entries-json"
+    >
+
+    <section class="personal-video-card">
+      <p class="eyebrow">PAYMENT</p>
+      <h2>How would you like to pay?</h2>
+
+      <div class="personal-video-payment-options">
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="online"
+            checked
+          >
+          <span>
+            <strong>Pay securely online now</strong>
+            <small>
+              Pay by card using our secure SumUp checkout.
+            </small>
+          </span>
+        </label>
+
+        <label class="personal-video-payment-option">
+          <input
+            type="radio"
+            name="payment_choice"
+            value="stand"
+          >
+          <span>
+            <strong>Pay at Sophie’s Photography Stand</strong>
+            <small>
+              Pay by cash or card using SumUp Solo at the stand.
+              Your performances are confirmed for filming once
+              payment has been received.
+            </small>
+          </span>
+        </label>
+
+      </div>
+    </section>
+
+    <button class="button personal-video-submit" type="submit">
+      Continue to Secure Payment
+    </button>
+
+  </form>
+</main>
+
+<template id="theatre-entry-template">
+
+  <article class="personal-video-entry">
+
+    <header>
+      <div>
+        <p class="eyebrow">PERFORMANCE</p>
+        <h3 data-entry-title>Performance</h3>
+      </div>
+
+      <button
+        class="personal-video-remove"
+        type="button"
+        data-remove-entry
+      >
+        Remove
+      </button>
+    </header>
+
+    <div class="personal-video-grid">
+
+      <label>
+        <span>Dancer / Group Name *</span>
+        <input
+          data-field="dancer_name"
+          required
+          maxlength="200"
+        >
+      </label>
+
+      <label>
+        <span>Exact Dance Name *</span>
+        <input
+          data-field="dance_name"
+          required
+          maxlength="250"
+        >
+        <small>
+          Enter exactly as shown in the official programme.
+        </small>
+      </label>
+
+      <label>
+        <span>Category / Section *</span>
+        <input
+          data-field="category"
+          required
+          maxlength="250"
+        >
+        <small>
+          Enter exactly as shown in the official programme.
+        </small>
+      </label>
+
+      <label>
+        <span>Event Number — Optional</span>
+        <input
+          data-field="event_number"
+          maxlength="80"
+        >
+      </label>
+
+      <label>
+        <span>Date of performance *</span>
+        <input
+          data-field="performance_date"
+          type="date"
+          required
+          min="{{ event.start_date }}"
+          max="{{ event.end_date }}"
+        >
+      </label>
+
+      <label>
+        <span>Time of performance — Optional</span>
+        <input
+          data-field="performance_time"
+          type="time"
+        >
+      </label>
+
+    </div>
+
+    <strong class="personal-video-entry-price">
+      £23.00
+    </strong>
+
+  </article>
+
+</template>
+
+<script>
+(() => {
+  const container =
+    document.getElementById('theatre-entries');
+
+  const template =
+    document.getElementById('theatre-entry-template');
+
+  const addButton =
+    document.getElementById('add-theatre-entry');
+
+  const form =
+    document.getElementById('theatre-video-form');
+
+  const hidden =
+    document.getElementById('theatre-entries-json');
+
+  const total =
+    document.getElementById('theatre-total');
+
+  function rows() {
+    return [
+      ...container.querySelectorAll(
+        '.personal-video-entry'
+      )
+    ];
+  }
+
+  function update() {
+    const entries = rows();
+
+    entries.forEach((row, index) => {
+      row.querySelector(
+        '[data-entry-title]'
+      ).textContent = `Performance ${index + 1}`;
+
+      row.querySelector(
+        '[data-remove-entry]'
+      ).hidden = entries.length === 1;
+    });
+
+    total.textContent =
+      `£${(entries.length * 23).toFixed(2)}`;
+  }
+
+  function addEntry() {
+    const fragment =
+      template.content.cloneNode(true);
+
+    container.appendChild(fragment);
+
+    const row = container.lastElementChild;
+
+    row.querySelector(
+      '[data-remove-entry]'
+    ).addEventListener('click', () => {
+      row.remove();
+      update();
+    });
+
+    update();
+  }
+
+  addButton.addEventListener(
+    'click',
+    addEntry
+  );
+
+  form.addEventListener('submit', event => {
+
+    const entries = rows().map(row => {
+
+      const value = name =>
+        row.querySelector(
+          `[data-field="${name}"]`
+        ).value.trim();
+
+      return {
+        dancer_name: value('dancer_name'),
+        dance_name: value('dance_name'),
+        category: value('category'),
+        event_number: value('event_number'),
+        performance_date:
+          value('performance_date'),
+        performance_time:
+          value('performance_time')
+      };
+    });
+
+    if (!entries.length) {
+      event.preventDefault();
+      return;
+    }
+
+    hidden.value = JSON.stringify(entries);
+  });
+
+  addEntry();
+})();
+</script>
+
+{% endblock %}

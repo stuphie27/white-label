@@ -1,0 +1,309 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'staff_events' %}
+
+{% block title %}{{ event.name }} | Staff Events{% endblock %}
+
+{% block content %}
+
+<section class="staff-event-view-header">
+
+  <div>
+
+    <a
+      class="staff-event-back"
+      href="/staff/team/events"
+    >
+      ← Events
+    </a>
+
+    <p class="team-eyebrow">EVENT INFORMATION</p>
+
+    <h1>{{ event.name }}</h1>
+
+    <p>
+      {{ event.venue or 'Venue to be confirmed' }}
+    </p>
+
+  </div>
+
+  <div class="staff-event-interest-box">
+
+    {% if assigned %}
+
+      <span class="staff-event-assigned-badge">
+        ✓ YOU ARE ASSIGNED TO THIS EVENT
+      </span>
+
+      <a
+        class="staff-event-my-work-button"
+        href="/staff/team/my-work"
+      >
+        View My Work
+      </a>
+
+    {% elif interested %}
+
+      <span class="staff-event-interest-badge">
+        ✓ INTEREST REGISTERED
+      </span>
+
+      <form
+        method="post"
+        action="/staff/team/events/{{ event.id }}/interest"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <button
+          type="submit"
+          name="action"
+          value="withdraw"
+          class="staff-event-withdraw"
+        >
+          Withdraw Interest
+        </button>
+      </form>
+
+    {% else %}
+
+      <span>WOULD YOU LIKE TO WORK THIS EVENT?</span>
+
+      <form
+        method="post"
+        action="/staff/team/events/{{ event.id }}/interest"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <button
+          type="submit"
+          name="action"
+          value="register"
+          class="staff-event-register"
+        >
+          Register Interest to Work
+        </button>
+      </form>
+
+    {% endif %}
+
+  </div>
+
+</section>
+
+<section class="staff-event-view-grid">
+
+  <article class="staff-event-info-panel wide">
+
+    <div class="staff-event-panel-heading">
+      <h2>Event Details</h2>
+      <span>READ ONLY</span>
+    </div>
+
+    <dl>
+
+      <dt>Date</dt>
+      <dd>
+        {{ event.start_date.strftime('%d %B %Y') }}
+
+        {% if event.end_date != event.start_date %}
+          –
+          {{ event.end_date.strftime('%d %B %Y') }}
+        {% endif %}
+      </dd>
+
+      <dt>Venue</dt>
+      <dd>
+        {{ event.venue or 'To be confirmed' }}
+      </dd>
+
+      <dt>Event Type</dt>
+      <dd>
+        {{ event.dance_style or 'Not set' }}
+      </dd>
+
+      <dt>Client / School</dt>
+      <dd>
+        {{ event.client_name or 'Not set' }}
+      </dd>
+
+      <dt>Principal / Contact</dt>
+      <dd>
+        {{ event.principal_name or 'Not set' }}
+      </dd>
+
+      <dt>Arrival</dt>
+      <dd>
+        {{ event.arrival_time.strftime('%H:%M')
+           if event.arrival_time else 'Not set' }}
+      </dd>
+
+      <dt>Event Time</dt>
+      <dd>
+        {% if event.event_start_time %}
+          {{ event.event_start_time.strftime('%H:%M') }}
+        {% else %}
+          Not set
+        {% endif %}
+
+        {% if event.event_end_time %}
+          –
+          {{ event.event_end_time.strftime('%H:%M') }}
+        {% endif %}
+      </dd>
+
+    </dl>
+
+  </article>
+
+  <article class="staff-event-info-panel">
+
+    <div class="staff-event-panel-heading">
+      <h2>Staffing</h2>
+    </div>
+
+    <div class="staff-event-big-stat">
+
+      <span>STAFF REQUIRED</span>
+
+      <strong>
+        {{ event.staff_required
+           if event.staff_required is not none
+           else '—' }}
+      </strong>
+
+    </div>
+
+    <div class="staff-event-big-stat">
+
+      <span>CURRENTLY ASSIGNED</span>
+      <strong>{{ assigned_count }}</strong>
+
+    </div>
+
+  </article>
+
+  <article class="staff-event-info-panel">
+
+    <div class="staff-event-panel-heading">
+      <h2>Travel & Accommodation</h2>
+    </div>
+
+    <dl>
+
+      <dt>Travel</dt>
+      <dd>
+        {% if event.travel_time_minutes is not none %}
+          {{ event.travel_time_minutes // 60 }}h
+          {{ event.travel_time_minutes % 60 }}m
+        {% else %}
+          Not set
+        {% endif %}
+      </dd>
+
+      <dt>Hotel</dt>
+      <dd>
+        {{ 'Required' if event.hotel_required
+           else 'Not required' }}
+      </dd>
+
+      {% if event.hotel_info %}
+      <dt>Hotel Information</dt>
+      <dd>{{ event.hotel_info }}</dd>
+      {% endif %}
+
+    </dl>
+
+  </article>
+
+  <article class="staff-event-info-panel">
+
+    <div class="staff-event-panel-heading">
+      <h2>Services</h2>
+    </div>
+
+    <div class="staff-event-services">
+
+      <span class="{{ 'on' if event.photography_enabled else '' }}">
+        Photography
+      </span>
+
+      <span class="{{ 'on' if event.video_enabled else '' }}">
+        Video
+      </span>
+
+      <span class="{{ 'on' if event.printing_enabled else '' }}">
+        Printing
+      </span>
+
+      <span class="{{ 'on' if event.customer_kiosk_enabled else '' }}">
+        Customer iPads
+      </span>
+
+    </div>
+
+  </article>
+
+  {% if event.description or event.planning_notes %}
+
+  <article class="staff-event-info-panel wide">
+
+    <div class="staff-event-panel-heading">
+      <h2>Event Information</h2>
+    </div>
+
+    {% if event.description %}
+      <p>{{ event.description }}</p>
+    {% endif %}
+
+    {% if event.planning_notes %}
+      <p>{{ event.planning_notes }}</p>
+    {% endif %}
+
+  </article>
+
+  {% endif %}
+
+  {% if assigned_team %}
+
+  <article class="staff-event-info-panel wide">
+
+    <div class="staff-event-panel-heading">
+      <h2>Assigned Team</h2>
+      <span>{{ assigned_count }} STAFF</span>
+    </div>
+
+    <div class="staff-event-team-grid">
+
+      {% for assignment, staff in assigned_team %}
+
+      <div>
+
+        <strong>
+          {{ staff.preferred_name or staff.staff_name }}
+        </strong>
+
+        <span>
+          {{ assignment.role or staff.default_role }}
+        </span>
+
+      </div>
+
+      {% endfor %}
+
+    </div>
+
+  </article>
+
+  {% endif %}
+
+</section>
+
+{% endblock %}

@@ -1,0 +1,956 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'timesheets' %}
+
+{% block title %}Timesheets | Stuphie Online{% endblock %}
+
+{% block control_title %}STAFF TIMESHEETS{% endblock %}
+
+{% block content %}
+
+<section class="timesheet-page-heading">
+  <div>
+    <p class="team-eyebrow">STUPHIE STAFF OPERATIONS</p>
+    <h2>Timesheets</h2>
+    <p>
+      Scheduled and actual staff attendance recorded from
+      Event Operations.
+    </p>
+  </div>
+
+  <div class="timesheet-heading-actions">
+
+    <a
+      href="/staff/payroll/monthly"
+      class="timesheet-payroll-link"
+    >
+      VIEW PAYROLL SPREADSHEET
+    </a>
+
+    <div class="timesheet-heading-state">
+      <span>OPERATIONS</span>
+      <strong>PAYROLL CONNECTED</strong>
+    </div>
+
+  </div>
+</section>
+
+<section class="timesheet-summary-grid">
+
+  <article>
+    <span>TOTAL SHIFTS</span>
+    <strong>{{ totals.all }}</strong>
+  </article>
+
+  <article>
+    <span>WORKING NOW</span>
+    <strong>{{ totals.working }}</strong>
+  </article>
+
+  <article>
+    <span>COMPLETED</span>
+    <strong>{{ totals.complete }}</strong>
+  </article>
+
+  <article>
+    <span>AWAITING APPROVAL</span>
+    <strong>{{ totals.unapproved }}</strong>
+  </article>
+
+  <article>
+    <span>APPROVED</span>
+    <strong>{{ totals.approved }}</strong>
+  </article>
+
+  <article>
+    <span>RECORDED HOURS</span>
+    <strong>
+      {{ totals.worked_minutes // 60 }}h
+      {{ totals.worked_minutes % 60 }}m
+    </strong>
+  </article>
+
+</section>
+
+
+<section class="timesheet-panel additional-work-management">
+
+  <div class="timesheet-panel-heading">
+
+    <div>
+
+      <p class="team-eyebrow">
+        STAFF SUBMITTED HOURS
+      </p>
+
+      <h3>
+        ADDITIONAL WORK APPROVALS
+      </h3>
+
+      <p>
+        Editing, administration, preparation and other
+        paid work submitted outside normal event attendance.
+      </p>
+
+    </div>
+
+    <span>
+      {{ additional_totals.unapproved }} AWAITING APPROVAL
+    </span>
+
+  </div>
+
+
+  <div class="additional-work-management-summary">
+
+    <article>
+      <span>TOTAL ENTRIES</span>
+      <strong>{{ additional_totals.all }}</strong>
+    </article>
+
+    <article>
+      <span>AWAITING APPROVAL</span>
+      <strong>{{ additional_totals.unapproved }}</strong>
+    </article>
+
+    <article>
+      <span>APPROVED</span>
+      <strong>{{ additional_totals.approved }}</strong>
+    </article>
+
+    <article>
+      <span>RETURNED</span>
+      <strong>{{ additional_totals.returned }}</strong>
+    </article>
+
+    <article>
+      <span>RECORDED HOURS</span>
+
+      <strong>
+        {{ additional_totals.worked_minutes // 60 }}h
+        {{ additional_totals.worked_minutes % 60 }}m
+      </strong>
+    </article>
+
+  </div>
+
+
+
+<section class="timesheet-grouped-management">
+
+  <div class="timesheet-grouped-heading">
+
+    <div>
+      <p class="timesheet-eyebrow">
+        MANAGEMENT QUEUE
+      </p>
+
+      <h2>Needs Attention</h2>
+
+      <p>
+        Staff with completed hours waiting for review.
+        Event shifts and Additional Work are grouped together.
+      </p>
+    </div>
+
+    <span class="timesheet-grouped-count">
+      {{ pending_staff_groups|length }} STAFF
+    </span>
+
+  </div>
+
+
+  <div class="timesheet-staff-groups">
+
+    {% for group in pending_staff_groups %}
+
+      <details class="timesheet-staff-tile pending">
+
+        <summary>
+
+          <div class="timesheet-staff-summary-person">
+
+            <strong>
+              {{ group.staff_name }}
+            </strong>
+
+            <span>
+              {{ group.pending_count }}
+              awaiting approval
+            </span>
+
+          </div>
+
+          <div class="timesheet-staff-summary-hours">
+
+            <span>TOTAL HOURS</span>
+
+            <strong>
+              {{ group.pending_minutes // 60 }}h
+              {{ group.pending_minutes % 60 }}m
+            </strong>
+
+          </div>
+
+          <div class="timesheet-staff-summary-action">
+            <span class="timesheet-expand-button">
+              VIEW TIMESHEETS
+              <span class="timesheet-expand-chevron">
+                ▼
+              </span>
+            </span>
+          </div>
+
+        </summary>
+
+
+        <div class="timesheet-staff-tile-body">
+
+          {% if group.pending_shifts %}
+
+            <div class="timesheet-group-subheading">
+              EVENT HOURS
+              <span>
+                {{ group.pending_shifts|length }}
+              </span>
+            </div>
+
+            {% for row in group.pending_shifts %}
+
+              {% set shift = row.shift %}
+              {% set member = row.member %}
+              {% set event = row.event %}
+
+              <article class="timesheet-operation-card">
+
+                <div class="timesheet-operation-main">
+
+                  <div class="timesheet-operation-person">
+
+                    <a href="/staff/team/{{ member.id }}">
+                      <strong>
+                        {{ member.preferred_name or member.staff_name }}
+                      </strong>
+                    </a>
+
+                    <span>{{ shift.role }}</span>
+
+                  </div>
+
+                  <div class="timesheet-operation-event">
+
+                    <a href="/staff/events/{{ event.id }}">
+                      {{ event.name }}
+                    </a>
+
+                    <span>
+                      {{ event.venue or '—' }}
+                    </span>
+
+                  </div>
+
+                  <div class="timesheet-operation-date">
+
+                    <strong>
+                      {{ shift.shift_date.strftime('%d %b %Y') }}
+                    </strong>
+
+                    <span>
+                      Scheduled
+
+                      {% if shift.scheduled_start %}
+                        {{ shift.scheduled_start.strftime('%H:%M') }}
+                      {% else %}
+                        —
+                      {% endif %}
+
+                      –
+
+                      {% if shift.scheduled_finish %}
+                        {{ shift.scheduled_finish.strftime('%H:%M') }}
+                      {% else %}
+                        —
+                      {% endif %}
+                    </span>
+
+                  </div>
+
+                  <div class="timesheet-operation-worked">
+
+                    <span>WORKED</span>
+
+                    <strong>
+                      {% if row.worked_minutes is not none %}
+                        {{ row.worked_minutes // 60 }}h
+                        {{ row.worked_minutes % 60 }}m
+                      {% else %}
+                        —
+                      {% endif %}
+                    </strong>
+
+                  </div>
+
+                  <div class="timesheet-operation-state">
+
+                    <span class="timesheet-status {{ shift.status }}">
+                      {{ shift.status|replace('_',' ')|upper }}
+                    </span>
+
+                    <span class="timesheet-approval pending">
+                      REVIEW
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <div class="timesheet-operation-details">
+
+                  <div class="timesheet-recorded-values">
+
+                    <div>
+                      <span>CLOCK IN</span>
+                      <strong>
+                        {% if shift.actual_clock_in %}
+                          {{ shift.actual_clock_in.strftime('%H:%M') }}
+                        {% else %}
+                          —
+                        {% endif %}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>CLOCK OUT</span>
+                      <strong>
+                        {% if shift.actual_clock_out %}
+                          {{ shift.actual_clock_out.strftime('%H:%M') }}
+                        {% else %}
+                          —
+                        {% endif %}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>BREAK</span>
+                      <strong>
+                        {{ shift.break_minutes or 0 }} min
+                      </strong>
+                    </div>
+
+                  </div>
+
+
+                  {% if shift.manually_corrected %}
+
+                    <div class="timesheet-audit-line">
+
+                      <strong>MANUALLY CORRECTED</strong>
+
+                      <span>
+                        {% if shift.corrected_by %}
+                          by {{ shift.corrected_by }}
+                        {% endif %}
+
+                        {% if shift.corrected_at %}
+                          · {{ shift.corrected_at.strftime('%d %b %Y %H:%M') }}
+                        {% endif %}
+                      </span>
+
+                    </div>
+
+                  {% endif %}
+
+
+                  <div class="timesheet-review-controls">
+
+                    <details class="timesheet-correction">
+
+                      <summary>CORRECT TIMES</summary>
+
+                      <form
+                        method="post"
+                        action="/staff/team/timesheets/{{ shift.id }}/correct"
+                      >
+
+                        <input
+                          type="hidden"
+                          name="csrf_token"
+                          value="{{ csrf_token }}"
+                        >
+
+                        <label>
+                          <span>CLOCK IN</span>
+
+                          <input
+                            type="datetime-local"
+                            name="actual_clock_in"
+                            value="{% if shift.actual_clock_in %}{{ shift.actual_clock_in.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                            required
+                          >
+                        </label>
+
+                        <label>
+                          <span>CLOCK OUT</span>
+
+                          <input
+                            type="datetime-local"
+                            name="actual_clock_out"
+                            value="{% if shift.actual_clock_out %}{{ shift.actual_clock_out.strftime('%Y-%m-%dT%H:%M') }}{% endif %}"
+                            required
+                          >
+                        </label>
+
+                        <label>
+                          <span>BREAK MINUTES</span>
+
+                          <input
+                            type="number"
+                            name="break_minutes"
+                            min="0"
+                            step="5"
+                            value="{{ shift.break_minutes or 0 }}"
+                            required
+                          >
+                        </label>
+
+                        <button
+                          type="submit"
+                          class="timesheet-save-correction"
+                        >
+                          SAVE CORRECTION
+                        </button>
+
+                      </form>
+
+                    </details>
+
+
+                    <form
+                      method="post"
+                      action="/staff/team/timesheets/{{ shift.id }}/approve"
+                      class="timesheet-approve-form"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token }}"
+                      >
+
+                      <button
+                        type="submit"
+                        class="timesheet-approve-button"
+                      >
+                        APPROVE TIMESHEET
+                      </button>
+
+                    </form>
+
+                  </div>
+
+                </div>
+
+              </article>
+
+            {% endfor %}
+
+          {% endif %}
+
+
+          {% if group.pending_additional %}
+
+            <div class="timesheet-group-subheading">
+              ADDITIONAL WORK
+              <span>
+                {{ group.pending_additional|length }}
+              </span>
+            </div>
+
+            {% for row in group.pending_additional %}
+
+              {% set work = row.work %}
+              {% set member = row.member %}
+
+              <article class="additional-work-management-card">
+
+                <div class="additional-work-management-main">
+
+                  <div class="additional-work-management-person">
+
+                    <a href="/staff/team/{{ member.id }}">
+                      <strong>
+                        {{ member.preferred_name or member.staff_name }}
+                      </strong>
+                    </a>
+
+                    <span>
+                      {{ work.work_type }}
+                    </span>
+
+                  </div>
+
+                  <div class="additional-work-management-description">
+
+                    <strong>
+                      {{ work.description }}
+                    </strong>
+
+                    {% if row.event %}
+                      <span>
+                        EVENT · {{ row.event.name }}
+                      </span>
+                    {% else %}
+                      <span>
+                        GENERAL / NON-EVENT WORK
+                      </span>
+                    {% endif %}
+
+                  </div>
+
+                  <div>
+                    <span>DATE</span>
+                    <strong>
+                      {{ work.work_date.strftime('%d %b %Y') }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>TIME</span>
+                    <strong>
+                      {{ work.start_time.strftime('%H:%M') }}
+                      –
+                      {{ work.finish_time.strftime('%H:%M') }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>BREAK</span>
+                    <strong>
+                      {{ work.break_minutes or 0 }} min
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>WORKED</span>
+                    <strong>
+                      {{ row.worked_minutes // 60 }}h
+                      {{ row.worked_minutes % 60 }}m
+                    </strong>
+                  </div>
+
+                  <div class="additional-work-management-state">
+                    <span class="timesheet-approval pending">
+                      REVIEW
+                    </span>
+                  </div>
+
+                </div>
+
+
+                <div class="additional-work-management-actions">
+
+                  <form
+                    method="post"
+                    action="/staff/team/timesheets/additional-work/{{ work.id }}/approve"
+                  >
+
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token }}"
+                    >
+
+                    <button
+                      type="submit"
+                      class="timesheet-approve-button"
+                    >
+                      APPROVE HOURS
+                    </button>
+
+                  </form>
+
+
+                  <details class="additional-work-return">
+
+                    <summary>
+                      RETURN FOR CORRECTION
+                    </summary>
+
+                    <form
+                      method="post"
+                      action="/staff/team/timesheets/additional-work/{{ work.id }}/return"
+                    >
+
+                      <input
+                        type="hidden"
+                        name="csrf_token"
+                        value="{{ csrf_token }}"
+                      >
+
+                      <label>
+
+                        <span>
+                          REASON / CORRECTION REQUIRED
+                        </span>
+
+                        <textarea
+                          name="return_notes"
+                          rows="3"
+                          maxlength="4000"
+                          required
+                          placeholder="Tell the staff member what needs changing"
+                        ></textarea>
+
+                      </label>
+
+                      <button
+                        type="submit"
+                        class="additional-work-return-button"
+                      >
+                        RETURN TO STAFF
+                      </button>
+
+                    </form>
+
+                  </details>
+
+                </div>
+
+              </article>
+
+            {% endfor %}
+
+          {% endif %}
+
+        </div>
+
+      </details>
+
+    {% else %}
+
+      <div class="timesheet-clean-queue">
+
+        <strong>✓ ALL CAUGHT UP</strong>
+
+        <span>
+          There are no completed hours waiting for approval.
+        </span>
+
+      </div>
+
+    {% endfor %}
+
+  </div>
+
+
+  <details class="timesheet-approved-archive">
+
+    <summary>
+
+      <div>
+
+        <span class="timesheet-archive-tick">
+          ✓
+        </span>
+
+        <div>
+          <strong>APPROVED HOURS ARCHIVE</strong>
+
+          <span>
+            Approved records are kept here for audit
+            and payroll history.
+          </span>
+        </div>
+
+      </div>
+
+      <div class="timesheet-archive-summary-action">
+
+        <strong>
+          {{ approved_archive_count }} RECORDS
+        </strong>
+
+        <span class="timesheet-expand-button archive-master">
+          OPEN ARCHIVE
+          <span class="timesheet-expand-chevron">
+            ▼
+          </span>
+        </span>
+
+      </div>
+
+    </summary>
+
+
+    <div class="timesheet-approved-archive-body">
+
+      {% for group in approved_staff_groups %}
+
+        <details class="timesheet-staff-tile approved">
+
+          <summary>
+
+            <div class="timesheet-staff-summary-person">
+
+              <strong>
+                {{ group.staff_name }}
+              </strong>
+
+              <span>
+                {{ group.approved_count }} approved
+              </span>
+
+            </div>
+
+            <div class="timesheet-staff-summary-hours">
+
+              <span>TOTAL HOURS</span>
+
+              <strong>
+                {{ group.approved_minutes // 60 }}h
+                {{ group.approved_minutes % 60 }}m
+              </strong>
+
+            </div>
+
+            <div class="timesheet-staff-summary-action">
+              <span class="timesheet-expand-button archive">
+                VIEW APPROVED HOURS
+                <span class="timesheet-expand-chevron">
+                  ▼
+                </span>
+              </span>
+            </div>
+
+          </summary>
+
+
+          <div class="timesheet-staff-tile-body">
+
+            {% for row in group.approved_shifts %}
+
+              {% set shift = row.shift %}
+              {% set member = row.member %}
+              {% set event = row.event %}
+
+              <article class="timesheet-operation-card approved-archive-card">
+
+                <div class="timesheet-operation-main">
+
+                  <div class="timesheet-operation-person">
+
+                    <a href="/staff/team/{{ member.id }}">
+                      <strong>
+                        {{ member.preferred_name or member.staff_name }}
+                      </strong>
+                    </a>
+
+                    <span>{{ shift.role }}</span>
+
+                  </div>
+
+                  <div class="timesheet-operation-event">
+
+                    <a href="/staff/events/{{ event.id }}">
+                      {{ event.name }}
+                    </a>
+
+                    <span>
+                      {{ event.venue or '—' }}
+                    </span>
+
+                  </div>
+
+                  <div class="timesheet-operation-date">
+
+                    <strong>
+                      {{ shift.shift_date.strftime('%d %b %Y') }}
+                    </strong>
+
+                  </div>
+
+                  <div class="timesheet-operation-worked">
+
+                    <span>WORKED</span>
+
+                    <strong>
+                      {{ row.worked_minutes // 60 }}h
+                      {{ row.worked_minutes % 60 }}m
+                    </strong>
+
+                  </div>
+
+                  <div class="timesheet-operation-state">
+
+                    <span class="timesheet-approval approved">
+                      ✓ APPROVED
+                    </span>
+
+                  </div>
+
+                </div>
+
+
+                <div class="timesheet-operation-details">
+
+                  <div class="timesheet-recorded-values">
+
+                    <div>
+                      <span>CLOCK IN</span>
+                      <strong>
+                        {{ shift.actual_clock_in.strftime('%H:%M') if shift.actual_clock_in else '—' }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>CLOCK OUT</span>
+                      <strong>
+                        {{ shift.actual_clock_out.strftime('%H:%M') if shift.actual_clock_out else '—' }}
+                      </strong>
+                    </div>
+
+                    <div>
+                      <span>BREAK</span>
+                      <strong>
+                        {{ shift.break_minutes or 0 }} min
+                      </strong>
+                    </div>
+
+                  </div>
+
+                  <div class="timesheet-audit-line approved">
+
+                    <strong>APPROVED</strong>
+
+                    <span>
+                      {% if shift.approved_by %}
+                        by {{ shift.approved_by }}
+                      {% endif %}
+
+                      {% if shift.approved_at %}
+                        · {{ shift.approved_at.strftime('%d %b %Y %H:%M') }}
+                      {% endif %}
+                    </span>
+
+                  </div>
+
+                  <div class="timesheet-locked-state">
+                    TIMESHEET LOCKED AFTER APPROVAL
+                  </div>
+
+                </div>
+
+              </article>
+
+            {% endfor %}
+
+
+            {% for row in group.approved_additional %}
+
+              {% set work = row.work %}
+              {% set member = row.member %}
+
+              <article class="additional-work-management-card approved-archive-card">
+
+                <div class="additional-work-management-main">
+
+                  <div class="additional-work-management-person">
+
+                    <a href="/staff/team/{{ member.id }}">
+                      <strong>
+                        {{ member.preferred_name or member.staff_name }}
+                      </strong>
+                    </a>
+
+                    <span>{{ work.work_type }}</span>
+
+                  </div>
+
+                  <div class="additional-work-management-description">
+
+                    <strong>
+                      {{ work.description }}
+                    </strong>
+
+                    {% if row.event %}
+                      <span>
+                        EVENT · {{ row.event.name }}
+                      </span>
+                    {% else %}
+                      <span>
+                        GENERAL / NON-EVENT WORK
+                      </span>
+                    {% endif %}
+
+                  </div>
+
+                  <div>
+                    <span>DATE</span>
+                    <strong>
+                      {{ work.work_date.strftime('%d %b %Y') }}
+                    </strong>
+                  </div>
+
+                  <div>
+                    <span>WORKED</span>
+                    <strong>
+                      {{ row.worked_minutes // 60 }}h
+                      {{ row.worked_minutes % 60 }}m
+                    </strong>
+                  </div>
+
+                  <div class="additional-work-management-state">
+                    <span class="timesheet-approval approved">
+                      ✓ APPROVED
+                    </span>
+                  </div>
+
+                </div>
+
+                <div class="additional-work-audit approved">
+
+                  <strong>APPROVED</strong>
+
+                  <span>
+
+                    {% if work.approved_by %}
+                      by {{ work.approved_by }}
+                    {% endif %}
+
+                    {% if work.approved_at %}
+                      · {{ work.approved_at.strftime('%d %b %Y %H:%M') }}
+                    {% endif %}
+
+                  </span>
+
+                </div>
+
+                <div class="timesheet-locked-state">
+                  ADDITIONAL WORK LOCKED AFTER APPROVAL
+                </div>
+
+              </article>
+
+            {% endfor %}
+
+          </div>
+
+        </details>
+
+      {% else %}
+
+        <div class="timesheet-empty">
+          No approved records yet.
+        </div>
+
+      {% endfor %}
+
+    </div>
+
+  </details>
+
+</section>
+
+
+{% endblock %}

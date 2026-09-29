@@ -1,0 +1,369 @@
+{% extends "staff_base.html" %}
+
+{% block title %}Documents & Policies | Stuphie Ltd{% endblock %}
+{% block control_title %}DOCUMENTS & POLICIES{% endblock %}
+
+{% block content %}
+<section class="staff-doc-management">
+
+  <header class="staff-doc-library-heading">
+    <div>
+      <span>STAFF MANAGEMENT</span>
+      <h2>Documents &amp; Policies</h2>
+      <p>
+        Publish and manage private company documents available to staff.
+      </p>
+    </div>
+  </header>
+
+
+  {% set document_result = request.query_params.get('document') %}
+
+  {% if document_result == 'uploaded' %}
+    <div class="staff-doc-success">
+      ✓ Document published successfully.
+    </div>
+
+  {% elif document_result == 'archived' %}
+    <div class="staff-doc-success">
+      ✓ Document archived.
+    </div>
+
+  {% elif document_result == 'restored' %}
+    <div class="staff-doc-success">
+      ✓ Document restored and visible to staff.
+    </div>
+
+  {% elif document_result %}
+    <div class="staff-doc-management-error">
+      The document could not be processed.
+      Please check the information and file and try again.
+    </div>
+  {% endif %}
+
+
+  <section class="staff-doc-upload-panel">
+
+    <div class="staff-doc-upload-heading">
+      <div>
+        <span>NEW DOCUMENT</span>
+        <h3>Upload a Policy or Document</h3>
+        <p>
+          Published documents are stored privately and are available
+          only to authenticated Stuphie staff.
+        </p>
+      </div>
+    </div>
+
+    <form
+      method="post"
+      action="/staff/team/documents/upload"
+      enctype="multipart/form-data"
+      class="staff-doc-upload-form"
+    >
+
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <div class="staff-doc-form-grid">
+
+        <label>
+          <span>DOCUMENT TITLE</span>
+          <input
+            type="text"
+            name="title"
+            maxlength="240"
+            required
+            placeholder="e.g. Staff Expenses Policy"
+          >
+        </label>
+
+        <label>
+          <span>CATEGORY</span>
+          <select name="category" required>
+            {% for category in document_categories %}
+            <option value="{{ category }}">
+              {{ category }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>VERSION</span>
+          <input
+            type="text"
+            name="version"
+            maxlength="40"
+            value="1.0"
+            placeholder="1.0"
+          >
+        </label>
+
+        <label class="staff-doc-file-field">
+          <span>DOCUMENT FILE</span>
+          <input
+            type="file"
+            name="document"
+            required
+            accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+          >
+          <small>
+            PDF, Word, Excel, JPG or PNG · Maximum 25 MB
+          </small>
+        </label>
+
+      </div>
+
+      <label class="staff-doc-description-field">
+        <span>DESCRIPTION</span>
+        <textarea
+          name="description"
+          rows="3"
+          placeholder="Briefly explain what this document contains..."
+        ></textarea>
+      </label>
+
+      <label class="staff-doc-ack-switch">
+
+        <input
+          type="checkbox"
+          name="requires_acknowledgement"
+          value="yes"
+        >
+
+        <span class="staff-doc-ack-switch-box"></span>
+
+        <span class="staff-doc-ack-switch-copy">
+          <strong>Require staff acknowledgement</strong>
+          <small>
+            Staff must explicitly confirm they have read and
+            understood this document.
+          </small>
+        </span>
+
+      </label>
+
+      <div class="staff-doc-upload-footer">
+
+        <div>
+          <strong>Publish immediately</strong>
+          <small>
+            The document will appear in the staff library as soon as
+            the upload completes.
+          </small>
+        </div>
+
+        <button type="submit">
+          Upload &amp; Publish
+        </button>
+
+      </div>
+
+    </form>
+
+  </section>
+
+
+  <section class="staff-doc-management-panel">
+
+    <div class="staff-doc-management-title">
+      <div>
+        <span>LIVE LIBRARY</span>
+        <h3>Published Documents</h3>
+      </div>
+
+      <strong>{{ documents|length }}</strong>
+    </div>
+
+    {% if documents %}
+
+    <div class="staff-doc-admin-grid">
+
+      {% for document in documents %}
+
+      <article class="staff-doc-admin-card">
+
+        <div class="staff-doc-admin-main">
+
+          <div class="staff-doc-admin-icon">▤</div>
+
+          <div>
+            <span>{{ document.category }}</span>
+
+            <h4>{{ document.title }}</h4>
+
+            {% if document.description %}
+            <p>{{ document.description }}</p>
+            {% endif %}
+
+            <small>
+              Version {{ document.version or '1.0' }}
+
+              {% if document.updated_at %}
+              · Updated
+              {{ document.updated_at.strftime('%d %b %Y') }}
+              {% endif %}
+            </small>
+          </div>
+
+        </div>
+
+        {% if document.requires_acknowledgement %}
+        <div class="staff-doc-required">
+          ACKNOWLEDGEMENT REQUIRED
+        </div>
+        {% endif %}
+
+        <div class="staff-doc-admin-stats">
+
+          <span>
+            <strong>
+              {{ document_view_counts.get(document.id, 0) }}
+            </strong>
+            Views
+          </span>
+
+          <span>
+            <strong>
+              {{ document_unique_viewers.get(document.id, 0) }}
+            </strong>
+            Staff Viewed
+          </span>
+
+          {% if document.requires_acknowledgement %}
+          <span class="is-required">
+            <strong>
+              {{ document_acknowledgement_counts.get(document.id, 0) }}
+            </strong>
+            Confirmed
+          </span>
+          {% endif %}
+
+        </div>
+
+        <div class="staff-doc-actions">
+
+          <a
+            href="/staff/team/documents/{{ document.id }}/view"
+            target="_blank"
+            rel="noopener"
+            class="staff-doc-view"
+          >
+            View Document
+          </a>
+
+          <form
+            method="post"
+            action="/staff/team/documents/{{ document.id }}/archive"
+          >
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="{{ csrf_token }}"
+            >
+
+            <button
+              type="submit"
+              class="staff-doc-archive"
+            >
+              Archive
+            </button>
+          </form>
+
+        </div>
+
+      </article>
+
+      {% endfor %}
+
+    </div>
+
+    {% else %}
+
+    <div class="staff-doc-empty">
+      <strong>No published documents yet.</strong>
+      <p>
+        Upload your first policy or staff document above.
+      </p>
+    </div>
+
+    {% endif %}
+
+  </section>
+
+
+  {% if archived_documents %}
+
+  <section class="staff-doc-management-panel">
+
+    <div class="staff-doc-management-title">
+      <div>
+        <span>ARCHIVE</span>
+        <h3>Archived Documents</h3>
+      </div>
+
+      <strong>{{ archived_documents|length }}</strong>
+    </div>
+
+    <div class="staff-doc-admin-grid">
+
+      {% for document in archived_documents %}
+
+      <article class="staff-doc-admin-card is-archived">
+
+        <div>
+          <span>{{ document.category }}</span>
+          <h4>{{ document.title }}</h4>
+
+          <small>
+            Version {{ document.version or '1.0' }}
+          </small>
+        </div>
+
+        <div class="staff-doc-actions">
+
+          <a
+            href="/staff/team/documents/{{ document.id }}/view"
+            target="_blank"
+            rel="noopener"
+            class="staff-doc-view"
+          >
+            View
+          </a>
+
+          <form
+            method="post"
+            action="/staff/team/documents/{{ document.id }}/restore"
+          >
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="{{ csrf_token }}"
+            >
+
+            <button
+              type="submit"
+              class="staff-doc-restore"
+            >
+              Restore
+            </button>
+          </form>
+
+        </div>
+
+      </article>
+
+      {% endfor %}
+
+    </div>
+
+  </section>
+
+  {% endif %}
+
+</section>
+{% endblock %}

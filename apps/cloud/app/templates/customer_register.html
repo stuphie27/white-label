@@ -1,0 +1,110 @@
+{% extends "customer_base.html" %}
+
+{% block title %}Verify your email | {{ brand.display_name }}{% endblock %}
+
+{% block content %}
+<section class="customer-access-shell">
+  <div class="customer-access-card">
+    <p class="customer-access-eyebrow">{{ brand.display_name | upper }}</p>
+
+    <h1>Secure access to your event photos</h1>
+
+    <p class="customer-access-intro">
+      Enter your name and email address and we’ll send you a six-digit
+      verification code.
+    </p>
+
+    <div class="customer-access-protection">
+      <strong>Why we verify your email</strong>
+      <p>
+        Our online galleries contain protected {{ brand.display_name }}
+        event images. Email verification helps us protect our photography
+        from unauthorised copying and secures your personal viewing session.
+      </p>
+      <p>
+        Your details are used for gallery security and to connect your
+        favourites, basket, purchases and deliveries. We do not use your
+        details for marketing unless you separately choose to opt in.
+      </p>
+      <p>
+        You can browse and purchase from your phone, tablet or computer,
+        then continue your visit at the {{ brand.display_name }} stand if you
+        wish. You can also pay at the stand and collect available prints
+        immediately.
+      </p>
+    </div>
+
+    {% if error %}
+      <div class="customer-access-error" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" action="/customer/register">
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <input
+        type="hidden"
+        name="next_url"
+        value="{{ next_url }}"
+      >
+
+      <label class="customer-access-field">
+        <span>First name</span>
+        <input
+          type="text"
+          name="first_name"
+          autocomplete="given-name"
+          maxlength="120"
+          required
+        >
+      </label>
+
+      <label class="customer-access-field">
+        <span>Surname</span>
+        <input
+          type="text"
+          name="last_name"
+          autocomplete="family-name"
+          maxlength="120"
+          required
+        >
+      </label>
+
+      <label class="customer-access-field">
+        <span>Email address</span>
+        <input
+          type="email"
+          name="email"
+          autocomplete="email"
+          maxlength="320"
+          inputmode="email"
+          required
+        >
+      </label>
+
+      <button
+        class="customer-access-button"
+        type="submit"
+      >
+        Email my verification code
+      </button>
+    </form>
+
+    <p class="customer-access-small">
+      Your verified session securely reconnects your favourites, basket,
+      orders and downloads across supported devices.
+    </p>
+
+    <p class="customer-access-small">
+      Gallery previews are protected and provided for viewing and purchasing
+      only. Copyright and image-protection terms must be accepted before
+      gallery access is granted.
+    </p>
+  </div>
+</section>
+{% endblock %}

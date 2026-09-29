@@ -1,0 +1,327 @@
+:root{
+  color-scheme:dark;
+}
+
+body.payroll-employee-page{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 88% 4%,rgba(197,0,24,.16),transparent 34rem),
+    #050505;
+  color:#f6f6f7;
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.payroll-employee-page *{
+  box-sizing:border-box;
+}
+
+.payroll-employee-page .shell{
+  width:min(1100px,calc(100% - 32px));
+  margin:0 auto;
+  padding:44px 0 80px;
+}
+
+.payroll-employee-page .auth-shell{
+  width:min(720px,calc(100% - 28px));
+}
+
+.payroll-employee-page .hero{
+  margin-bottom:22px;
+  padding:30px;
+  border:1px solid #303036;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at top right,rgba(197,0,24,.21),transparent 42%),
+    linear-gradient(145deg,#18181a,#0c0c0e);
+  box-shadow:0 18px 55px rgba(0,0,0,.34);
+}
+
+.payroll-employee-page .eyebrow{
+  margin:0 0 9px;
+  color:#ff5263;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.payroll-employee-page h1{
+  margin:0;
+  color:#fff;
+  font-size:clamp(2.6rem,7vw,5rem);
+  line-height:.95;
+  letter-spacing:-.045em;
+}
+
+.payroll-employee-page h2{
+  margin:0 0 10px;
+  color:#fff;
+  font-size:1.35rem;
+}
+
+.payroll-employee-page .muted{
+  color:#9a9aa2;
+}
+
+.payroll-employee-page .panel{
+  margin-top:16px;
+  padding:24px;
+  border:1px solid #303036;
+  border-radius:16px;
+  background:linear-gradient(145deg,#151517,#0b0b0d);
+  box-shadow:0 14px 40px rgba(0,0,0,.22);
+}
+
+.payroll-employee-page .notice{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+}
+
+.payroll-employee-page .notice-icon{
+  display:grid;
+  place-items:center;
+  flex:0 0 42px;
+  width:42px;
+  height:42px;
+  border-radius:12px;
+  background:#112f1d;
+  border:1px solid #2d7044;
+  color:#8ff0ad;
+  font-weight:900;
+}
+
+.payroll-employee-page label{
+  display:block;
+  margin-bottom:7px;
+  color:#d8d8dd;
+  font-size:.82rem;
+  font-weight:800;
+}
+
+.payroll-employee-page input{
+  width:100%;
+  min-height:48px;
+  border:1px solid #3a3a41;
+  border-radius:10px;
+  background:#09090b;
+  color:#fff;
+  padding:11px 13px;
+  font:inherit;
+  outline:none;
+}
+
+.payroll-employee-page input:focus{
+  border-color:#d71920;
+  box-shadow:0 0 0 3px rgba(215,25,32,.15);
+}
+
+.payroll-employee-page button,
+.payroll-employee-page .button{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:44px;
+  border:1px solid #df1b25;
+  border-radius:9px;
+  background:linear-gradient(180deg,#dc1720,#aa0710);
+  color:#fff;
+  padding:10px 16px;
+  font:inherit;
+  font-size:.9rem;
+  font-weight:850;
+  text-decoration:none;
+  cursor:pointer;
+}
+
+.payroll-employee-page button:hover,
+.payroll-employee-page .button:hover{
+  background:linear-gradient(180deg,#ec202a,#be0913);
+}
+
+.payroll-employee-page .secondary{
+  border-color:#44444b;
+  background:#202024;
+}
+
+.payroll-employee-page .secondary:hover{
+  border-color:#d71920;
+  background:#2a181b;
+}
+
+.payroll-employee-page .actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:20px;
+}
+
+.payroll-employee-page table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.payroll-employee-page th{
+  padding:13px 14px;
+  border-bottom:1px solid #303036;
+  background:#101012;
+  color:#87878e;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.1em;
+  text-align:left;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.payroll-employee-page td{
+  padding:15px 14px;
+  border-bottom:1px solid #29292e;
+  color:#e8e8eb;
+  vertical-align:middle;
+}
+
+.payroll-employee-page tbody tr:last-child td{
+  border-bottom:0;
+}
+
+.payroll-employee-page tbody tr:hover{
+  background:#131316;
+}
+
+.payroll-employee-page .status{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:5px 9px;
+  border:1px solid #45454b;
+  border-radius:999px;
+  background:#1e1e22;
+  color:#d8d8dc;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.payroll-employee-page .status-submitted{
+  border-color:#2f7145;
+  background:#102d1b;
+  color:#9df0b7;
+}
+
+.payroll-employee-page .status-emailed{
+  border-color:#806226;
+  background:#2b210e;
+  color:#f1d27f;
+}
+
+.payroll-employee-page .status-draft{
+  border-color:#55555d;
+  background:#202024;
+  color:#c7c7cd;
+}
+
+.payroll-employee-page .grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:18px 0;
+}
+
+.payroll-employee-page .card{
+  padding:18px 20px;
+  border:1px solid #303036;
+  border-radius:14px;
+  background:linear-gradient(145deg,#171719,#0d0d0f);
+}
+
+.payroll-employee-page .card small{
+  display:block;
+  margin-bottom:7px;
+  color:#85858c;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.payroll-employee-page .card strong{
+  font-size:1.4rem;
+  color:#fff;
+}
+
+.payroll-employee-page .top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:24px;
+  padding:28px 30px;
+  border:1px solid #303036;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at top right,rgba(197,0,24,.20),transparent 44%),
+    linear-gradient(145deg,#18181a,#0c0c0e);
+}
+
+.payroll-employee-page .back{
+  display:inline-flex;
+  margin-bottom:14px;
+  color:#cacacf;
+  text-decoration:none;
+  font-weight:750;
+}
+
+.payroll-employee-page .empty{
+  padding:34px 20px;
+  text-align:center;
+}
+
+.payroll-employee-page .empty strong{
+  display:block;
+  margin-bottom:6px;
+}
+
+@media(max-width:900px){
+  .payroll-employee-page .grid{
+    grid-template-columns:1fr;
+  }
+
+  .payroll-employee-page .panel{
+    overflow-x:auto;
+  }
+
+  .payroll-employee-page table{
+    min-width:760px;
+  }
+}
+
+@media(max-width:620px){
+  .payroll-employee-page .shell{
+    width:min(100% - 18px,1100px);
+    padding-top:12px;
+  }
+
+  .payroll-employee-page .hero,
+  .payroll-employee-page .top,
+  .payroll-employee-page .panel{
+    padding:20px 18px;
+  }
+
+  .payroll-employee-page .top{
+    display:grid;
+    align-items:start;
+  }
+
+  .payroll-employee-page h1{
+    font-size:clamp(2.4rem,13vw,3.8rem);
+  }
+
+  .payroll-employee-page .actions,
+  .payroll-employee-page .actions > *{
+    width:100%;
+  }
+}

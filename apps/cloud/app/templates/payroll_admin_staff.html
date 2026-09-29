@@ -1,0 +1,374 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1"
+  >
+  <meta
+    name="robots"
+    content="noindex,nofollow,noarchive"
+  >
+  <title>
+    Staff Payment Setup | Stuphie Ltd
+  </title>
+
+  <link
+    rel="stylesheet"
+    href="/static/cloud.css"
+  >
+
+  <link
+    rel="stylesheet"
+    href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}"
+  >
+</head>
+
+<body class="payroll-admin-page">
+
+<main class="shell">
+
+  <header class="top">
+
+    <div>
+
+      <a
+        class="back"
+        href="/staff/payroll"
+      >
+        ← Payroll Admin
+      </a>
+
+      <div class="eyebrow">
+        STUPHIE LTD
+      </div>
+
+      <h1>
+        Staff Payment Setup
+      </h1>
+
+      <div class="muted">
+        Private Payroll Admin information ·
+        {{ staff_email }}
+      </div>
+
+    </div>
+
+  </header>
+
+
+  <section class="panel pay-privacy-warning">
+
+    <strong>
+      PRIVATE FINANCIAL INFORMATION
+    </strong>
+
+    <p class="muted">
+      Payment arrangements and agreed rates are available
+      only inside Payroll Admin. They are not shown in the
+      Staff Hub, staff directory or employee profile.
+    </p>
+
+  </section>
+
+
+  <section class="pay-setup-list">
+
+    {% for row in rows %}
+
+      {% set member = row.member %}
+
+      <article
+        class="panel pay-setup-card"
+        id="staff-{{ member.id }}"
+      >
+
+        <div class="pay-setup-heading">
+
+          <div>
+
+            <div class="eyebrow">
+              {{ member.staff_code or member.staff_source_ref }}
+            </div>
+
+            <h2>
+              {{ member.preferred_name or member.staff_name }}
+            </h2>
+
+            <div class="muted">
+              {{ member.email }}
+            </div>
+
+          </div>
+
+
+          <div class="pay-setup-current">
+
+            <span>
+              PAYMENT ARRANGEMENT
+            </span>
+
+            <strong>
+              {{ row.arrangement_label }}
+            </strong>
+
+            <span>
+              CURRENT AGREED RATE
+            </span>
+
+            <strong>
+
+              {% if row.current_rate %}
+
+                £{{ '%.2f' | format(
+                  row.current_rate.hourly_rate_pence / 100
+                ) }}
+                / hour
+
+              {% else %}
+
+                NOT SET
+
+              {% endif %}
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <div class="pay-setup-grid">
+
+          <form
+            method="post"
+            action="/staff/payroll/staff-payment-setup/{{ member.id }}/arrangement"
+            class="pay-setup-form"
+          >
+
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="{{ csrf_token }}"
+            >
+
+            <h3>
+              Payment Arrangement
+            </h3>
+
+            <label>
+
+              <span>
+                Arrangement
+              </span>
+
+              <select
+                name="payment_arrangement"
+                required
+              >
+
+                <option
+                  value="self_employed_contractor"
+                  {% if row.arrangement == 'self_employed_contractor' %}
+                    selected
+                  {% endif %}
+                >
+                  Self-Employed Contractor
+                </option>
+
+                <option
+                  value="external_payroll"
+                  {% if row.arrangement == 'external_payroll' %}
+                    selected
+                  {% endif %}
+                >
+                  External Payroll
+                </option>
+
+              </select>
+
+            </label>
+
+
+            <label>
+
+              <span>
+                Private management note
+              </span>
+
+              <textarea
+                name="notes"
+                rows="3"
+                maxlength="4000"
+              >{{ row.profile.notes if row.profile else '' }}</textarea>
+
+            </label>
+
+
+            <button type="submit">
+              SAVE ARRANGEMENT
+            </button>
+
+          </form>
+
+
+          <form
+            method="post"
+            action="/staff/payroll/staff-payment-setup/{{ member.id }}/rate"
+            class="pay-setup-form"
+          >
+
+            <input
+              type="hidden"
+              name="csrf_token"
+              value="{{ csrf_token }}"
+            >
+
+            <h3>
+              Add / Change Agreed Rate
+            </h3>
+
+            <label>
+
+              <span>
+                Hourly rate
+              </span>
+
+              <div class="pay-rate-input">
+
+                <strong>£</strong>
+
+                <input
+                  type="number"
+                  name="hourly_rate"
+                  min="0.01"
+                  step="0.01"
+                  required
+                  placeholder="0.00"
+                >
+
+              </div>
+
+            </label>
+
+
+            <label>
+
+              <span>
+                Effective from
+              </span>
+
+              <input
+                type="date"
+                name="effective_from"
+                required
+              >
+
+            </label>
+
+
+            <label>
+
+              <span>
+                Private rate note
+              </span>
+
+              <textarea
+                name="notes"
+                rows="3"
+                maxlength="4000"
+                placeholder="Optional reason for rate change"
+              ></textarea>
+
+            </label>
+
+
+            <button type="submit">
+              SAVE RATE
+            </button>
+
+          </form>
+
+        </div>
+
+
+        <details class="pay-rate-history">
+
+          <summary>
+            RATE HISTORY · {{ row.rates|length }} RECORDS
+          </summary>
+
+          {% if row.rates %}
+
+            <table>
+
+              <thead>
+                <tr>
+                  <th>Effective from</th>
+                  <th>Rate</th>
+                  <th>Private note</th>
+                  <th>Recorded by</th>
+                </tr>
+              </thead>
+
+              <tbody>
+
+                {% for rate in row.rates %}
+
+                  <tr>
+
+                    <td>
+                      {{ rate.effective_from.strftime('%d %b %Y') }}
+                    </td>
+
+                    <td>
+                      <strong>
+                        £{{ '%.2f' | format(
+                          rate.hourly_rate_pence / 100
+                        ) }}
+                      </strong>
+                    </td>
+
+                    <td>
+                      {{ rate.notes or '—' }}
+                    </td>
+
+                    <td>
+                      {{ rate.created_by or '—' }}
+                    </td>
+
+                  </tr>
+
+                {% endfor %}
+
+              </tbody>
+
+            </table>
+
+          {% else %}
+
+            <div class="empty">
+              No agreed rate has been recorded yet.
+            </div>
+
+          {% endif %}
+
+        </details>
+
+      </article>
+
+    {% else %}
+
+      <section class="panel empty">
+        No active staff records.
+      </section>
+
+    {% endfor %}
+
+  </section>
+
+</main>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'events' %}
+{% block title %}Event Calendar | Stuphie Online{% endblock %}
+{% block content %}
+<section class="sp-plan-hero"><div><p class="section-kicker">STUPHIE ONLINE · EVENT PLANNING</p><h1>Event Calendar</h1><p>Month view of upcoming events, readiness and staffing attention.</p></div><div class="sp-plan-actions"><a class="ghost-button" href="/staff/events">Planning View</a><a class="primary-button" href="/staff/events/new">＋ New Event</a></div></section>
+<nav class="sp-calendar-nav"><a class="ghost-button" href="/staff/events/calendar?year={{ prev_year }}&month={{ prev_month }}">← Previous</a><div><strong>{{ calendar_title }}</strong><a href="/staff/events/calendar">Today</a></div><a class="ghost-button" href="/staff/events/calendar?year={{ next_year }}&month={{ next_month }}">Next →</a></nav>
+<div class="sp-calendar-weekdays">{% for day in ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] %}<span>{{ day }}</span>{% endfor %}</div>
+<div class="sp-calendar-grid">{% for week in calendar_weeks %}{% for cell in week %}<section class="sp-calendar-day {% if not cell.in_month %}outside{% endif %} {% if cell.today %}today{% endif %}"><header><strong>{{ cell.date.day }}</strong>{% if cell.today %}<small>TODAY</small>{% endif %}</header><div>{% for row in cell.events %}{% set event=row.event %}{% set ready=row.readiness %}<a class="sp-calendar-event {% if ready.ready %}ready{% elif ready.shortfall %}shortfall{% elif ready.needs_attention %}attention{% endif %}" href="/staff/events#event-{{ event.id }}"><strong>{{ event.name }}</strong><span>{{ event.venue or 'Location not set' }}</span><small>{% if ready.ready %}Ready{% elif ready.shortfall %}Staff shortfall {{ ready.shortfall }}{% elif ready.needs_attention %}Needs information{% else %}Planning{% endif %}</small></a>{% endfor %}</div></section>{% endfor %}{% endfor %}</div>
+<div class="sp-calendar-key"><span class="ready">Ready</span><span class="shortfall">Staff shortfall</span><span class="attention">Needs information</span><span>Planning</span></div>
+{% endblock %}

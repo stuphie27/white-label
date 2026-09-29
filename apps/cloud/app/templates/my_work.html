@@ -1,0 +1,906 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'my_work' %}
+
+{% block title %}My Work | Stuphie Online{% endblock %}
+
+{% block control_title %}MY WORK{% endblock %}
+
+{% block content %}
+
+<section class="my-work-heading">
+  <div>
+    <p class="team-eyebrow">STAFF SELF SERVICE</p>
+
+    <h2>
+      {% if member %}
+        {{ member.preferred_name or member.staff_name }}
+      {% else %}
+        My Work
+      {% endif %}
+    </h2>
+
+    <p>
+      View your events, confirm your availability and record your hours.
+    </p>
+  </div>
+</section>
+
+{% if not member %}
+
+<section class="my-work-empty-card">
+  <strong>STAFF PROFILE NOT LINKED</strong>
+
+  <p>
+    Your signed-in email does not currently match a Staff Master record.
+  </p>
+</section>
+
+{% else %}
+
+<section class="my-work-summary-grid">
+
+  <article>
+    <span>YOUR EVENTS</span>
+    <strong>{{ event_rows|length }}</strong>
+  </article>
+
+  <article>
+    <span>COMPLETED ENTRIES</span>
+    <strong>{{ completed|length }}</strong>
+  </article>
+
+  <article>
+    <span>APPROVED HOURS</span>
+    <strong>
+      {{ approved_minutes // 60 }}h
+      {{ approved_minutes % 60 }}m
+    </strong>
+  </article>
+
+</section>
+
+<section class="additional-work-panel additional-work-polished">
+
+  <div class="additional-work-heading">
+
+    <div>
+      <p class="team-eyebrow">OTHER PAID WORK</p>
+      <h3>Additional Work</h3>
+      <p>
+        Record editing, admin, preparation, post-production or
+        other work completed for Sophie’s Photography.
+      </p>
+    </div>
+
+    <div class="additional-work-total">
+      <span>RECORDED</span>
+      <strong>
+        {{ additional_work_minutes // 60 }}h
+        {{ additional_work_minutes % 60 }}m
+      </strong>
+    </div>
+
+  </div>
+
+  <details class="additional-work-entry additional-work-entry-polished">
+
+    <summary>
+      <div class="additional-work-summary-main">
+
+        <span class="additional-work-summary-icon">
+          +
+        </span>
+
+        <div>
+          <strong>ADD ADDITIONAL WORK</strong>
+          <span>
+            Editing, administration, preparation or other paid work
+          </span>
+        </div>
+
+      </div>
+
+      <span class="additional-work-summary-action">
+        OPEN FORM ▼
+      </span>
+    </summary>
+
+    <form
+      method="post"
+      action="/staff/team/my-work/additional-work"
+      class="additional-work-form"
+    >
+
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <label>
+        <span>Date</span>
+        <input
+          type="date"
+          name="work_date"
+          required
+        >
+      </label>
+
+      <label>
+        <span>Work Type</span>
+        <select
+          name="work_type"
+          required
+        >
+          <option value="">Select type</option>
+          <option value="Editing">Editing</option>
+          <option value="Post-production">Post-production</option>
+          <option value="Administration">Administration</option>
+          <option value="Event Preparation">Event Preparation</option>
+          <option value="Equipment">Equipment</option>
+          <option value="Customer Work">Customer Work</option>
+          <option value="Training">Training</option>
+          <option value="Other">Other</option>
+        </select>
+      </label>
+
+      <label>
+        <span>Related Event</span>
+        <select name="event_id">
+          <option value="">Not linked to an event</option>
+
+          {% for event in additional_work_events %}
+            <option value="{{ event.id }}">
+              {{ event.name }}
+              ·
+              {{ event.start_date.strftime('%d %b %Y') }}
+            </option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="additional-work-description">
+        <span>What work did you do?</span>
+        <textarea
+          name="description"
+          rows="3"
+          maxlength="4000"
+          required
+          placeholder="Brief description of the work completed"
+        ></textarea>
+      </label>
+
+      <label>
+        <span>Start</span>
+        <input
+          type="time"
+          name="start_time"
+          required
+        >
+      </label>
+
+      <label>
+        <span>Finish</span>
+        <input
+          type="time"
+          name="finish_time"
+          required
+        >
+      </label>
+
+      <label>
+        <span>Break</span>
+        <div class="my-work-break-field">
+          <input
+            type="number"
+            name="break_minutes"
+            value="0"
+            min="0"
+            step="5"
+          >
+          <small>minutes</small>
+        </div>
+      </label>
+
+      <button
+        type="submit"
+        class="additional-work-submit"
+      >
+        SUBMIT HOURS
+      </button>
+
+    </form>
+
+  </details>
+
+  <div class="additional-work-history">
+
+    {% for row in additional_work %}
+
+      {% set work = row.work %}
+
+      <article class="additional-work-card">
+
+        <div class="additional-work-card-main">
+
+          <div>
+            <span>
+              {{ work.work_date.strftime('%d %b %Y') }}
+            </span>
+
+            <strong>
+              {{ work.work_type }}
+            </strong>
+
+            <p>
+              {{ work.description }}
+            </p>
+
+            {% if row.event %}
+              <small>
+                Linked to {{ row.event.name }}
+              </small>
+            {% else %}
+              <small>
+                General business work
+              </small>
+            {% endif %}
+          </div>
+
+          <div class="additional-work-hours">
+
+            <span>
+              {{ work.start_time.strftime('%H:%M') }}
+              –
+              {{ work.finish_time.strftime('%H:%M') }}
+            </span>
+
+            <strong>
+              {{ row.worked_minutes // 60 }}h
+              {{ row.worked_minutes % 60 }}m
+            </strong>
+
+          </div>
+
+          <div class="additional-work-status">
+
+            {% if work.approved %}
+              <strong class="approved">
+                ✓ APPROVED
+              </strong>
+
+            {% elif work.status == 'returned' %}
+              <strong class="returned">
+                RETURNED
+              </strong>
+
+            {% else %}
+              <strong class="review">
+                AWAITING APPROVAL
+              </strong>
+            {% endif %}
+
+          </div>
+
+        </div>
+
+        {% if work.status == 'returned' and work.return_notes %}
+          <div class="additional-work-return-note">
+            <strong>Management note</strong>
+            <span>{{ work.return_notes }}</span>
+          </div>
+        {% endif %}
+
+      </article>
+
+    {% else %}
+
+      <div class="my-work-empty-card">
+        <strong>NO ADDITIONAL WORK RECORDED</strong>
+        <p>
+          Use + Add Hours when you complete paid work outside
+          your normal event shift.
+        </p>
+      </div>
+
+    {% endfor %}
+
+  </div>
+
+</section>
+
+{% for row in event_rows %}
+
+  {% set event = row.event %}
+  {% set assignment = row.assignment %}
+
+  <details
+    class="my-work-event-card my-work-event-tile{% if row.event_finished %} completed-needs-hours{% endif %}"
+    {% if row.event_finished or loop.first %}open{% endif %}
+  >
+
+    <summary class="my-work-event-summary">
+
+      <div class="my-work-event-summary-main">
+
+        {% if row.event_finished %}
+
+          <span class="my-work-event-status urgent">
+            HOURS REQUIRED
+          </span>
+
+        {% elif row.availability_status == 'available' %}
+
+          <span class="my-work-event-status available">
+            ✓ AVAILABLE
+          </span>
+
+        {% elif row.availability_status == 'unavailable' %}
+
+          <span class="my-work-event-status unavailable">
+            NOT AVAILABLE
+          </span>
+
+        {% else %}
+
+          <span class="my-work-event-status upcoming">
+            AVAILABILITY REQUIRED
+          </span>
+
+        {% endif %}
+
+        <div>
+
+          <h3>
+            {{ event.name }}
+          </h3>
+
+          {% if event.venue %}
+            <p>
+              {{ event.venue }}
+            </p>
+          {% endif %}
+
+        </div>
+
+      </div>
+
+
+      <div class="my-work-event-summary-meta">
+
+        <span>
+
+          {% if event.start_date == event.end_date %}
+
+            {{ event.start_date.strftime('%d %B %Y') }}
+
+          {% else %}
+
+            {{ event.start_date.strftime('%d %B %Y') }}
+            –
+            {{ event.end_date.strftime('%d %B %Y') }}
+
+          {% endif %}
+
+        </span>
+
+        <strong>
+          {{ assignment.role }}
+        </strong>
+
+      </div>
+
+
+      <div class="my-work-event-summary-action">
+
+        {% if row.event_finished %}
+
+          <strong>
+            {{ row.missing_hours_count }}
+            DAY{% if row.missing_hours_count != 1 %}S{% endif %}
+            TO COMPLETE
+          </strong>
+
+        {% else %}
+
+          <strong>
+            OPEN EVENT
+          </strong>
+
+        {% endif %}
+
+        <span class="my-work-event-chevron">
+          ▼
+        </span>
+
+      </div>
+
+    </summary>
+
+
+    <div class="my-work-event-body">
+
+
+      {% if row.event_finished %}
+
+        <div class="my-work-completed-hours-warning">
+
+          <div class="my-work-completed-hours-icon">
+            !
+          </div>
+
+          <div>
+
+            <strong>
+              EVENT COMPLETED — PLEASE SUBMIT YOUR HOURS
+            </strong>
+
+            <p>
+              This event has now finished.
+              Availability is no longer required.
+              Please complete the outstanding working
+              {% if row.missing_hours_count == 1 %}
+                day below.
+              {% else %}
+                days below.
+              {% endif %}
+            </p>
+
+          </div>
+
+        </div>
+
+
+      {% else %}
+
+        <form
+          method="post"
+          action="/staff/team/my-work/availability"
+          class="my-work-availability-form my-work-availability-compact"
+        >
+
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token }}"
+          >
+
+          <input
+            type="hidden"
+            name="event_id"
+            value="{{ event.id }}"
+          >
+
+
+          <div class="my-work-availability-copy">
+
+            <strong>
+              ARE YOU AVAILABLE FOR THIS EVENT?
+            </strong>
+
+            <span>
+              Please confirm whether you are able to work.
+            </span>
+
+          </div>
+
+
+          <div class="my-work-availability-actions">
+
+            <button
+              type="submit"
+              name="availability_status"
+              value="available"
+              class="my-work-availability-yes"
+            >
+              ✓ I AM AVAILABLE
+            </button>
+
+            <button
+              type="submit"
+              name="availability_status"
+              value="unavailable"
+              class="my-work-availability-no"
+            >
+              ✕ I AM NOT AVAILABLE
+            </button>
+
+          </div>
+
+        </form>
+
+      {% endif %}
+
+
+      {% if row.event_finished or row.availability_status == 'available' %}
+
+        <div class="my-work-event-total">
+
+          <div>
+
+            {% if row.event_finished %}
+
+              <span>OUTSTANDING HOURS</span>
+
+            {% else %}
+
+              <span>YOUR HOURS FOR THIS EVENT</span>
+
+            {% endif %}
+
+          </div>
+
+          {% if not row.event_finished %}
+
+            <strong>
+              {{ row.event_total_minutes // 60 }}h
+              {{ row.event_total_minutes % 60 }}m
+            </strong>
+
+          {% else %}
+
+            <strong class="my-work-hours-required-count">
+              {{ row.missing_hours_count }}
+              DAY{% if row.missing_hours_count != 1 %}S{% endif %}
+              REMAINING
+            </strong>
+
+          {% endif %}
+
+        </div>
+
+
+        <div class="my-work-days">
+
+          {% if row.event_finished %}
+            {% set display_days = row.days %}
+          {% else %}
+            {% set display_days = row.days %}
+          {% endif %}
+
+
+          {% for day in display_days %}
+
+            {% set shift = day.shift %}
+
+            <article class="my-work-day-card{% if row.event_finished %} outstanding{% endif %}{% if shift and shift.status == 'did_not_work' %} did-not-work{% endif %}">
+
+              <div class="my-work-day-heading">
+
+                <div>
+
+                  <span>
+                    {% if shift and shift.status == 'did_not_work' %}
+                      DAY RESOLVED
+                    {% elif row.event_finished %}
+                      HOURS REQUIRED
+                    {% else %}
+                      WORKING DAY
+                    {% endif %}
+                  </span>
+
+                  <strong>
+                    {{ day.date.strftime('%A %d %B %Y') }}
+                  </strong>
+
+                </div>
+
+
+                {% if shift and shift.status == 'did_not_work' %}
+
+                  <span class="my-work-day-state did-not-work">
+                    DID NOT WORK
+                  </span>
+
+                {% elif shift and shift.status == 'complete' %}
+
+                  {% if shift.approved %}
+
+                    <span class="my-work-day-state approved">
+                      ✓ APPROVED
+                    </span>
+
+                  {% else %}
+
+                    <span class="my-work-day-state review">
+                      AWAITING APPROVAL
+                    </span>
+
+                  {% endif %}
+
+                {% else %}
+
+                  <span class="my-work-day-state not-entered">
+                    HOURS REQUIRED
+                  </span>
+
+                {% endif %}
+
+              </div>
+
+
+              {% if shift and shift.status == 'did_not_work' %}
+
+                <div class="my-work-did-not-work-confirmed">
+
+                  <div>
+
+                    <strong>
+                      ✓ DAY COMPLETE — DID NOT WORK
+                    </strong>
+
+                    <span>
+                      No hours required.
+                    </span>
+
+                  </div>
+
+                  <form
+                    method="post"
+                    action="/staff/team/my-work/did-not-work"
+                  >
+
+                    <input
+                      type="hidden"
+                      name="csrf_token"
+                      value="{{ csrf_token }}"
+                    >
+
+                    <input
+                      type="hidden"
+                      name="event_id"
+                      value="{{ event.id }}"
+                    >
+
+                    <input
+                      type="hidden"
+                      name="work_date"
+                      value="{{ day.date.isoformat() }}"
+                    >
+
+                    <input
+                      type="hidden"
+                      name="action"
+                      value="undo"
+                    >
+
+                    <button
+                      type="submit"
+                      class="my-work-did-not-work-undo"
+                    >
+                      UNDO
+                    </button>
+
+                  </form>
+
+                </div>
+
+              {% else %}
+
+              <form
+                method="post"
+                action="/staff/team/my-work/hours"
+                class="my-work-hours-form"
+              >
+
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="event_id"
+                  value="{{ event.id }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="work_date"
+                  value="{{ day.date.isoformat() }}"
+                >
+
+
+                <label>
+
+                  <span>Start</span>
+
+                  <input
+                    type="time"
+                    name="start_time"
+                    required
+                    value="{% if shift and shift.actual_clock_in %}{{ shift.actual_clock_in.strftime('%H:%M') }}{% elif shift and shift.scheduled_start %}{{ shift.scheduled_start.strftime('%H:%M') }}{% endif %}"
+                  >
+
+                </label>
+
+
+                <label>
+
+                  <span>Finish</span>
+
+                  <input
+                    type="time"
+                    name="finish_time"
+                    required
+                    value="{% if shift and shift.actual_clock_out %}{{ shift.actual_clock_out.strftime('%H:%M') }}{% elif shift and shift.scheduled_finish %}{{ shift.scheduled_finish.strftime('%H:%M') }}{% endif %}"
+                  >
+
+                </label>
+
+
+                <label>
+
+                  <span>Break</span>
+
+                  <div class="my-work-break-field">
+
+                    <input
+                      type="number"
+                      name="break_minutes"
+                      min="0"
+                      step="5"
+                      value="{{ shift.break_minutes if shift else 0 }}"
+                    >
+
+                    <small>minutes</small>
+
+                  </div>
+
+                </label>
+
+
+                <div class="my-work-worked-total">
+
+                  <span>Worked</span>
+
+                  <strong>
+
+                    {% if day.worked_minutes is not none %}
+
+                      {{ day.worked_minutes // 60 }}h
+                      {{ day.worked_minutes % 60 }}m
+
+                    {% else %}
+
+                      —
+
+                    {% endif %}
+
+                  </strong>
+
+                </div>
+
+
+                <button
+                  type="submit"
+                  class="my-work-save-hours{% if row.event_finished %} urgent{% endif %}"
+                >
+
+                  {% if shift and shift.status == 'complete' %}
+
+                    UPDATE HOURS
+
+                  {% elif row.event_finished %}
+
+                    SUBMIT HOURS
+
+                  {% else %}
+
+                    SAVE HOURS
+
+                  {% endif %}
+
+                </button>
+
+              </form>
+
+
+              <form
+                method="post"
+                action="/staff/team/my-work/did-not-work"
+                class="my-work-did-not-work-form"
+              >
+
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="event_id"
+                  value="{{ event.id }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="work_date"
+                  value="{{ day.date.isoformat() }}"
+                >
+
+                <input
+                  type="hidden"
+                  name="action"
+                  value="mark"
+                >
+
+                <button
+                  type="submit"
+                  class="my-work-did-not-work-button"
+                >
+                  I DID NOT WORK THIS DAY
+                </button>
+
+              </form>
+
+              {% endif %}
+
+            </article>
+
+          {% endfor %}
+
+        </div>
+
+
+      {% elif row.availability_status == 'unavailable' %}
+
+        <div class="my-work-event-message unavailable">
+
+          <strong>
+            YOU HAVE MARKED YOURSELF UNAVAILABLE
+          </strong>
+
+          <p>
+            You can change your response above
+            if your availability changes.
+          </p>
+
+        </div>
+
+
+      {% else %}
+
+        <div class="my-work-event-message">
+
+          <strong>
+            AVAILABILITY REQUIRED
+          </strong>
+
+          <p>
+            Confirm whether you are available.
+            Your working days will then appear here.
+          </p>
+
+        </div>
+
+      {% endif %}
+
+    </div>
+
+  </details>
+
+
+{% else %}
+
+  <section class="my-work-empty-card my-work-all-clear">
+
+    <strong>
+      ✓ YOUR WORK IS UP TO DATE
+    </strong>
+
+    <p>
+      You have no upcoming assigned events or
+      completed events waiting for hours.
+    </p>
+
+  </section>
+
+{% endfor %}
+
+{% endif %}
+
+{% endblock %}

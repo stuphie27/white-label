@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>My Payroll | Pirouette</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet" href="/static/payroll-employee.css?v={{ request.app.state.settings.version }}">
+</head>
+<body class="payroll-employee-page">
+<main class="shell auth-shell" style="max-width:620px;padding-top:64px">
+  <div class="eyebrow">STUPHIE LTD</div>
+  <h1>My Payroll</h1>
+
+  {% if sent %}
+    <section class="panel">
+      <h2>Check your email</h2>
+      <p>
+        If that email address is associated with Stuphie Ltd payroll,
+        we've sent a private sign-in link.
+      </p>
+      <p class="muted">
+        The link expires in 20 minutes and can only be used once.
+      </p>
+    </section>
+  {% else %}
+    <section class="panel">
+      <h2>Sign in securely</h2>
+      <p class="muted">
+        Enter the email address used for your Stuphie Ltd payroll.
+        We'll send you a private sign-in link.
+      </p>
+
+      <form method="post" action="/my-payroll">
+        <label for="email">Email address</label>
+        <input
+          id="email"
+          name="email"
+          type="email"
+          autocomplete="email"
+          required
+          style="width:100%;margin:8px 0 18px"
+        >
+        <button type="submit">Email my sign-in link</button>
+      </form>
+    </section>
+  {% endif %}
+</main>
+</body>
+</html>

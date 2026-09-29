@@ -1,0 +1,350 @@
+.customer-access-shell {
+  width: min(100%, 560px);
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.customer-access-card {
+  background: #111;
+  border: 1px solid rgba(255, 255, 255, .12);
+  border-radius: 18px;
+  padding: 28px;
+}
+
+.customer-access-eyebrow {
+  margin: 0 0 8px;
+  font-size: .76rem;
+  font-weight: 800;
+  letter-spacing: .14em;
+}
+
+.customer-access-card h1 {
+  margin: 0;
+}
+
+.customer-access-intro {
+  margin: 12px 0 24px;
+  line-height: 1.55;
+}
+
+.customer-access-error {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid currentColor;
+  border-radius: 10px;
+}
+
+.customer-access-field {
+  display: block;
+  margin: 0 0 18px;
+}
+
+.customer-access-field span {
+  display: block;
+  margin: 0 0 7px;
+  font-weight: 700;
+}
+
+.customer-access-field input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 50px;
+  padding: 11px 13px;
+  border: 1px solid rgba(255, 255, 255, .24);
+  border-radius: 10px;
+  background: #fff;
+  color: #111;
+  font: inherit;
+}
+
+.customer-access-code {
+  text-align: center;
+  font-size: 1.55rem !important;
+  font-weight: 800 !important;
+  letter-spacing: .28em;
+}
+
+.customer-access-button {
+  width: 100%;
+  min-height: 52px;
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 18px;
+  background: #c00;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.customer-access-small {
+  margin: 18px 0 0;
+  font-size: .86rem;
+  line-height: 1.5;
+  opacity: .78;
+}
+
+@media (max-width: 600px) {
+  .customer-access-shell {
+    padding: 14px 10px 36px;
+  }
+
+  .customer-access-card {
+    padding: 22px 18px;
+    border-radius: 14px;
+  }
+}
+
+.customer-access-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 16px 0;
+  padding: 15px;
+  border: 1px solid rgba(255,255,255,.14);
+  border-radius: 12px;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.customer-access-consent input {
+  width: 20px;
+  height: 20px;
+  min-width: 20px;
+  margin-top: 2px;
+}
+
+.customer-access-consent span {
+  flex: 1;
+}
+
+.customer-account-shell {
+  width: min(760px, calc(100% - 28px));
+  margin: 0 auto;
+  padding: 22px 0 80px;
+}
+
+.customer-account-hero {
+  padding: 18px 4px 10px;
+}
+
+.customer-account-hero h1 {
+  margin: 5px 0 8px;
+  font-size: clamp(30px, 8vw, 46px);
+  line-height: 1;
+}
+
+.customer-account-hero p {
+  margin: 0;
+  opacity: .72;
+  line-height: 1.5;
+}
+
+.customer-account-section {
+  margin-top: 18px;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.11);
+  border-radius: 18px;
+  background: #111;
+}
+
+.customer-account-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.customer-account-heading h2,
+.customer-account-section h2 {
+  margin: 4px 0 0;
+}
+
+.customer-live-pill,
+.customer-account-count {
+  display: inline-flex;
+  min-width: 34px;
+  height: 34px;
+  padding: 0 10px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #e31b23;
+  color: #fff;
+  font-weight: 800;
+  font-size: 12px;
+}
+
+.customer-account-muted,
+.customer-account-note {
+  opacity: .68;
+  line-height: 1.5;
+}
+
+.customer-account-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.customer-account-primary,
+.customer-account-secondary {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 800;
+  text-align: center;
+}
+
+.customer-account-primary {
+  background: #e31b23;
+  color: #fff;
+}
+
+.customer-account-secondary {
+  border: 1px solid rgba(255,255,255,.18);
+  color: #fff;
+}
+
+.customer-account-list {
+  margin-top: 14px;
+}
+
+.customer-account-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 15px 0;
+  border-top: 1px solid rgba(255,255,255,.09);
+  color: inherit;
+  text-decoration: none;
+}
+
+.customer-account-row:first-child {
+  border-top: 0;
+}
+
+.customer-account-row div {
+  display: grid;
+  gap: 4px;
+}
+
+.customer-account-row span {
+  opacity: .62;
+  font-size: 13px;
+}
+
+.customer-account-row-right {
+  text-align: right;
+}
+
+.customer-account-empty {
+  margin: 14px 0 0;
+  opacity: .62;
+}
+
+.customer-event-grid {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.customer-event-card {
+  display: grid;
+  gap: 5px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(255,255,255,.055);
+  color: inherit;
+  text-decoration: none;
+}
+
+.customer-event-card span {
+  opacity: .62;
+  font-size: 13px;
+}
+
+.customer-event-card b {
+  margin-top: 6px;
+  color: #fff;
+}
+
+.customer-account-verified {
+  font-weight: 800;
+}
+
+.customer-account-signout {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 12px;
+  border: 1px solid rgba(255,255,255,.18);
+  border-radius: 12px;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 800;
+}
+
+@media (max-width: 560px) {
+  .customer-account-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .customer-account-section {
+    padding: 17px;
+  }
+}
+
+.customer-account-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 999px;
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+/* White-label customer access colours */
+.customer-access-card {
+  background: var(--brand-panel-background, #111) !important;
+  border-color: var(--brand-border, rgba(255,255,255,.12)) !important;
+  color: var(--brand-text, #fff);
+}
+
+.customer-access-eyebrow {
+  color: var(--brand-accent, #c90000) !important;
+}
+
+.customer-access-intro,
+.customer-access-small {
+  color: var(--brand-muted, #c8c8cc);
+}
+
+.customer-access-button {
+  background: var(--brand-accent, #c90000) !important;
+}
+
+.customer-access-button:hover {
+  background: var(--brand-accent-hover, #e31b2f) !important;
+}
+
+.customer-access-error {
+  border-color: var(--brand-border, currentColor);
+}
+
+.customer-access-consent {
+  background: var(--brand-panel-secondary, #101012);
+  border-color: var(--brand-border, rgba(255,255,255,.14));
+}
+

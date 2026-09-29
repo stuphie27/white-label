@@ -1,0 +1,180 @@
+{% extends "staff_base.html" %}
+
+{% block title %}Staff Home · Sophie’s Photography{% endblock %}
+{% block control_title %}STAFF PORTAL{% endblock %}
+
+{% block content %}
+<div class="staff-home">
+
+  <section class="staff-home-welcome">
+    <div>
+      <div class="staff-home-kicker">SOPHIE’S PHOTOGRAPHY</div>
+      <h2>
+        {% if member and member.preferred_name %}
+          Hello, {{ member.preferred_name }}
+        {% elif member and member.staff_name %}
+          Hello, {{ member.staff_name }}
+        {% else %}
+          Welcome
+        {% endif %}
+      </h2>
+      <p>Your events, availability, details and timesheets in one place.</p>
+    </div>
+
+    <a class="staff-home-profile-button"
+       href="/staff/team/profile">
+      My Details
+    </a>
+  </section>
+
+  {% if next_event %}
+  <section class="staff-next-event">
+    <div class="staff-next-event-label">NEXT EVENT</div>
+
+    <div class="staff-next-event-grid">
+      <div>
+        <h3>{{ next_event.event.name }}</h3>
+
+        <p class="staff-next-event-meta">
+          {{ next_event.shift.shift_date.strftime('%A %d %B %Y') }}
+          {% if next_event.event.venue %}
+            · {{ next_event.event.venue }}
+          {% endif %}
+        </p>
+      </div>
+
+      <div class="staff-next-event-role">
+        <span>YOUR ROLE</span>
+        <strong>{{ next_event.shift.role or next_event.assignment.role }}</strong>
+      </div>
+
+      <div class="staff-next-event-role">
+        <span>START</span>
+        <strong>
+          {% if next_event.shift.scheduled_start %}
+            {{ next_event.shift.scheduled_start.strftime('%H:%M') }}
+          {% else %}
+            TBC
+          {% endif %}
+        </strong>
+      </div>
+    </div>
+
+    <a href="/staff/team/my-work" class="staff-next-event-link">
+      View event details →
+    </a>
+  </section>
+  {% else %}
+  <section class="staff-next-event staff-next-event-empty">
+    <div class="staff-next-event-label">NEXT EVENT</div>
+    <h3>No upcoming event currently assigned</h3>
+    <p>Your next confirmed event will appear here.</p>
+  </section>
+  {% endif %}
+
+  <section class="staff-home-card-grid">
+
+    <a href="/staff/team/my-work" class="staff-home-card">
+      <div class="staff-home-card-icon">▣</div>
+      <div>
+        <span>MY EVENTS</span>
+        <strong>{{ upcoming|length }} upcoming</strong>
+        <p>View your booked events, role and working times.</p>
+      </div>
+    </a>
+
+    <a href="/staff/team/my-work" class="staff-home-card">
+      <div class="staff-home-card-icon">✓</div>
+      <div>
+        <span>AVAILABILITY</span>
+        <strong>
+          {% if availability_count %}
+            {{ availability_count }} awaiting response
+          {% else %}
+            Up to date
+          {% endif %}
+        </strong>
+        <p>Tell us when you are available for upcoming events.</p>
+      </div>
+    </a>
+
+    <a href="/staff/team/approved-hours" class="staff-home-card">
+      <div class="staff-home-card-icon">◷</div>
+      <div>
+        <span>MY TIMESHEETS</span>
+        <strong>
+          {% if pending_timesheets %}
+            {{ pending_timesheets }} requiring attention
+          {% else %}
+            {{ completed_count }} completed
+          {% endif %}
+        </strong>
+        <p>Review your hours and completed event work.</p>
+      </div>
+    </a>
+
+    <a href="/staff/team/profile" class="staff-home-card">
+      <div class="staff-home-card-icon">♟</div>
+      <div>
+        <span>MY DETAILS</span>
+        <strong>Personal information</strong>
+        <p>Check and update the details we hold for you.</p>
+      </div>
+    </a>
+
+  </section>
+
+  <section class="staff-home-section">
+    <div class="staff-home-section-heading">
+      <div>
+        <span>STAFF INFORMATION</span>
+        <h3>Policies & Documents</h3>
+      </div>
+    </div>
+
+    <div class="staff-policy-grid">
+      <div class="staff-policy-placeholder">
+        <strong>Staff policies are coming here</strong>
+        <p>
+          Company policies, event guidance and staff documents
+          will be available directly from your portal.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  {% if is_super_admin %}
+  <section class="staff-home-section staff-management-overview">
+    <div class="staff-home-section-heading">
+      <div>
+        <span>MANAGEMENT</span>
+        <h3>Staff Overview</h3>
+      </div>
+    </div>
+
+    <div class="staff-management-grid">
+
+      <a href="/staff/team" class="staff-management-stat">
+        <span>ACTIVE STAFF</span>
+        <strong>{{ management.staff_count }}</strong>
+        <small>Manage staff →</small>
+      </a>
+
+      <a href="/staff/events" class="staff-management-stat">
+        <span>AVAILABILITY WAITING</span>
+        <strong>{{ management.availability_waiting }}</strong>
+        <small>View events →</small>
+      </a>
+
+      <a href="/staff/team/timesheets" class="staff-management-stat">
+        <span>TIMESHEETS WAITING</span>
+        <strong>{{ management.timesheets_waiting }}</strong>
+        <small>Review timesheets →</small>
+      </a>
+
+    </div>
+  </section>
+  {% endif %}
+
+</div>
+{% endblock %}

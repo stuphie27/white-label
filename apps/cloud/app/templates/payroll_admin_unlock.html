@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Payroll Security | Stuphie Ltd</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet"
+        href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}">
+</head>
+
+<body class="payroll-admin-page">
+<main class="shell">
+
+  <header class="top">
+    <div>
+      <div class="eyebrow">STUPHIE LTD</div>
+      <h1>Payroll Security</h1>
+      <div class="muted">
+        Additional verification required for Payroll Admin.
+      </div>
+    </div>
+
+    <form method="post" action="/staff/logout">
+      <button type="submit">Sign out</button>
+    </form>
+  </header>
+
+  <section class="panel" style="padding:24px">
+
+    <h2>Email security check</h2>
+
+    <p class="muted">
+      Payroll information is protected by an additional one-time code.
+      The code will be sent to:
+    </p>
+
+    <p>
+      <strong>{{ staff_email }}</strong>
+    </p>
+
+    {% if error %}
+      <div class="status-message error-message">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    {% if sent %}
+      <div class="status-message success-message">
+        Security code sent. It expires in 10 minutes.
+      </div>
+
+      <form method="post"
+            action="/staff/payroll/unlock/verify"
+            style="margin-top:22px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+        <label>
+          6-digit security code
+          <input
+            name="code"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            pattern="[0-9]{6}"
+            maxlength="6"
+            required
+          >
+        </label>
+
+        <div style="margin-top:18px">
+          <button type="submit">
+            Unlock Payroll Admin
+          </button>
+        </div>
+      </form>
+
+      <form method="post"
+            action="/staff/payroll/unlock/send-code"
+            style="margin-top:14px">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button class="button" type="submit">
+          Send another code
+        </button>
+      </form>
+
+    {% else %}
+
+      <form method="post"
+            action="/staff/payroll/unlock/send-code"
+            style="margin-top:22px">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <button type="submit">
+          Email my security code
+        </button>
+      </form>
+
+    {% endif %}
+
+  </section>
+
+</main>
+</body>
+</html>

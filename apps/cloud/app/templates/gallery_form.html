@@ -1,0 +1,15 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'galleries' %}
+{% block title %}{{ 'Edit Gallery' if gallery else 'Create Gallery' }} | Stuphie Ltd{% endblock %}
+{% block content %}
+<section class="page-title-row dark-title-row"><div><p class="section-kicker">GALLERY MANAGEMENT</p><h1>{{ 'Edit Gallery' if gallery else 'Create Gallery' }}</h1><p class="page-summary">Customer access and publishing settings.</p></div><a class="ghost-button" href="{{ '/staff/galleries/' ~ gallery.id if gallery else '/staff/galleries' }}">Cancel</a></section>
+{% if error %}<div class="alert-banner error">{{ error }}</div>{% endif %}
+<form class="pirouette-form live-panel dark-form" method="post" action="{{ form_action }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+<h3>GALLERY DETAILS</h3><label><span>Event</span><select name="event_id" required>{% for event in events %}<option value="{{ event.id }}" {{ 'selected' if selected_event_id == event.id else '' }}>{{ event.name }} — {{ event.start_date.strftime('%d %b %Y') }}</option>{% endfor %}</select></label>
+<label><span>Gallery name</span><input name="name" maxlength="200" required value="{{ gallery.name if gallery else '' }}" placeholder="ABC Dance Academy 2026"></label>
+{% if not gallery %}<label><span>Web address</span><input name="slug" maxlength="180" value="" placeholder="abc-dance-academy-2026"><small>Leave blank to generate automatically.</small></label>{% endif %}
+<div class="form-grid-2"><label><span>Status</span><select name="gallery_status">{% for status in statuses %}<option value="{{ status }}" {{ 'selected' if gallery and gallery.status == status else '' }}>{{ status|title }}</option>{% endfor %}</select></label><label><span>Visibility</span><select name="visibility">{% for visibility in visibilities %}<option value="{{ visibility }}" {{ 'selected' if gallery and gallery.visibility == visibility else '' }}>{{ visibility|title }}</option>{% endfor %}</select></label></div>
+<div class="form-grid-2"><label><span>{{ 'New access code' if gallery else 'Customer access code' }}</span><input name="access_code" maxlength="32" value="{{ suggested_code if not gallery else '' }}" inputmode="numeric"><small>{{ 'Leave blank to keep the current code.' if gallery else 'Required for private galleries; six digits suggested.' }}</small></label><label><span>Expiry date</span><input type="date" name="expires_at" value="{{ gallery.expires_at.isoformat() if gallery and gallery.expires_at else '' }}"></label></div>
+<label><span>Customer-facing description</span><textarea name="description" rows="5">{{ gallery.description if gallery else '' }}</textarea></label>
+<div class="form-actions"><button class="primary-button" type="submit">{{ 'Save Changes' if gallery else 'Create Gallery' }}</button><a class="text-button" href="{{ '/staff/galleries/' ~ gallery.id if gallery else '/staff/galleries' }}">Cancel</a></div></form>
+{% endblock %}

@@ -1,0 +1,13 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'events' %}
+{% block title %}Events Paused | Stuphie Ltd{% endblock %}
+{% block content %}
+<section class="page-title-row"><div><p class="section-kicker">EVENT MANAGEMENT</p><h1>Events are paused</h1><p class="page-summary">Stuphie Ltd remains online. Event Management will open as soon as the database connection and Pirouette tables are ready.</p></div></section>
+<section class="pirouette-panel">
+  {% if connection_ready and not schema_ready %}
+  <div class="panel-empty warning"><strong>Database setup is required</strong><p>The PostgreSQL connection works, but the Pirouette tables have not been initialised yet.</p><a class="primary-button" href="/staff/database">Complete database setup</a></div>
+  {% else %}
+  <div class="panel-empty warning"><strong>Database connection unavailable</strong><p>Check System Status. This does not affect the offline Event application.</p><a class="secondary-button" href="/staff/database">Open system status</a></div>
+  {% endif %}
+</section>
+{% endblock %}

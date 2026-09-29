@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive">
+
+<title>Staff Payroll | Sophie’s Photography</title>
+
+<link rel="stylesheet" href="/shared-ui/pirouette-interface.css">
+<link rel="stylesheet" href="/static/staff-payroll.css?v={{ request.app.state.settings.version }}">
+</head>
+
+<body class="pirouette-interface">
+
+<main class="payroll-shell">
+
+<header class="payroll-brand">
+  <img
+    src="/customer-static/images/sophies-dashboard-logo.png"
+    alt="Sophie’s Photography"
+  >
+
+  <div class="payroll-brand-copy">
+    <p class="eyebrow">STUPHIE LTD · STAFF PAYROLL</p>
+    <strong>Secure Timesheet</strong>
+  </div>
+</header>
+
+<section class="payroll-hero">
+
+  <p class="eyebrow">PRIVATE STAFF PAYROLL</p>
+
+  <h1>Timesheet<br>&amp; Expenses</h1>
+
+  <p class="payroll-intro">
+    Hello <strong>{{ row.staff_name }}</strong>. Enter your working hours and
+    business expenses for this payroll week. Save your draft at any time and
+    return later using your private link.
+  </p>
+
+  <div class="payroll-meta">
+
+    <div class="payroll-meta-card">
+      <small>STAFF MEMBER</small>
+      <strong>{{ row.staff_name }}</strong>
+      <span>Secure Stuphie Ltd payroll record</span>
+    </div>
+
+    <div class="payroll-meta-card">
+      <small>PAYROLL WEEK</small>
+      <strong>
+        {{ row.week_start.strftime('%d %B %Y') }}
+        →
+        {{ (row.week_start.fromordinal(row.week_start.toordinal() + 6)).strftime('%d %B %Y') }}
+      </strong>
+      <span>Wednesday to Tuesday · submission day Wednesday</span>
+    </div>
+
+  </div>
+
+</section>
+
+<div class="payroll-notices">
+
+  <div class="payroll-notice">
+    <div class="payroll-notice-icon">!</div>
+    <div>
+      <strong>Monthly payroll cut-off: 20th of each month</strong>
+      <span>
+        Make sure all hours and expenses due for payroll are entered before
+        the monthly cut-off.
+      </span>
+    </div>
+  </div>
+
+  {% if saved %}
+  <div class="payroll-saved">
+    Draft saved. You can close this page and return later using your private link.
+  </div>
+  {% endif %}
+
+  {% if errors %}
+  <div class="payroll-notice">
+    <div class="payroll-notice-icon">!</div>
+    <div>
+      <strong>Please check your payroll submission</strong>
+      {% for error in errors %}
+      <span>{{ error }}</span>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+{% if row.status == 'submitted' %}
+
+<div class="payroll-saved">
+  Payroll submitted successfully. This week is now locked and
+  can no longer be edited.
+</div>
+
+{% else %}
+
+<form
+  class="payroll-form"
+  method="post"
+  action="/payroll/{{ token }}/save"
+  enctype="multipart/form-data"
+>
+
+<section class="payroll-section">
+
+  <header class="payroll-section-heading">
+    <div>
+      <div class="payroll-section-number">01 · TIMESHEET</div>
+      <h2>Working hours</h2>
+    </div>
+
+    <p class="payroll-help">
+      Enter the time you actually started and finished work.
+      Travel to site before setup is not included. Event paid time
+      starts when setup begins.
+    </p>
+  </header>
+
+  <div class="timesheet-wrap">
+
+    <table class="timesheet">
+
+      <thead>
+        <tr>
+          <th>Day</th>
+          <th>Start</th>
+          <th>Finish</th>
+          <th>Break</th>
+          <th>Notes / event / work completed</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+      {% for day in payroll_days %}
+
+        <tr>
+
+          <td class="payroll-day">
+            <strong>{{ day.day_name }}</strong>
+            <span>{{ day.date_label }}</span>
+          </td>
+
+          <td>
+            <input
+              class="payroll-input"
+              type="time"
+              name="day_{{ loop.index0 }}_start_time"
+              value="{{ day.start_time }}"
+            >
+          </td>
+
+          <td>
+            <input
+              class="payroll-input"
+              type="time"
+              name="day_{{ loop.index0 }}_finish_time"
+              value="{{ day.finish_time }}"
+            >
+          </td>
+
+          <td>
+            <input
+              class="payroll-input"
+              type="number"
+              min="0"
+              max="1440"
+              name="day_{{ loop.index0 }}_break_minutes"
+              value="{{ day.break_minutes }}"
+              placeholder="mins"
+            >
+          </td>
+
+          <td>
+            <textarea
+              class="payroll-textarea"
+              name="day_{{ loop.index0 }}_notes"
+              maxlength="1000"
+              placeholder="Event, editing, office work, admin…"
+            >{{ day.notes }}</textarea>
+          </td>
+
+        </tr>
+
+      {% endfor %}
+
+      </tbody>
+
+    </table>
+
+  </div>
+
+</section>
+
+<section class="payroll-section">
+
+  <header class="payroll-section-heading">
+    <div>
+      <div class="payroll-section-number">02 · EXPENSES</div>
+      <h2>Business expenses</h2>
+    </div>
+
+    <p class="payroll-help">
+      Add any business expenses for this payroll week.
+      Upload a receipt for each expense where available.
+    </p>
+  </header>
+
+  <div class="expenses">
+
+  {% for index in range(10) %}
+
+    {% set expense = expense_claims[index] if index < expense_claims|length else {} %}
+
+    <div class="expense-card">
+
+      <div class="expense-number">
+        {{ '%02d' | format(index + 1) }}
+      </div>
+
+      <input
+        class="payroll-input"
+        type="date"
+        name="expense_{{ index }}_date"
+        min="{{ row.week_start.isoformat() }}"
+        max="{{ (row.week_start.fromordinal(row.week_start.toordinal() + 6)).isoformat() }}"
+        value="{{ expense.get('expense_date', '') }}"
+        aria-label="Expense {{ index + 1 }} date"
+      >
+
+      <select
+        class="payroll-select"
+        name="expense_{{ index }}_category"
+        aria-label="Expense {{ index + 1 }} category"
+      >
+        <option value="">Category</option>
+
+        {% for category in [
+          'Travel',
+          'Parking',
+          'Accommodation',
+          'Food',
+          'Equipment',
+          'Postage',
+          'Other'
+        ] %}
+
+        <option
+          value="{{ category }}"
+          {% if expense.get('category') == category %}selected{% endif %}
+        >
+          {{ category }}
+        </option>
+
+        {% endfor %}
+      </select>
+
+      <input
+        class="payroll-input expense-description"
+        type="text"
+        maxlength="500"
+        name="expense_{{ index }}_description"
+        value="{{ expense.get('description', '') }}"
+        placeholder="What was the expense for?"
+        aria-label="Expense {{ index + 1 }} description"
+      >
+
+      <input
+        class="payroll-input expense-amount"
+        type="number"
+        min="0"
+        step="0.01"
+        name="expense_{{ index }}_amount"
+        value="{{ expense.get('amount', '') }}"
+        placeholder="£0.00"
+        aria-label="Expense {{ index + 1 }} amount"
+      >
+
+      <div class="payroll-expense-receipt">
+        <label>
+          <span>Receipt</span>
+          <input
+            type="file"
+            name="expense_{{ index }}_receipt"
+            accept=".jpg,.jpeg,.png,.webp,.pdf,image/jpeg,image/png,image/webp,application/pdf"
+            aria-label="Expense {{ index + 1 }} receipt"
+          >
+        </label>
+
+        {% if expense.get('receipt') %}
+        <p class="payroll-help">
+          ✓ Receipt already uploaded. Choose another file only
+          if you want to replace it.
+        </p>
+        {% endif %}
+
+        <label>
+          <span>No receipt? Tell us why</span>
+          <input
+            class="payroll-input"
+            type="text"
+            name="expense_{{ index }}_no_receipt_reason"
+            maxlength="500"
+            value="{{ expense.get('no_receipt_reason', '') }}"
+            placeholder="e.g. Parking meter did not issue a receipt"
+            aria-label="Expense {{ index + 1 }} no receipt reason"
+          >
+        </label>
+      </div>
+
+
+    </div>
+
+  {% endfor %}
+
+  </div>
+
+</section>
+
+<div class="payroll-actions">
+
+  <div class="payroll-actions-copy">
+    <strong>Not finished yet?</strong>
+    <span>Save now and return later using your secure payroll link.</span>
+  </div>
+
+  <div>
+    <button
+      class="payroll-save"
+      type="submit"
+      name="payroll_action"
+      value="save"
+    >
+      Save Draft
+    </button>
+
+    <button
+      class="payroll-save"
+      type="submit"
+      name="payroll_action"
+      value="submit"
+    >
+      Submit Week
+    </button>
+  </div>
+
+</div>
+
+</form>
+
+{% endif %}
+
+<footer class="payroll-footer">
+  Sophie’s Photography · Stuphie Ltd
+</footer>
+
+</main>
+
+</body>
+</html>

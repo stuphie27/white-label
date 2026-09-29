@@ -1,0 +1,25 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'database' %}
+{% block title %}System Status | Stuphie Ltd{% endblock %}
+{% block content %}
+<section class="page-title-row"><div><p class="section-kicker">SYSTEM STATUS</p><h1>Cloud Health</h1><p class="page-summary">Connection and schema checks are separate from application startup, so Pirouette stays online if a service has a problem.</p></div></section>
+{% if message %}<div class="alert-banner success">{{ message }}</div>{% endif %}
+{% if error %}<div class="alert-banner error">{{ error }}</div>{% endif %}
+<section class="status-grid">
+  <article class="pirouette-panel status-card"><span>APPLICATION</span><strong class="healthy-text">● Online</strong><small>Version {{ version }}</small></article>
+  <article class="pirouette-panel status-card"><span>DATABASE</span><strong class="{{ 'healthy-text' if ready else 'warning-text' }}">● {{ 'Connected' if ready else 'Unavailable' }}</strong><small>{{ 'PostgreSQL connection successful' if ready else ('Configured but connection failed' if configured else 'Not configured') }}</small></article>
+  <article class="pirouette-panel status-card"><span>PIROUETTE TABLES</span><strong class="{{ 'healthy-text' if schema_ready else 'warning-text' }}">● {{ 'Ready' if schema_ready else 'Setup required' }}</strong><small>{{ 'Events and migrations are available' if schema_ready else 'Initialise the cloud database once' }}</small></article>
+</section>
+{% if ready and not schema_ready %}
+<section class="pirouette-panel setup-panel">
+  <div class="panel-title"><div><span>ONE-TIME SETUP</span><h2>Initialise Stuphie Ltd</h2></div></div>
+  <p>This creates the versioned Pirouette tables in the connected PostgreSQL database. It does not alter your Event Mac or any photographs.</p>
+  <form method="post" action="/staff/database/initialise">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <button class="primary-button" type="submit">Initialise Database</button>
+  </form>
+</section>
+{% endif %}
+{% if database_error %}<details class="technical-details"><summary>Technical detail</summary><pre>{{ database_error }}</pre></details>{% endif %}
+<p><a class="secondary-button" href="/staff">Return to Dashboard</a></p>
+{% endblock %}

@@ -1,0 +1,354 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'events' %}
+{% block title %}{{ page_title }} | Stuphie Online{% endblock %}
+
+{% block content %}
+
+<section class="page-title-row dark-title-row">
+  <div>
+    <p class="section-kicker">STUPHIE ONLINE · EVENT MANAGEMENT</p>
+    <h1>{{ page_title }}</h1>
+    <p class="page-summary">
+      Plan the event online. Once approved, its Event Package can be
+      published to Stuphie Offline.
+    </p>
+  </div>
+
+  <a class="ghost-button"
+     href="{{ '/staff/events/' ~ event.id if event else '/staff/events' }}">
+    Cancel
+  </a>
+</section>
+
+{% if error %}
+<div class="alert-banner error">{{ error }}</div>
+{% endif %}
+
+<form class="pirouette-form live-panel dark-form"
+      method="post"
+      action="{{ form_action }}">
+
+  <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+  <h3>CORE EVENT INFORMATION</h3>
+
+  <label class="field-wide">
+    <span>Event name</span>
+    <input
+      name="name"
+      maxlength="200"
+      required
+      value="{{ event.name if event else '' }}"
+      placeholder="SUKI">
+  </label>
+
+  <div class="form-grid-2">
+    <label>
+      <span>Client / school</span>
+      <input
+        name="client_name"
+        maxlength="200"
+        value="{{ event.client_name if event else '' }}">
+    </label>
+
+    <label>
+      <span>Principal / main contact</span>
+      <input
+        name="principal_name"
+        maxlength="200"
+        value="{{ event.principal_name if event else '' }}">
+    </label>
+  </div>
+
+  <div class="form-grid-2">
+    <label>
+      <span>Venue</span>
+      <input
+        name="venue"
+        maxlength="250"
+        value="{{ event.venue if event else '' }}">
+    </label>
+
+    <label>
+      <span>Event type / dance style</span>
+      <input
+        name="dance_style"
+        maxlength="120"
+        value="{{ event.dance_style if event else '' }}">
+    </label>
+  </div>
+
+  <div class="form-grid-2">
+    <label>
+      <span>Start date</span>
+      <input
+        type="date"
+        name="start_date"
+        required
+        value="{{ event.start_date.isoformat() if event else '' }}">
+    </label>
+
+    <label>
+      <span>End date</span>
+      <input
+        type="date"
+        name="end_date"
+        required
+        value="{{ event.end_date.isoformat() if event else '' }}">
+    </label>
+  </div>
+
+
+  <h3>PROMOTER / ORGANISER</h3>
+
+  <label>
+    <span>Promoter name</span>
+    <input
+      name="promoter_name"
+      maxlength="200"
+      value="{{ event.promoter_name if event else '' }}">
+  </label>
+
+  <div class="form-grid-2">
+    <label>
+      <span>Promoter email</span>
+      <input
+        type="email"
+        name="promoter_email"
+        maxlength="320"
+        value="{{ event.promoter_email if event else '' }}">
+    </label>
+
+    <label>
+      <span>Promoter phone</span>
+      <input
+        name="promoter_phone"
+        maxlength="80"
+        value="{{ event.promoter_phone if event else '' }}">
+    </label>
+  </div>
+
+
+  <h3>EVENT-DAY OPERATION</h3>
+
+  <div class="form-grid-3">
+    <label>
+      <span>Arrival time</span>
+      <input
+        type="time"
+        name="arrival_time"
+        value="{{ event.arrival_time.strftime('%H:%M') if event and event.arrival_time else '' }}">
+    </label>
+
+    <label>
+      <span>Event starts</span>
+      <input
+        type="time"
+        name="event_start_time"
+        value="{{ event.event_start_time.strftime('%H:%M') if event and event.event_start_time else '' }}">
+    </label>
+
+    <label>
+      <span>Event finishes</span>
+      <input
+        type="time"
+        name="event_end_time"
+        value="{{ event.event_end_time.strftime('%H:%M') if event and event.event_end_time else '' }}">
+    </label>
+  </div>
+
+  <div class="form-grid-3">
+    <label>
+      <span>Photography start</span>
+      <input
+        type="time"
+        name="photography_start"
+        value="{{ event.photography_start.strftime('%H:%M') if event and event.photography_start else '' }}">
+    </label>
+
+    <label>
+      <span>Photography finish</span>
+      <input
+        type="time"
+        name="photography_finish"
+        value="{{ event.photography_finish.strftime('%H:%M') if event and event.photography_finish else '' }}">
+    </label>
+
+    <label>
+      <span>Lead photographer</span>
+      <input
+        name="photographer_name"
+        maxlength="200"
+        value="{{ event.photographer_name if event else '' }}">
+    </label>
+  </div>
+
+
+  <h3>STAFFING & LOGISTICS</h3>
+
+  <div class="form-grid-2">
+    <label>
+      <span>Staff required</span>
+      <input
+        type="number"
+        min="0"
+        name="staff_required"
+        value="{{ event.staff_required if event and event.staff_required is not none else '' }}">
+    </label>
+
+    <label>
+      <span>Estimated travel time — minutes</span>
+      <input
+        type="number"
+        min="0"
+        name="travel_time_minutes"
+        value="{{ event.travel_time_minutes if event and event.travel_time_minutes is not none else '' }}">
+    </label>
+  </div>
+
+  <label>
+    <input
+      type="checkbox"
+      name="hotel_required"
+      value="1"
+      {% if event and event.hotel_required %}checked{% endif %}>
+    <span>Hotel / overnight accommodation required</span>
+  </label>
+
+  <label>
+    <span>Hotel information</span>
+    <textarea
+      name="hotel_info"
+      rows="3"
+      placeholder="Hotel, address, booking reference, rooms or notes">{{ event.hotel_info if event else '' }}</textarea>
+  </label>
+
+
+  <h3>SERVICES REQUIRED</h3>
+
+  <div class="form-grid-2">
+
+    <label>
+      <input
+        type="checkbox"
+        name="photography_enabled"
+        value="1"
+        {% if not event or event.photography_enabled %}checked{% endif %}>
+      <span>Photography</span>
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        name="video_enabled"
+        value="1"
+        {% if event and event.video_enabled %}checked{% endif %}>
+      <span>Video</span>
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        name="printing_enabled"
+        value="1"
+        {% if not event or event.printing_enabled %}checked{% endif %}>
+      <span>Event printing</span>
+    </label>
+
+    <label>
+      <input
+        type="checkbox"
+        name="customer_kiosk_enabled"
+        value="1"
+        {% if not event or event.customer_kiosk_enabled %}checked{% endif %}>
+      <span>Customer iPads / kiosks</span>
+    </label>
+
+  </div>
+
+
+  <h3>PLANNING</h3>
+
+  <label>
+    <span>Customer-facing description</span>
+    <textarea
+      name="description"
+      rows="4">{{ event.description if event else '' }}</textarea>
+  </label>
+
+  <label>
+    <span>Planning notes</span>
+    <textarea
+      name="planning_notes"
+      rows="5"
+      placeholder="Travel, setup, running order, special requirements, staffing notes">{{ event.planning_notes if event else '' }}</textarea>
+  </label>
+
+  <label>
+    <span>Internal staff notes</span>
+    <textarea
+      name="internal_notes"
+      rows="4">{{ event.internal_notes if event else '' }}</textarea>
+  </label>
+
+
+  <h3>EVENT READINESS</h3>
+
+  <div class="alert-banner">
+    <strong>EVENT READY is confirmed from Event Control.</strong>
+    <span>
+      Save the planning information first. Stuphie will check the required
+      event details and staffing before the event can be marked ready.
+    </span>
+  </div>
+
+  <label>
+    <span>Online event status</span>
+
+    {% if event and event.status == 'archived' %}
+
+    <input type="hidden"
+           name="event_status"
+           value="archived">
+
+    <select disabled>
+      <option selected>Archived — Completed</option>
+    </select>
+
+    <small>
+      Completed events are locked. Use Reopen Event from the
+      event page if this event needs to become active again.
+    </small>
+
+    {% else %}
+
+    <select name="event_status">
+      {% for status in statuses %}
+      {% if status != 'archived' %}
+      <option
+        value="{{ status }}"
+        {{ 'selected' if event and event.status == status else '' }}>
+        {{ status|title }}
+      </option>
+      {% endif %}
+      {% endfor %}
+    </select>
+
+    {% endif %}
+  </label>
+
+
+  <div class="form-actions">
+    <button class="primary-button" type="submit">
+      {{ 'Save Changes' if event else 'Create Event' }}
+    </button>
+
+    <a class="text-button"
+       href="{{ '/staff/events/' ~ event.id if event else '/staff/events' }}">
+      Cancel
+    </a>
+  </div>
+
+</form>
+
+{% endblock %}

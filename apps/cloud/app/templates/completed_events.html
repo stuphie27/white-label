@@ -1,0 +1,127 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'completed_events' %}
+
+{% block title %}Completed Events | Stuphie{% endblock %}
+
+{% block content %}
+
+<section class="page-title-row dark-title-row">
+  <div>
+    <p class="section-kicker">EVENT RECORDS</p>
+    <h1>Completed Events</h1>
+    <p class="page-summary">
+      Historical event records retained for reference.
+    </p>
+  </div>
+
+  <a class="ghost-button"
+     href="/staff/events">
+    ← Current Events
+  </a>
+</section>
+
+<section class="event-toolbar live-panel">
+
+  <form method="get"
+        action="/staff/events/completed">
+
+    <label>
+      <span>Search completed events</span>
+
+      <input name="q"
+             value="{{ query }}"
+             placeholder="Event, client, venue or photographer">
+    </label>
+
+    <button class="primary-button"
+            type="submit">
+      Search
+    </button>
+
+    {% if query %}
+      <a class="ghost-button"
+         href="/staff/events/completed">
+        Clear
+      </a>
+    {% endif %}
+
+  </form>
+
+</section>
+
+<section class="live-panel event-manager-panel">
+
+  <div class="panel-heading">
+    <h3>COMPLETED EVENTS</h3>
+
+    <span>
+      {{ events|length }}
+      result{{ '' if events|length == 1 else 's' }}
+    </span>
+  </div>
+
+  {% if events %}
+
+    <div class="event-table dark-event-table"
+         role="list">
+
+      {% for event in events %}
+
+        <a class="event-table-row"
+           href="/staff/events/{{ event.id }}"
+           role="listitem">
+
+          <div class="event-main">
+            <strong>{{ event.name }}</strong>
+
+            <small>
+              {{ event.client_name or event.venue or 'Client not set' }}
+
+              {% if event.photographer_name %}
+                · {{ event.photographer_name }}
+              {% endif %}
+            </small>
+          </div>
+
+          <div>
+            <span class="event-date">
+              {{ event.start_date.strftime('%d %b %Y') }}
+            </span>
+
+            <small>
+              {% if event.end_date != event.start_date %}
+                to {{ event.end_date.strftime('%d %b %Y') }}
+              {% else %}
+                Single day
+              {% endif %}
+            </small>
+          </div>
+
+          <span class="status-badge status-archived">
+            Completed
+          </span>
+
+          <span class="row-arrow">›</span>
+
+        </a>
+
+      {% endfor %}
+
+    </div>
+
+  {% else %}
+
+    <div class="panel-empty-dark">
+      <strong>No completed events found</strong>
+
+      <p>
+        Completed events will appear here automatically.
+      </p>
+    </div>
+
+  {% endif %}
+
+</section>
+
+{% endblock %}

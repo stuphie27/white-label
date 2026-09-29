@@ -1,0 +1,487 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="utf-8">
+
+<meta name="viewport"
+      content="width=device-width,initial-scale=1">
+
+<meta name="robots"
+      content="noindex,nofollow,noarchive">
+
+<title>
+Secure Staff Profile | Sophie’s Photography
+</title>
+<link rel="stylesheet" href="/static/cloud-customer.css">
+</head>
+
+
+<body>
+
+<main class="shell">
+
+
+<header class="hero">
+
+<img
+  src="/customer-static/images/sophies-dashboard-logo.png"
+  alt="Sophie’s Photography"
+>
+
+<div class="eyebrow">
+SECURE STAFF ONBOARDING
+</div>
+
+<h1>
+Hello {{ member.preferred_name or member.name }}
+</h1>
+
+<p>
+Please complete your staff record and upload your
+identification photograph.
+</p>
+
+</header>
+
+
+
+<section class="security">
+
+<div class="lock">
+🔒
+</div>
+
+<div>
+
+<strong>
+PRIVATE STAFF PROFILE
+</strong>
+
+<h2>
+This secure HTTPS link belongs only to you.
+</h2>
+
+<p>
+Do not forward, copy or share this page or its address.
+</p>
+
+<ul>
+
+<li>
+Sophie’s Photography will never ask you to email
+medical, allergy or emergency-contact information.
+</li>
+
+<li>
+Enter confidential information only on this secure page.
+</li>
+
+<li>
+Health, allergy and support information is optional and
+is used only for staff welfare and emergencies.
+</li>
+
+<li>
+Medical and emergency information never appears on your
+ID pass or ordinary event timesheets.
+</li>
+
+<li>
+This link closes permanently as soon as you submit it.
+</li>
+
+<li>
+If you believe somebody else has received this link,
+stop and contact Sophie’s Photography.
+</li>
+
+</ul>
+
+</div>
+
+</section>
+
+
+
+<form method="post"
+      enctype="multipart/form-data">
+
+
+<section class="card">
+
+<h2>
+01 · About You
+</h2>
+
+
+<div class="fields">
+
+<label>
+Staff ID
+
+<input
+  value="{{ member.staff_code }}"
+  disabled
+>
+</label>
+
+
+<label>
+Full name
+
+<input
+  value="{{ member.name }}"
+  disabled
+>
+</label>
+
+
+<label>
+Preferred / pass name
+
+<input
+  name="preferred_name"
+  value="{{ member.preferred_name }}"
+>
+</label>
+
+
+<label>
+Role
+
+<input
+  value="{{ member.role or 'Photography Staff' }}"
+  disabled
+>
+</label>
+
+
+<label>
+Email address
+
+<input
+  type="email"
+  name="email"
+  value="{{ member.email }}"
+  required
+>
+</label>
+
+
+<label>
+Mobile telephone
+
+<input
+  name="telephone"
+  required
+>
+</label>
+
+
+<label>
+Date of birth
+
+<input
+  type="date"
+  name="date_of_birth"
+>
+</label>
+
+</div>
+
+</section>
+
+
+
+<section class="card">
+
+<h2>
+02 · Home Address
+</h2>
+
+
+<div class="fields">
+
+<label class="wide">
+Address line 1
+
+<input
+  name="address_line_1"
+>
+</label>
+
+
+<label class="wide">
+Address line 2
+
+<input
+  name="address_line_2"
+>
+</label>
+
+
+<label>
+Town / City
+
+<input
+  name="town_city"
+>
+</label>
+
+
+<label>
+Postcode
+
+<input
+  name="postcode"
+>
+</label>
+
+</div>
+
+</section>
+
+
+
+<section class="card">
+
+<h2>
+03 · Emergency Contacts
+</h2>
+
+<p class="note">
+Please provide somebody we can contact if you become
+ill or are injured while working.
+</p>
+
+
+<div class="fields">
+
+<label>
+Emergency contact
+
+<input
+  name="emergency_name"
+  required
+>
+</label>
+
+
+<label>
+Relationship
+
+<input
+  name="emergency_relationship"
+>
+</label>
+
+
+<label>
+Emergency telephone
+
+<input
+  name="emergency_phone"
+  required
+>
+</label>
+
+
+<label>
+Secondary contact
+
+<input
+  name="secondary_emergency_name"
+>
+</label>
+
+
+<label>
+Secondary telephone
+
+<input
+  name="secondary_emergency_phone"
+>
+</label>
+
+</div>
+
+</section>
+
+
+
+<section class="card confidential">
+
+<h2>
+04 · Health &amp; Welfare
+</h2>
+
+<p class="note">
+These fields are optional and confidential.
+Enter “None” where appropriate, or leave optional
+information blank.
+</p>
+
+
+<div class="fields">
+
+<label class="wide">
+Allergies
+
+<textarea
+  name="allergies"
+  rows="3"
+></textarea>
+</label>
+
+
+<label class="wide">
+Relevant medical information
+
+<textarea
+  name="medical_notes"
+  rows="3"
+></textarea>
+</label>
+
+
+<label class="wide">
+Accessibility / support requirements
+
+<textarea
+  name="accessibility_requirements"
+  rows="3"
+></textarea>
+</label>
+
+
+<label class="wide">
+Dietary requirements
+
+<textarea
+  name="dietary_requirements"
+  rows="2"
+></textarea>
+</label>
+
+</div>
+
+</section>
+
+
+
+<section class="card">
+
+<h2>
+05 · Event Information
+</h2>
+
+
+<div class="fields">
+
+<label>
+Driving status
+
+<select name="driving_status">
+
+<option value="">
+Not recorded
+</option>
+
+<option value="Full licence">
+Full licence
+</option>
+
+<option value="Provisional">
+Provisional licence
+</option>
+
+<option value="Does not drive">
+Does not drive
+</option>
+
+</select>
+
+</label>
+
+
+<label>
+Clothing / uniform size
+
+<input
+  name="uniform_size"
+>
+</label>
+
+</div>
+
+</section>
+
+
+
+<section class="card">
+
+<h2>
+06 · Official Staff Pass Photograph
+</h2>
+
+<p class="note">
+Upload a recent, clear photograph showing your face.
+
+This photograph will appear on your
+<strong>OFFICIAL PHOTOGRAPHY STAFF</strong>
+pass.
+</p>
+
+
+<label>
+
+Photograph
+
+<input
+  type="file"
+  name="photo"
+  accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif"
+  required
+>
+
+</label>
+
+</section>
+
+
+
+<section class="submit">
+
+<div>
+
+<strong>
+Ready to submit?
+</strong>
+
+<p>
+Please check your details carefully.
+
+Your private link will close immediately
+after successful submission.
+</p>
+
+</div>
+
+
+<button type="submit">
+SUBMIT MY STAFF PROFILE
+</button>
+
+</section>
+
+
+</form>
+
+</main>
+
+</body>
+
+</html>

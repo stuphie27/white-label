@@ -1,0 +1,490 @@
+{% extends "staff_base.html" %}
+
+{% set active_nav = 'profile' %}
+
+{% block title %}My Details | Stuphie Ltd{% endblock %}
+{% block control_title %}MY DETAILS{% endblock %}
+
+{% block content %}
+
+<section class="private-profile-shell">
+
+  <header class="private-profile-header">
+
+    <div>
+      <p class="team-eyebrow">
+        PRIVATE STAFF SELF SERVICE
+      </p>
+
+      <h1>
+        {% if member %}
+          {{ member.preferred_name or member.staff_name }}
+        {% else %}
+          My Details
+        {% endif %}
+      </h1>
+
+      <p>
+        Your private Stuphie staff record.
+        Only you and authorised management can access
+        this information.
+      </p>
+    </div>
+
+    {% if member %}
+
+    <div class="private-profile-status">
+      <span>PROFILE</span>
+
+      <strong>
+        {% if member.profile_completed_at %}
+          COMPLETE
+        {% else %}
+          DETAILS REQUIRED
+        {% endif %}
+      </strong>
+    </div>
+
+    {% endif %}
+
+  </header>
+
+
+  {% if not member %}
+
+  <section class="private-profile-warning">
+    <strong>STAFF PROFILE NOT LINKED</strong>
+
+    <p>
+      Your signed-in account could not be linked to your
+      Staff Master record. Please contact management.
+    </p>
+  </section>
+
+  {% else %}
+
+
+  {% if request.query_params.get('saved') == '1' %}
+  <div class="private-profile-success">
+    ✓ Your staff details have been updated.
+  </div>
+  {% endif %}
+
+
+  {% if request.query_params.get('error') == 'photo_type' %}
+  <div class="private-profile-error">
+    Please upload a JPG, PNG, WebP, HEIC or HEIF photograph.
+  </div>
+  {% endif %}
+
+
+  {% if request.query_params.get('error') == 'photo_size' %}
+  <div class="private-profile-error">
+    Your photograph must be smaller than 12 MB.
+  </div>
+  {% endif %}
+
+
+  <section class="private-profile-identity">
+
+    <div class="private-profile-photo">
+
+      {% if member.photo_storage_path %}
+
+      <img
+        src="/staff/team/{{ member.id }}/directory-photo"
+        alt="{{ member.preferred_name or member.staff_name }}"
+      >
+
+      {% else %}
+
+      <span>
+        {{
+          (
+            member.preferred_name
+            or member.staff_name
+            or '?'
+          )[:1]|upper
+        }}
+      </span>
+
+      {% endif %}
+
+    </div>
+
+
+    <div>
+
+      <span class="private-profile-label">
+        STAFF MEMBER
+      </span>
+
+      <h2>
+        {{ member.preferred_name or member.staff_name }}
+      </h2>
+
+      <p>
+        {{ member.default_role or 'Photography Staff' }}
+      </p>
+
+      <small>
+        {{ member.email }}
+      </small>
+
+    </div>
+
+  </section>
+
+
+  <form
+    method="post"
+    action="/staff/team/profile"
+    enctype="multipart/form-data"
+    class="private-profile-form"
+  >
+
+    <input
+      type="hidden"
+      name="csrf_token"
+      value="{{ csrf_token }}"
+    >
+
+
+    <section class="private-profile-card">
+
+      <div class="private-profile-card-heading">
+        <span>01</span>
+
+        <div>
+          <h2>About You</h2>
+          <p>Your contact and identification details.</p>
+        </div>
+      </div>
+
+      <div class="private-profile-grid">
+
+        <label>
+          <span>Full Name</span>
+          <input
+            value="{{ member.staff_name }}"
+            disabled
+          >
+          <small>
+            Contact management to change your legal/full name.
+          </small>
+        </label>
+
+
+        <label>
+          <span>Preferred Name</span>
+          <input
+            name="preferred_name"
+            value="{{
+              profile_data.get(
+                'preferred_name',
+                member.preferred_name or ''
+              )
+            }}"
+          >
+        </label>
+
+
+        <label>
+          <span>Email Address</span>
+          <input
+            value="{{ member.email }}"
+            disabled
+          >
+          <small>
+            Your login email is managed by Stuphie.
+          </small>
+        </label>
+
+
+        <label>
+          <span>Mobile Telephone</span>
+          <input
+            name="telephone"
+            value="{{
+              profile_data.get(
+                'telephone',
+                member.telephone or ''
+              )
+            }}"
+            required
+          >
+        </label>
+
+
+        <label>
+          <span>Date of Birth</span>
+          <input
+            type="date"
+            name="date_of_birth"
+            value="{{
+              profile_data.get(
+                'date_of_birth',
+                ''
+              )
+            }}"
+          >
+        </label>
+
+
+        <label>
+          <span>Staff Photograph</span>
+          <input
+            name="photo"
+            type="file"
+            accept=".jpg,.jpeg,.png,.webp,.heic,.heif,image/jpeg,image/png,image/webp,image/heic,image/heif"
+          >
+          <small>
+            Leave blank to keep your current photograph.
+          </small>
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <section class="private-profile-card">
+
+      <div class="private-profile-card-heading">
+        <span>02</span>
+
+        <div>
+          <h2>Home Address</h2>
+          <p>This information is private.</p>
+        </div>
+      </div>
+
+      <div class="private-profile-grid">
+
+        <label class="wide">
+          <span>Address Line 1</span>
+          <input
+            name="address_line_1"
+            value="{{ profile_data.get('address_line_1','') }}"
+          >
+        </label>
+
+        <label class="wide">
+          <span>Address Line 2</span>
+          <input
+            name="address_line_2"
+            value="{{ profile_data.get('address_line_2','') }}"
+          >
+        </label>
+
+        <label>
+          <span>Town / City</span>
+          <input
+            name="town_city"
+            value="{{ profile_data.get('town_city','') }}"
+          >
+        </label>
+
+        <label>
+          <span>Postcode</span>
+          <input
+            name="postcode"
+            value="{{ profile_data.get('postcode','') }}"
+          >
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <section class="private-profile-card">
+
+      <div class="private-profile-card-heading">
+        <span>03</span>
+
+        <div>
+          <h2>Emergency Contacts</h2>
+          <p>
+            Used if you become ill or are injured while working.
+          </p>
+        </div>
+      </div>
+
+      <div class="private-profile-grid">
+
+        <label>
+          <span>Emergency Contact</span>
+          <input
+            name="emergency_name"
+            value="{{ profile_data.get('emergency_name','') }}"
+          >
+        </label>
+
+        <label>
+          <span>Relationship</span>
+          <input
+            name="emergency_relationship"
+            value="{{
+              profile_data.get(
+                'emergency_relationship',
+                ''
+              )
+            }}"
+          >
+        </label>
+
+        <label>
+          <span>Emergency Telephone</span>
+          <input
+            name="emergency_phone"
+            value="{{ profile_data.get('emergency_phone','') }}"
+          >
+        </label>
+
+        <label>
+          <span>Secondary Contact</span>
+          <input
+            name="secondary_emergency_name"
+            value="{{
+              profile_data.get(
+                'secondary_emergency_name',
+                ''
+              )
+            }}"
+          >
+        </label>
+
+        <label>
+          <span>Secondary Telephone</span>
+          <input
+            name="secondary_emergency_phone"
+            value="{{
+              profile_data.get(
+                'secondary_emergency_phone',
+                ''
+              )
+            }}"
+          >
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <section class="private-profile-card confidential">
+
+      <div class="private-profile-card-heading">
+        <span>04</span>
+
+        <div>
+          <h2>Health &amp; Welfare</h2>
+
+          <p>
+            Confidential information visible only to you and
+            authorised management.
+          </p>
+        </div>
+      </div>
+
+      <div class="private-profile-grid">
+
+        <label class="wide">
+          <span>Allergies</span>
+          <textarea
+            name="allergies"
+            rows="3"
+          >{{ profile_data.get('allergies','') }}</textarea>
+        </label>
+
+        <label class="wide">
+          <span>Medical Notes</span>
+          <textarea
+            name="medical_notes"
+            rows="3"
+          >{{ profile_data.get('medical_notes','') }}</textarea>
+        </label>
+
+        <label class="wide">
+          <span>Accessibility Requirements</span>
+          <textarea
+            name="accessibility_requirements"
+            rows="3"
+          >{{ profile_data.get('accessibility_requirements','') }}</textarea>
+        </label>
+
+        <label class="wide">
+          <span>Dietary Requirements</span>
+          <textarea
+            name="dietary_requirements"
+            rows="3"
+          >{{ profile_data.get('dietary_requirements','') }}</textarea>
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <section class="private-profile-card">
+
+      <div class="private-profile-card-heading">
+        <span>05</span>
+
+        <div>
+          <h2>Work Information</h2>
+          <p>Useful information for event planning.</p>
+        </div>
+      </div>
+
+      <div class="private-profile-grid">
+
+        <label>
+          <span>Driving Status</span>
+          <input
+            name="driving_status"
+            value="{{ profile_data.get('driving_status','') }}"
+          >
+        </label>
+
+        <label>
+          <span>Uniform Size</span>
+          <input
+            name="uniform_size"
+            value="{{ profile_data.get('uniform_size','') }}"
+          >
+        </label>
+
+      </div>
+
+    </section>
+
+
+    <div class="private-profile-save">
+
+      <div>
+        <strong>PRIVATE STAFF RECORD</strong>
+
+        <p>
+          Changes are saved securely to your own
+          Stuphie profile.
+        </p>
+      </div>
+
+      <button type="submit">
+        SAVE MY DETAILS
+      </button>
+
+    </div>
+
+  </form>
+
+  {% endif %}
+
+</section>
+
+
+
+
+{% endblock %}

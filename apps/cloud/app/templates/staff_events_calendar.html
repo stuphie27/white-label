@@ -1,0 +1,146 @@
+{% extends "staff_base.html" %}
+{% set active_nav = 'staff_events' %}
+{% block title %}Event Calendar | Staff Hub{% endblock %}
+{% block content %}
+
+<section class="pf-events-hero staff-calendar-standalone-hero">
+  <div>
+    <p class="section-kicker">SOPHIE'S PHOTOGRAPHY · STAFF EVENTS</p>
+    <h1>Event Calendar</h1>
+    <p>Calendar view of upcoming Sophie’s Photography events.</p>
+  </div>
+
+  <div class="pf-events-hero-actions">
+    <a class="primary-button" href="/staff/team/events">Events List</a>
+    <a class="ghost-button" href="/staff/team/my-work">My Assigned Work</a>
+  </div>
+</section>
+
+{% if not member %}
+
+<section class="my-work-empty-card">
+  <strong>STAFF PROFILE NOT LINKED</strong>
+  <p>Your login is not currently linked to a Staff Master record.</p>
+</section>
+
+{% else %}
+
+<section class="staff-calendar-mobile-note">
+  <strong>CALENDAR VIEW</strong>
+  <span>On phones this automatically changes to a simple event agenda.</span>
+</section>
+
+<section class="staff-calendar-shell staff-calendar-standalone">
+
+{% for month in calendar_months %}
+
+  <article class="staff-calendar-month">
+
+    <header class="staff-calendar-month-heading">
+      <div>
+        <span>MONTH</span>
+        <h2>{{ month.label }}</h2>
+      </div>
+
+      <strong>
+        {{ month.events|length }}
+        event{{ '' if month.events|length == 1 else 's' }}
+      </strong>
+    </header>
+
+    <div class="staff-calendar-weekdays">
+      <span>MON</span>
+      <span>TUE</span>
+      <span>WED</span>
+      <span>THU</span>
+      <span>FRI</span>
+      <span>SAT</span>
+      <span>SUN</span>
+    </div>
+
+    <div class="staff-calendar-grid">
+
+      {% for week in month.weeks %}
+      {% for day in week %}
+
+        {% if day %}
+
+        <div class="staff-calendar-day {% if day.events %}has-events{% else %}no-events{% endif %}">
+
+          <div class="staff-calendar-day-heading">
+            <strong>{{ day.number }}</strong>
+            <span>{{ day.date.strftime('%A') }}</span>
+            <small>{{ day.date.strftime('%d %B %Y') }}</small>
+          </div>
+
+          {% if day.events %}
+
+          <div class="staff-calendar-day-events">
+
+            {% for event in day.events %}
+
+            <a
+              href="/staff/team/events?open={{ event.id }}#event-{{ event.id }}"
+              class="staff-calendar-event
+                {% if event.id in confirmed_event_ids %}
+                  assigned
+                {% elif event.id in assigned_event_ids %}
+                  interested
+                {% elif event.id in interest_event_ids %}
+                  interested
+                {% endif %}
+              "
+            >
+              <span>{{ event.name }}</span>
+
+              <small>
+                {% if event.id in confirmed_event_ids %}
+                  ✓ CONFIRMED TO WORK
+                {% elif event.id in assigned_event_ids %}
+                  ◷ SELECTED · CONFIRMATION REQUIRED
+                {% elif event.id in interest_event_ids %}
+                  ✓ AVAILABLE · AWAITING SELECTION
+                {% else %}
+                  AVAILABILITY NOT SET
+                {% endif %}
+              </small>
+
+              {% if event.venue %}
+              <em>{{ event.venue }}</em>
+              {% endif %}
+            </a>
+
+            {% endfor %}
+
+          </div>
+
+          {% endif %}
+
+        </div>
+
+        {% else %}
+
+        <div class="staff-calendar-day empty"></div>
+
+        {% endif %}
+
+      {% endfor %}
+      {% endfor %}
+
+    </div>
+
+  </article>
+
+{% else %}
+
+<section class="my-work-empty-card">
+  <strong>NO UPCOMING EVENTS</strong>
+  <p>There are currently no future events to show.</p>
+</section>
+
+{% endfor %}
+
+</section>
+
+{% endif %}
+{% endblock %}

@@ -1,0 +1,322 @@
+{% extends "customer_base.html" %}
+{% block title %}Basket and checkout | {{ gallery.name }}{% endblock %}
+{% block content %}
+<main class="sales-shell cloud-basket-shell pirouette-online-checkout">
+  <section class="basket-parity-heading">
+    <div>
+      <p class="eyebrow">YOUR BASKET</p>
+      <h1>Your photographs</h1>
+      <p>Choose what you would like for each photograph, then complete your order.</p>
+    </div>
+    <a class="button-link customer-secondary-button compact-action" href="/g/{{ gallery.slug }}?media=photos">＋ Add more photos</a>
+  </section>
+
+  {% if rows %}
+  <section class="online-order-layout">
+    <div>
+      <section id="basket-items" class="cloud-basket-grid" aria-label="Basket items">
+        {% for row in rows %}
+        <article class="cloud-basket-card">
+          {% if row.asset %}
+          <button
+            type="button"
+            class="protected-customer-image cloud-basket-photo basket-photo-preview"
+            data-expand-image="/g/{{ gallery.slug }}/assets/{{ row.asset.id }}"
+            data-expand-alt="{{ row.filename }}"
+            aria-label="View larger preview of {{ row.filename }}"
+            title="Click to view photograph"
+          >
+            <img
+              class="protected-customer-image-file"
+              src="/g/{{ gallery.slug }}/assets/{{ row.asset.id }}"
+              alt="{{ row.filename }}"
+              draggable="false"
+            >
+            <span class="basket-photo-preview-hint" aria-hidden="true">
+              🔍 View
+            </span>
+          </button>
+          {% endif %}
+
+          <div class="cloud-basket-copy">
+            {% if row.product_type in ['favourites_extension', 'favourites_extension_70'] %}
+              <p class="basket-item-kicker">FAVOURITES ACCESS</p>
+              <strong>{{ row.filename }}</strong>
+              {% if row.product %}<p>{{ row.product.name or row.product.label }}</p>{% endif %}
+            {% else %}
+              <p class="basket-item-kicker">PHOTOGRAPH</p>
+              <strong>{{ row.filename }}</strong>
+
+              <div class="basket-product-picker" aria-label="Choose a product for {{ row.filename }}">
+                <strong class="basket-product-question">How would you like this photograph?</strong>
+                <div class="basket-product-options">
+                  {% for code, product in product_catalogue.items() %}
+                    {% if product.semantic_type not in ['favourites_extension', 'favourites_extension_70', 'video'] %}
+                    <form method="post" action="/g/{{ gallery.slug }}/basket/product" class="basket-product-option-form">
+                      <input type="hidden" name="key" value="{{ row.key }}">
+                      <button
+                        type="submit"
+                        name="product_code"
+                        value="{{ code }}"
+                        class="basket-product-option{% if row.product_code == code %} is-selected{% endif %}"
+                        {% if product.sold_out %}disabled{% endif %}
+                        aria-pressed="{{ 'true' if row.product_code == code else 'false' }}"
+                      >
+                        <span>
+                          <strong>{{ product.name }}</strong>
+                          {% if product.note %}<small>{{ product.note }}</small>{% endif %}
+                        </span>
+                        <b>£{{ '%.2f'|format(product.price_pence/100) }}</b>
+                        {% if product.sold_out %}<em>SOLD OUT</em>{% endif %}
+                      </button>
+                    </form>
+                    {% endif %}
+                  {% endfor %}
+                </div>
+              </div>
+
+              {% if not row.product_code %}
+              <small class="product-choice-required">Choose one option for this photograph before continuing.</small>
+              {% endif %}
+
+              {% if row.product_code and row.product and row.product.semantic_type == 'print' %}
+              {% set qty = (row.quantity or 1)|int %}
+              <div class="basket-quantity-control" aria-label="Quantity for {{ row.filename }}">
+                <strong>Quantity</strong>
+                <div class="basket-quantity-stepper">
+                  <form method="post" action="/g/{{ gallery.slug }}/basket/quantity">
+                    <input type="hidden" name="key" value="{{ row.key }}">
+                    <input type="hidden" name="quantity" value="{{ qty - 1 if qty > 1 else 1 }}">
+                    <button type="submit" aria-label="Decrease quantity" {% if qty <= 1 %}disabled{% endif %}>−</button>
+                  </form>
+                  <output aria-live="polite">{{ qty }}</output>
+                  <form method="post" action="/g/{{ gallery.slug }}/basket/quantity">
+                    <input type="hidden" name="key" value="{{ row.key }}">
+                    <input type="hidden" name="quantity" value="{{ qty + 1 if qty < 50 else 50 }}">
+                    <button type="submit" aria-label="Increase quantity" {% if qty >= 50 %}disabled{% endif %}>+</button>
+                  </form>
+                </div>
+                <small>Up to 50 copies of this physical product.</small>
+              </div>
+              {% endif %}
+
+              {% if row.product_code %}
+              <form method="post" action="/g/{{ gallery.slug }}/basket/duplicate" class="basket-add-version-form">
+                <input type="hidden" name="key" value="{{ row.key }}">
+                <button class="customer-secondary-button" type="submit">＋ Add another product using this photo</button>
+              </form>
+              {% endif %}
+            {% endif %}
+
+            <form method="post" action="/g/{{ gallery.slug }}/basket/remove">
+              <input type="hidden" name="key" value="{{ row.key }}">
+              <button class="customer-link-button" type="submit">Remove from basket</button>
+            </form>
+          </div>
+
+          <strong class="cloud-basket-price">
+            {% if row.product %}£{{ '%.2f'|format(row.line_total_pence/100) }}{% else %}—{% endif %}
+          </strong>
+        </article>
+        {% endfor %}
+      </section>
+
+      <section class="pricing-summary cloud-pricing-summary">
+        <div class="customer-total"><span>Basket subtotal</span><strong>£{{ '%.2f'|format(subtotal_pence/100) }}</strong></div>
+        <p class="customer-note">UK postage is £7 once per order when physical products are posted. Digital purchases are supplied privately without the gallery watermark.</p>
+      </section>
+    </div>
+
+    <form id="checkout" class="checkout-card customer-checkout-form online-checkout-card" method="post" action="/g/{{ gallery.slug }}/checkout">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      {% if error %}<p class="public-error" role="alert">{{ error }}</p>{% endif %}
+
+      <div class="checkout-card-heading">
+        <div><p class="eyebrow">SECURE CHECKOUT</p><h2>Your details</h2></div>
+        <span class="secure-checkout-badge">🔒 Secure</span>
+      </div>
+      <label><span>Name</span><input name="customer_name" value="{{ profile.name or '' }}" required maxlength="100" autocomplete="name"></label>
+      <label><span>Email address</span><input type="email" name="customer_email" value="{{ profile.email or '' }}" required maxlength="200" autocomplete="email"></label>
+      <label><span>Telephone number <small>(optional)</small></span><input name="customer_phone" type="tel" value="{{ profile.phone or '' }}" maxlength="40" autocomplete="tel"></label>
+      <input type="hidden" name="customer_at_event" id="customer-at-event" value="false">
+
+      {% set digital_state = namespace(has_digital=false) %}
+      {% for row in rows %}
+        {% if row.product_type in ['low_res', 'high_res'] %}{% set digital_state.has_digital = true %}{% endif %}
+      {% endfor %}
+
+      {% if digital_state.has_digital %}
+      <fieldset class="checkout-choice-card checkout-button-card" aria-labelledby="digital-delivery-title">
+        <legend id="digital-delivery-title">How would you like to receive your digital photographs?</legend>
+        <p class="checkout-choice-intro">Choose the delivery preference for the digital files in this order.</p>
+        <div class="checkout-option-buttons" data-digital-fulfilment-group>
+          <label class="checkout-option-button{% if event.status != 'live' %} is-disabled{% endif %}">
+            <input type="radio" name="digital_fulfilment" value="event_collection" data-customer-at-event="true"
+              {% if checkout_preferences.digital_fulfilment == 'event_collection' and event.status == 'live' %}checked{% endif %}
+              {% if event.status != 'live' %}disabled{% endif %}>
+            <span class="checkout-option-icon">⌂</span>
+            <span><strong>Collect at the stand</strong><small>We will transfer the purchased files to you at the {{ brand.display_name }} stand. A secure backup email will also follow.</small></span>
+          </label>
+          <label class="checkout-option-button">
+            <input type="radio" name="digital_fulfilment" value="secure_email_delivery" data-customer-at-event="false"
+              {% if checkout_preferences.digital_fulfilment != 'event_collection' or event.status != 'live' %}checked{% endif %}>
+            <span class="checkout-option-icon">✉</span>
+            <span><strong>Receive by secure email</strong><small>We will email a private download link when your purchased photographs are ready.</small></span>
+          </label>
+        </div>
+      </fieldset>
+      {% else %}
+      <input type="hidden" name="digital_fulfilment" value="secure_email_delivery">
+      {% endif %}
+
+      {% if has_print %}
+      <fieldset class="checkout-choice-card checkout-button-card" aria-labelledby="print-delivery-title">
+        <legend id="print-delivery-title">How would you like to receive your prints and photo products?</legend>
+        <p class="checkout-choice-intro">Choose free collection at this live event or UK postage for £7 per order.</p>
+        <div class="checkout-option-buttons" data-checkout-option-group>
+          <label class="checkout-option-button{% if event.status != 'live' or not event.event_collection_available %} is-disabled{% endif %}">
+            <input type="radio" name="print_fulfilment" value="event_collection" data-customer-at-event="true"
+              {% if checkout_preferences.print_fulfilment == 'event_collection' and event.status == 'live' and event.event_collection_available %}checked{% endif %}
+              {% if event.status != 'live' or not event.event_collection_available %}disabled{% endif %}>
+            <span class="checkout-option-icon">⌂</span>
+            <span><strong>Collect at the event — FREE</strong><small>We will prepare your order for collection at the {{ brand.display_name }} stand during this event.</small></span>
+          </label>
+          <label class="checkout-option-button">
+            <input type="radio" name="print_fulfilment" value="home_delivery" data-customer-at-event="false"
+              {% if checkout_preferences.print_fulfilment != 'event_collection' or event.status != 'live' or not event.event_collection_available %}checked{% endif %}>
+            <span class="checkout-option-icon">⌂</span>
+            <span><strong>UK postage — £7 per order</strong><small>We will post all physical products in this order to your UK delivery address.</small></span>
+          </label>
+        </div>
+      </fieldset>
+
+      <section class="address-fields" id="delivery-address-fields">
+        <h3>Delivery address</h3>
+        <label><span>Address line 1</span><input name="address_line_1" autocomplete="address-line1"></label>
+        <label><span>Address line 2 <small>(optional)</small></span><input name="address_line_2" autocomplete="address-line2"></label>
+        <label><span>Town / city</span><input name="town" autocomplete="address-level2"></label>
+        <label><span>County <small>(optional)</small></span><input name="county" autocomplete="address-level1"></label>
+        <label><span>Postcode</span><input name="postcode" autocomplete="postal-code"></label>
+        <label><span>Country</span><input name="country" value="United Kingdom" autocomplete="country-name"></label>
+        <p class="checkout-delivery-note">Postage is charged once per order, regardless of how many physical products you buy.</p>
+      </section>
+      {% else %}
+      <input type="hidden" name="print_fulfilment" value="home_delivery">
+      {% endif %}
+
+      <div class="checkout-total"><span>Basket subtotal</span><strong>£{{ '%.2f'|format(subtotal_pence/100) }}</strong></div>
+
+      {% if brand.brand_id == "sophies" %}
+      <section
+        class="checkout-choice-card sophies-rewards-card"
+        aria-labelledby="sophies-rewards-title"
+      >
+        <div class="sophies-rewards-heading">
+          <div>
+            <p class="eyebrow">SOPHIE’S REWARDS</p>
+            <h2 id="sophies-rewards-title">Your Rewards</h2>
+          </div>
+
+          <span class="sophies-rewards-badge">
+            ★ Rewards
+          </span>
+        </div>
+
+        {% if rewards.verified %}
+
+        <div class="sophies-rewards-grid">
+
+          <div>
+            <small>Available now</small>
+            <strong>
+              {{ rewards.points }} points
+            </strong>
+          </div>
+
+          <div>
+            <small>This order earns</small>
+            <strong>
+              +{{ rewards.earned_points }} points
+            </strong>
+          </div>
+
+          <div>
+            <small>After payment</small>
+            <strong>
+              {{ rewards.projected_points }} points
+            </strong>
+          </div>
+
+        </div>
+
+        {% else %}
+
+        <p class="sophies-rewards-muted">
+          Verify your customer account to see your current
+          Sophie’s Rewards balance.
+        </p>
+
+        {% if rewards.earned_points > 0 %}
+        <p class="sophies-rewards-rule">
+          This purchase will earn
+          <strong>
+            {{ rewards.earned_points }} Rewards points
+          </strong>
+          after payment.
+        </p>
+        {% endif %}
+
+        {% endif %}
+
+        <p class="sophies-rewards-rule">
+          <strong>
+            100 points = £5 off at participating competitions.
+          </strong>
+        </p>
+
+        <p class="sophies-rewards-muted">
+          Rewards can be earned online but redeemed in person only.
+          Points have no cash value and expire 18 months after they
+          are earned.
+        </p>
+
+      </section>
+
+      {% endif %}
+
+      <section class="payment-button-section" aria-labelledby="online-payment-title">
+        <h2 id="online-payment-title">How would you like to pay?</h2>
+        <p class="payment-privacy-note"><strong>We do not collect, see or store your card details.</strong> Online payments are processed securely by SumUp.</p>
+        <div class="payment-action-grid">
+          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_cash" {% if event.status != 'live' or not event.service_desk_payments_enabled %}disabled{% endif %}>Pay Cash at the Stand</button>
+          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_card" {% if event.status != 'live' or not event.service_desk_payments_enabled %}disabled{% endif %}>Pay Card at the Stand</button>
+          <button class="customer-primary-button payment-action payment-action-online" type="submit" name="payment_method" value="sumup_online">Pay Securely Online with SumUp</button>
+        </div>
+      </section>
+      <p class="customer-note checkout-footnote">High-resolution files are prepared by {{ brand.display_name }} after purchase.</p>
+    </form>
+  </section>
+  {% else %}
+  <section class="public-gallery-ready basket-empty-card"><span class="empty-basket-icon">🛒</span><strong>Your basket is empty</strong><p>Return to the gallery and add a photograph. You will choose the product here in the basket.</p><a class="customer-primary-button" href="/g/{{ gallery.slug }}">Browse photographs</a></section>
+  {% endif %}
+</main>
+
+<nav class="customer-bottom-bar" aria-label="Customer navigation">
+  <a class="customer-bottom-action" href="/g/{{ gallery.slug }}/favourites"><span class="customer-bottom-icon">♥</span><span class="customer-bottom-label">Favourites</span></a>
+  <a class="customer-bottom-action customer-bottom-basket is-active" href="/g/{{ gallery.slug }}/basket"><span class="customer-bottom-icon">🛒</span><span class="customer-bottom-label">Basket</span></a>
+  <form
+  method="post"
+  action="/customer/logout"
+  class="customer-bottom-end-form"
+>
+  <button
+    type="submit"
+    class="customer-bottom-action customer-bottom-end"
+    aria-label="End customer session"
+  >
+    <span class="customer-bottom-icon" aria-hidden="true">↪</span>
+    <span class="customer-bottom-label">End Session</span>
+  </button>
+</form>
+</nav>
+{% endblock %}

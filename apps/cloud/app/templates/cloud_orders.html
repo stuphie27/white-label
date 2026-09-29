@@ -1,0 +1,64 @@
+{% extends "staff_base.html" %}{% block title %}Cloud Orders | Stuphie Ltd{% endblock %}{% block content %}
+<section class="page-heading"><div><p class="eyebrow">STUPHIE LTD MIRROR</p><h1>Cloud Orders</h1><p>Orders and fulfilment groups mirrored from Stuphie Ltd or placed online. Local print production remains controlled by Stuphie Ltd.</p></div></section>
+<section class="panel"><div class="panel-heading"><h2>Order Synchronisation & Fulfilment</h2></div>
+{% if orders %}<div class="table-wrap"><table><thead><tr><th>Order / Customer</th><th>Event</th><th>Product</th><th>Payment</th><th>Fulfilment</th><th>Delivery</th><th>Status</th><th>Action</th></tr></thead><tbody>
+{% for order,event in orders %}<tr>
+<td><strong>{{ order.order_reference or order.source_ref or order.id }}</strong><br>{{ order.customer_name }}<br><small>{{ order.customer_email }}</small></td>
+<td>{{ event.name }}</td>
+<td>{{ order.product_type|replace('_',' ')|title }}</td>
+<td>{{ order.payment_status|replace('_',' ')|title }}<br><small>{{ order.payment_method|replace('_',' ')|title }}{% if order.sumup_status %} · SumUp {{ order.sumup_status }}{% endif %}</small>{% if order.sumup_transaction_code %}<br><small>{{ order.sumup_transaction_code }}</small>{% endif %}</td>
+<td>{{ order.fulfilment_method|replace('_',' ')|title }}</td>
+<td>{% if order.delivery_charge_pence %}£{{ '%.2f'|format(order.delivery_charge_pence / 100) }}{% else %}—{% endif %}</td>
+<td><strong>{{ order.status|replace('_',' ')|title }}</strong>{% if order.fulfilment_error %}<br><small class="status-bad">{{ order.fulfilment_error }}</small>{% endif %}</td>
+<td>
+{% if order.payment_status == 'paid' %}
+  {% if order.status in ['delivery_failed','delivery_email_failed','waiting_for_cloud_assets','ready_for_automatic_delivery'] %}
+    <form method="post" action="/staff/orders/{{ order.id }}/retry">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <button class="button button-small" type="submit">Retry</button>
+    </form>
+  {% elif order.status in ['awaiting_print_production','awaiting_print_production_for_dispatch'] %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="start_printing">
+      <button class="button button-small" type="submit">Start Printing</button>
+    </form>
+  {% elif order.status == 'printing' and order.fulfilment_method == 'event_collection' %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="ready_for_collection">
+      <button class="button button-small" type="submit">Ready for Collection</button>
+    </form>
+  {% elif order.status == 'ready_for_collection' %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="collected">
+      <button class="button button-small" type="submit">Collected</button>
+    </form>
+  {% elif order.status == 'printing' and order.fulfilment_method == 'home_delivery' %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="ready_for_dispatch">
+      <button class="button button-small" type="submit">Ready to Dispatch</button>
+    </form>
+  {% elif order.status == 'awaiting_dispatch' %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="dispatched">
+      <button class="button button-small" type="submit">Dispatched</button>
+    </form>
+  {% elif order.status == 'awaiting_high_resolution_preparation' %}
+    <form method="post" action="/staff/orders/{{ order.id }}/action">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+      <input type="hidden" name="action" value="prepare_high_res">
+      <button class="button button-small" type="submit">Prepare High Res</button>
+    </form>
+  {% else %}
+    —
+  {% endif %}
+{% else %}
+  —
+{% endif %}
+</td>
+</tr>{% endfor %}</tbody></table></div>{% else %}<div class="empty-state"><h3>No Cloud orders yet</h3><p>Paid Stuphie Ltd digital orders and online Cloud orders will appear here.</p></div>{% endif %}</section>
+{% endblock %}

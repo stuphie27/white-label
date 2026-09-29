@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#070708">
+  <meta name="application-name" content="STUPHIE">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="STUPHIE">
+  <meta name="format-detection" content="telephone=no">
+  <link rel="manifest" href="/static/stuphie-manifest.webmanifest">
+  <link rel="apple-touch-icon" href="/static/images/stuphie-apple-touch.png">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <link rel="icon" href="/static/images/favicon.png" type="image/png">
+  <title>{% block title %}Stuphie Ltd{% endblock %}</title>
+  <link rel="stylesheet" href="/shared-ui/pirouette-interface.css?v={{ version or request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/cloud.css?v={{ version or request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/project-dashboard.css?v={{ version or request.app.state.settings.version }}&ui=staffing-9e2">
+</head>
+<body class="pirouette-interface pirouette-dark cloud-project-parity">
+{% set system_live = current_live_event is defined and current_live_event %}
+<section class="live-control-shell">
+  <aside class="live-sidebar">
+    <a href="/staff" class="live-logo-link"><img src="/static/images/sophies-dashboard-logo.png" alt="Sophie's Photography"></a>
+    <nav aria-label="Sophie’s Photography staff navigation">
+      {% set is_super_admin = request.session.get('staff_role') == 'super_admin' %}
+
+      <a class="{{ 'active' if active_nav == 'dashboard' else '' }}" href="/staff">
+        ⌂ <span>Home</span>
+      </a>
+
+      <div class="staff-nav-section">MY STAFF AREA</div>
+      <a
+        class="{{ 'active' if active_nav == 'staff_events' else '' }}"
+        href="/staff/team/events"
+      >
+        ◫ <span>Events</span>
+      </a>
+
+
+      <a href="/staff/team/my-work"
+         class="{{ 'active' if active_nav == 'my_work' else '' }}">
+        ♟ <span>My Work</span>
+      </a>
+
+      <a
+        href="/staff/team/my-documents"
+        class="{{ 'active' if active_nav == 'my_documents' else '' }}"
+      >
+        ▤ <span>Policies &amp; Documents</span>
+      </a>
+
+      <a href="/staff/team/approved-hours"
+         class="{{ 'active' if active_nav == 'approved_hours' else '' }}">
+        ◷ <span>My Timesheets</span>
+      </a>
+
+      {% if is_super_admin %}
+      <div class="staff-nav-section">MANAGEMENT</div>
+
+      <a href="/staff/team"
+         class="{{ 'active' if active_nav == 'team' else '' }}">
+        ♟ <span>Staff</span>
+      </a>
+
+      <a
+        href="/staff/team/documents"
+        class="{{ 'active' if active_nav == 'documents' else '' }}"
+      >
+        ▤ <span>Documents &amp; Policies</span>
+      </a>
+
+      <a href="/staff/events"
+         class="{{ 'active' if active_nav == 'events' else '' }}">
+        ▣ <span>Events</span>
+      </a>
+
+      <a href="/staff/events/completed"
+         class="{{ 'active' if active_nav == 'completed_events' else '' }}">
+        ✓ <span>Completed Events</span>
+      </a>
+
+      <a href="/staff/team/timesheets"
+         class="{{ 'active' if active_nav == 'timesheets' else '' }}">
+        ◷ <span>Timesheet Approvals</span>
+      </a>
+      {% endif %}
+
+      <form method="post" action="/staff/logout" class="sidebar-logout">
+        <button type="submit">↩ <span>Sign Out</span></button>
+      </form>
+    </nav>
+  </aside>
+
+  <div class="live-control-main">
+    <header class="live-control-header">
+      <div><h1>{% block control_title %}STAFF PORTAL{% endblock %}</h1><p>Events <i></i> Availability <i></i> Timesheets <i></i> Staff</p></div>
+      <div class="live-event-title live-master-state {{ 'is-live' if system_live else 'is-offline' }}">
+        {% if system_live %}
+          <div class="pirouette-heartbeat" role="status" aria-label="Stuphie Ltd live and synchronising">
+            <span class="heartbeat-heart">♥</span>
+            <svg viewBox="0 0 620 64" preserveAspectRatio="none" aria-hidden="true"><path class="heartbeat-track" d="M0 32 H150 L174 32 L186 13 L200 51 L216 5 L234 32 H620"/><path class="heartbeat-pulse" d="M0 32 H150 L174 32 L186 13 L200 51 L216 5 L234 32 H620"/></svg>
+            <strong>LIVE</strong>
+          </div>
+          <h2>{{ current_live_event.name or current_live_event.venue }} <span>LIVE</span></h2>
+          <p>{{ current_live_event.start_date }}{% if current_live_event.end_date and current_live_event.end_date != current_live_event.start_date %} – {{ current_live_event.end_date }}{% endif %}</p>
+        {% else %}
+          <a class="go-live-heart" href="/staff/events" aria-label="Choose an event to go live"><span>♥</span><strong>GO LIVE</strong></a>
+          <h2>No live event <span class="offline-badge">OFFLINE</span></h2>
+        {% endif %}
+      </div>
+      <div class="live-header-tools">
+        <div class="cloud-secure-badge" title="Secure staff-only dashboard">🔒 STAFF ONLY<span class="sr-only"> — Signed in as {{ staff_email or request.session.get('staff_email', '') }}</span></div>
+        <div class="live-clock"><strong id="live-clock">--:--</strong><span id="live-date"></span></div>
+      </div>
+    </header>
+    {% block content %}{% endblock %}
+  </div>
+</section>
+<script>
+(function(){function tick(){const d=new Date();const c=document.getElementById('live-clock'),dt=document.getElementById('live-date');if(c)c.textContent=d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});if(dt)dt.textContent=d.toLocaleDateString([], {weekday:'short',day:'numeric',month:'short',year:'numeric'});}tick();setInterval(tick,30000);}());
+</script>
+
+  <nav class="stuphie-app-nav" aria-label="STUPHIE mobile navigation">
+
+    <a
+      href="/staff"
+      class="{{ 'active' if active_nav == 'dashboard' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">⌂</span>
+      <span>Home</span>
+    </a>
+
+    <a
+      href="/staff/team/events"
+      class="{{ 'active' if active_nav == 'staff_events' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">▣</span>
+      <span>Events</span>
+    </a>
+
+    <a
+      href="/staff/team/events/calendar"
+      class="{{ 'active' if active_nav == 'staff_calendar' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">◫</span>
+      <span>Calendar</span>
+    </a>
+
+    <a
+      href="/staff/team/my-work"
+      class="{{ 'active' if active_nav == 'my_work' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">✓</span>
+      <span>My Work</span>
+    </a>
+
+    {% if request.session.get('staff_role') == 'super_admin' %}
+
+    <a
+      href="/staff/events"
+      class="{{ 'active' if active_nav == 'events' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">•••</span>
+      <span>Admin</span>
+    </a>
+
+    {% else %}
+
+    <a
+      href="/staff/team/profile"
+      class="{{ 'active' if active_nav == 'profile' else '' }}"
+    >
+      <span class="stuphie-app-nav-icon">●</span>
+      <span>Profile</span>
+    </a>
+
+    {% endif %}
+
+  </nav>
+
+  <script src="/static/stuphie-app.js?v={{ version or request.app.state.settings.version }}"></script>
+
+</body>
+</html>

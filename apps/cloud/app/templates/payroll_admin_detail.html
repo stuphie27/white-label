@@ -1,0 +1,381 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>{{ submission.staff_name }} Payroll | Stuphie Ltd</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet" href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}">
+</head>
+<body class="payroll-admin-page">
+<main class="shell">
+  <header class="top">
+    <div>
+      <a class="back" href="/staff/payroll">← Payroll Admin</a>
+      <div class="eyebrow" style="margin-top:18px">PAYROLL SUBMISSION</div>
+      <h1>{{ submission.staff_name }}</h1>
+      <div class="muted">
+        {{ submission.staff_email }} · week starting
+        {{ submission.week_start.strftime('%d %B %Y') }}
+      </div>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <small>Status</small>
+      <strong>
+        {% if submission.paid_at %}
+          <span class="status status-paid">PAID</span>
+        {% elif submission.approved_at %}
+          <span class="status status-ready-to-pay">
+            READY TO PAY
+          </span>
+        {% elif submission.status == 'submitted' %}
+          <span class="status status-needs-approval">
+            NEEDS APPROVAL
+          </span>
+        {% else %}
+          <span class="status">
+            {{ submission.status|upper }}
+          </span>
+        {% endif %}
+      </strong>
+    </div>
+    <div class="card">
+      <small>Total hours</small>
+      <strong>{{ total_hours }}</strong>
+    </div>
+    <div class="card">
+      <small>Hourly rate</small>
+      <strong>£{{ hourly_rate }}</strong>
+    </div>
+    <div class="card">
+      <small>Gross pay</small>
+      <strong>£{{ gross_pay }}</strong>
+    </div>
+    <div class="card">
+      <small>Total expenses</small>
+      <strong>£{{ total_expenses }}</strong>
+    </div>
+    <div class="card">
+      <small>Total due</small>
+      <strong>£{{ total_due }}</strong>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Timesheet</h2>
+    {% if timesheets %}
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Start</th>
+          <th>Finish</th>
+          <th>Break</th>
+          <th>Hours</th>
+          <th>Type / event</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in timesheets %}
+        <tr>
+          <td>{{ row.get('work_date','') }}</td>
+          <td>{{ row.get('start_time','') }}</td>
+          <td>{{ row.get('finish_time','') }}</td>
+          <td>{{ row.get('break_minutes',0) }} min</td>
+          <td>{{ '%.2f'|format(row._paid_minutes / 60) }}</td>
+          <td>{{ row.get('work_type') or row.get('event_name') or '—' }}</td>
+          <td>{{ row.get('notes') or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No timesheet entries.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Expenses</h2>
+    {% if expenses %}
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Receipt / explanation</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in expenses %}
+        <tr>
+          <td>{{ row.get('expense_date','') }}</td>
+          <td>{{ row.get('description') or row.get('expense_type') or '—' }}</td>
+          <td>£{{ row._amount }}</td>
+          <td>
+            {% if row._receipt_location %}
+              <a class="button receipt-button"
+                 href="/staff/payroll/{{ submission.id }}/receipt/{{ row._index }}"
+                 target="_blank" rel="noopener">View receipt</a>
+            {% else %}
+              {{ row.get('no_receipt_reason') or row.get('receipt_explanation') or 'No receipt supplied' }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No expense claims.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Management approval</h2>
+
+    {% if submission.approved_at %}
+      <div class="card">
+        <small>Payroll status</small>
+        <strong>APPROVED</strong>
+        <p class="muted">
+          Approved by {{ submission.approved_by }}
+          on {{ submission.approved_at.strftime('%d %b %Y %H:%M') }}
+        </p>
+      </div>
+
+    {% elif submission.status == 'submitted' %}
+      <p>
+        Confirm that the submitted hours, hourly rate,
+        expenses and total due above are correct before
+        approving this payroll.
+      </p>
+
+      <form
+        method="post"
+        action="/staff/payroll/{{ submission.id }}/approve"
+        onsubmit="return confirm(
+          'Approve this payroll? This action records your approval.'
+        );"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <button
+          class="button"
+          type="submit"
+        >
+          APPROVE PAYROLL
+        </button>
+      </form>
+
+    {% else %}
+      <p class="muted">
+        This payroll cannot be approved until it has been submitted.
+      </p>
+    {% endif %}
+  </section>
+
+  {% if payment_arrangement == 'self_employed_contractor' %}
+
+  <section class="panel">
+
+    <h2>
+      Contractor Payment Statement
+    </h2>
+
+    {% if submission.approved_at %}
+
+      <p>
+        Generate or send the contractor's branded
+        payment statement.
+      </p>
+
+      <div class="payroll-statement-actions">
+
+        <a
+          class="button"
+          href="/staff/payroll/{{ submission.id }}/statement.pdf"
+        >
+          DOWNLOAD STATEMENT PDF
+        </a>
+
+        <form
+          method="post"
+          action="/staff/payroll/{{ submission.id }}/send-statement"
+          onsubmit="return confirm(
+            'Send this contractor payment statement to {{ submission.staff_email }}?'
+          );"
+        >
+
+          <input
+            type="hidden"
+            name="csrf_token"
+            value="{{ csrf_token }}"
+          >
+
+          <button
+            class="button"
+            type="submit"
+          >
+            SEND STATEMENT
+          </button>
+
+        </form>
+
+      </div>
+
+      {% if statement_audit.get('last_sent_at') %}
+
+        <div class="card">
+
+          <small>
+            Last statement sent
+          </small>
+
+          <strong>
+            SENT
+          </strong>
+
+          <p class="muted">
+            {{ statement_audit.get('last_sent_at') }}
+            · to
+            {{ statement_audit.get('sent_to') }}
+          </p>
+
+        </div>
+
+      {% endif %}
+
+    {% else %}
+
+      <p class="muted">
+        Statement generation becomes available after
+        management approval.
+      </p>
+
+    {% endif %}
+
+  </section>
+
+  {% endif %}
+
+
+  <section class="panel">
+    <h2>Payment</h2>
+
+    {% if submission.paid_at %}
+      <div class="card">
+        <small>Payment status</small>
+        <strong>PAID</strong>
+
+        <p class="muted">
+          Paid by {{ submission.paid_by }}
+          on {{ submission.paid_at.strftime('%d %b %Y %H:%M') }}
+        </p>
+
+        <p>
+          <strong>Payment reference:</strong>
+          {{ submission.payment_reference }}
+        </p>
+      </div>
+
+    {% elif submission.approved_at %}
+      <p>
+        Management approval is complete.
+        Enter the bank/payment reference before recording
+        this payroll as paid.
+      </p>
+
+      <form
+        method="post"
+        action="/staff/payroll/{{ submission.id }}/mark-paid"
+        onsubmit="return confirm(
+          'Mark this payroll as PAID? Confirm the money has actually been sent.'
+        );"
+      >
+        <input
+          type="hidden"
+          name="csrf_token"
+          value="{{ csrf_token }}"
+        >
+
+        <label for="payment_reference">
+          <strong>Payment reference</strong>
+        </label>
+
+        <input
+          id="payment_reference"
+          name="payment_reference"
+          type="text"
+          maxlength="200"
+          required
+          autocomplete="off"
+          placeholder="e.g. BANK-240826-STUART"
+        >
+
+        <p class="muted">
+          This should match the reference used for the
+          actual bank/payment transaction.
+        </p>
+
+        <button
+          class="button"
+          type="submit"
+        >
+          MARK AS PAID
+        </button>
+      </form>
+
+    {% else %}
+      <p class="muted">
+        Payroll cannot be marked paid until management
+        approval has been recorded.
+      </p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Submission record</h2>
+    <p><strong>Source:</strong> {{ submission.source_ref }}</p>
+    <p><strong>Staff source:</strong> {{ submission.staff_source_ref }}</p>
+    <p><strong>Emailed:</strong> {{ submission.emailed_at or '—' }}</p>
+    <p>
+      <strong>Submitted:</strong>
+      {% if submission.submitted_at %}
+        {{ submission.submitted_at.strftime('%d %b %Y %H:%M') }}
+      {% else %}
+        —
+      {% endif %}
+    </p>
+    <p>
+      <strong>Approved:</strong>
+      {% if submission.approved_at %}
+        {{ submission.approved_at.strftime('%d %b %Y %H:%M') }}
+      {% else %}
+        —
+      {% endif %}
+    </p>
+    <p><strong>Approved by:</strong> {{ submission.approved_by or '—' }}</p>
+    <p>
+      <strong>Paid:</strong>
+      {% if submission.paid_at %}
+        {{ submission.paid_at.strftime('%d %b %Y %H:%M') }}
+      {% else %}
+        —
+      {% endif %}
+    </p>
+    <p><strong>Paid by:</strong> {{ submission.paid_by or '—' }}</p>
+    <p><strong>Payment reference:</strong> {{ submission.payment_reference or '—' }}</p>
+    <p><strong>Last updated:</strong> {{ submission.updated_at }}</p>
+  </section>
+</main>
+</body>
+</html>

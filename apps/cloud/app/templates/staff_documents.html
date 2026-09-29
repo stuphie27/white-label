@@ -1,0 +1,141 @@
+{% extends "staff_base.html" %}
+
+{% block title %}Policies & Documents | Stuphie Ltd{% endblock %}
+{% block control_title %}POLICIES & DOCUMENTS{% endblock %}
+
+{% block content %}
+<section class="staff-doc-library">
+
+  <header class="staff-doc-library-heading">
+    <div>
+      <span>STAFF INFORMATION</span>
+      <h2>Policies &amp; Documents</h2>
+      <p>
+        Company policies, procedures, forms, training and staff guidance.
+      </p>
+    </div>
+  </header>
+
+  {% if request.query_params.get('acknowledged') %}
+  <div class="staff-doc-success">
+    ✓ Thank you. Your acknowledgement has been recorded.
+  </div>
+  {% endif %}
+
+  {% if documents %}
+
+    {% for category in document_categories %}
+      {% set category_documents =
+        documents
+        | selectattr("category", "equalto", category)
+        | list
+      %}
+
+      {% if category_documents %}
+      <section class="staff-doc-category">
+
+        <div class="staff-doc-category-title">
+          <span>{{ "%02d"|format(loop.index) }}</span>
+          <div>
+            <h3>{{ category }}</h3>
+            <p>{{ category_documents|length }} document{% if category_documents|length != 1 %}s{% endif %}</p>
+          </div>
+        </div>
+
+        <div class="staff-doc-grid">
+
+        {% for document in category_documents %}
+          {% set acknowledgement =
+            acknowledgements.get(document.id)
+          %}
+
+          <article class="staff-doc-card">
+
+            <div class="staff-doc-card-top">
+
+              <div class="staff-doc-icon">▤</div>
+
+              <div class="staff-doc-copy">
+                <span>{{ document.category }}</span>
+                <h4>{{ document.title }}</h4>
+
+                {% if document.description %}
+                <p>{{ document.description }}</p>
+                {% endif %}
+
+                <small>
+                  Version {{ document.version or '1.0' }}
+                  {% if document.updated_at %}
+                  · Updated {{ document.updated_at.strftime('%d %B %Y') }}
+                  {% endif %}
+                </small>
+              </div>
+
+            </div>
+
+            {% if document.requires_acknowledgement %}
+              {% if acknowledgement %}
+              <div class="staff-doc-acknowledged">
+                ✓ READ &amp; CONFIRMED
+              </div>
+              {% else %}
+              <div class="staff-doc-required">
+                ACKNOWLEDGEMENT REQUIRED
+              </div>
+              {% endif %}
+            {% endif %}
+
+            <div class="staff-doc-actions">
+
+              <a
+                href="/staff/team/documents/{{ document.id }}/view"
+                target="_blank"
+                rel="noopener"
+                class="staff-doc-view"
+              >
+                View Document
+              </a>
+
+              {% if
+                document.requires_acknowledgement
+                and not acknowledgement
+              %}
+              <form
+                method="post"
+                action="/staff/team/my-documents/{{ document.id }}/acknowledge"
+              >
+                <input
+                  type="hidden"
+                  name="csrf_token"
+                  value="{{ csrf_token }}"
+                >
+                <button type="submit">
+                  I Have Read &amp; Understand
+                </button>
+              </form>
+              {% endif %}
+
+            </div>
+
+          </article>
+        {% endfor %}
+
+        </div>
+
+      </section>
+      {% endif %}
+    {% endfor %}
+
+  {% else %}
+
+  <div class="staff-doc-empty">
+    <strong>No documents have been published yet.</strong>
+    <p>
+      Policies and staff guidance will appear here when management publishes them.
+    </p>
+  </div>
+
+  {% endif %}
+
+</section>
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "customer_base.html" %}
+
+{% block title %}
+Personal Video booking saved
+{% endblock %}
+
+{% block content %}
+<div class="personal-video-page">
+  <section class="personal-video-card">
+    <p class="eyebrow">PERSONAL VIDEO</p>
+
+    <h1>Your booking has been saved</h1>
+
+    <p>
+      Thank you. Your {{ booking_type_label }} Personal Video
+      booking for <strong>{{ event.name }}</strong> has been
+      recorded.
+    </p>
+
+    <div class="personal-video-summary">
+      <div>
+        <span>Booking reference</span>
+        <strong>{{ booking.reference }}</strong>
+      </div>
+
+      <div>
+        <span>Booking type</span>
+        <strong>{{ booking_type_label }}</strong>
+      </div>
+    </div>
+
+    {% if payment_error %}
+    <div
+      class="personal-video-error"
+      role="alert"
+    >
+      {{ payment_error }}
+    </div>
+
+    {% elif booking.payment_status == "paid" %}
+    <div
+      class="status-message"
+      role="status"
+    >
+      <strong>Payment confirmed.</strong>
+      <p>
+        Your Personal Video booking is confirmed.
+      </p>
+    </div>
+
+    {% elif booking.payment_status == "part_paid" %}
+    <div
+      class="status-message"
+      role="status"
+    >
+      <strong>Initial payment confirmed.</strong>
+      <p>
+        Your Ballroom Personal Video booking is confirmed.
+        Any remaining balance is handled after your final
+        video selection.
+      </p>
+    </div>
+
+    {% elif stand_payment %}
+    <div class="status-message">
+      <strong>Your booking has been saved.</strong>
+      <p>
+        Payment is still due at the Sophie’s Photography
+        Service Desk.
+      </p>
+    </div>
+
+    {% elif payment_result in ("FAILED", "EXPIRED") %}
+    <div
+      class="personal-video-error"
+      role="alert"
+    >
+      Payment was not completed. Your booking is still
+      safely saved and has not been marked as paid.
+    </div>
+
+    {% else %}
+    <p>
+      Your booking is safely saved. Payment has not yet
+      been verified as complete.
+    </p>
+    {% endif %}
+
+    <p>
+      Please keep your booking reference safe.
+    </p>
+
+    <div class="status-message">
+      <strong>Need to add or change details later?</strong>
+      <p>
+        Keep your private manage-booking link.
+        You can return to it from home whenever you need
+        to update the details that are available for
+        customer amendment.
+      </p>
+    </div>
+
+    <a
+      class="button"
+      href="/personal-video/manage/{{ booking.manage_token }}"
+    >
+      Manage My Booking
+    </a>
+
+    <a
+      class="button"
+      href="/personal-video"
+    >
+      Return to Personal Video
+    </a>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,592 @@
+:root{
+  color-scheme:dark;
+}
+
+body.payroll-admin-page{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 88% 0,rgba(197,0,24,.13),transparent 34rem),
+    #050505;
+  color:#f7f7f8;
+  font-family:Inter,ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+
+.payroll-admin-page *{
+  box-sizing:border-box;
+}
+
+.payroll-admin-page .shell{
+  width:min(1280px,calc(100% - 34px));
+  margin:0 auto;
+  padding:34px 0 90px;
+}
+
+/* ---------- Header ---------- */
+
+.payroll-admin-page .top{
+  display:flex;
+  align-items:flex-end;
+  justify-content:space-between;
+  gap:24px;
+  margin-bottom:24px;
+  padding:28px 30px;
+  border:1px solid #303036;
+  border-radius:18px;
+  background:
+    radial-gradient(circle at top right,rgba(197,0,24,.20),transparent 44%),
+    linear-gradient(145deg,#18181a,#0c0c0e);
+  box-shadow:0 18px 55px rgba(0,0,0,.34);
+}
+
+.payroll-admin-page .eyebrow{
+  margin:0 0 8px;
+  color:#ff5263;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+}
+
+.payroll-admin-page h1{
+  margin:0;
+  color:#fff;
+  font-size:clamp(2.2rem,5vw,4.6rem);
+  line-height:.94;
+  letter-spacing:-.045em;
+}
+
+.payroll-admin-page .muted{
+  color:#97979f;
+}
+
+.payroll-admin-page .top .muted{
+  margin-top:12px;
+  font-size:.92rem;
+}
+
+.payroll-admin-page .back{
+  display:inline-flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:14px;
+  color:#cacacf;
+  text-decoration:none;
+  font-weight:750;
+}
+
+.payroll-admin-page .back:hover{
+  color:#fff;
+}
+
+.payroll-admin-page button,
+.payroll-admin-page .button{
+  appearance:none;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  min-height:42px;
+  border:1px solid #44444b;
+  border-radius:9px;
+  background:#202024;
+  color:#fff;
+  padding:10px 15px;
+  font:inherit;
+  font-size:.88rem;
+  font-weight:850;
+  text-decoration:none;
+  cursor:pointer;
+  transition:
+    transform .14s ease,
+    border-color .14s ease,
+    background .14s ease;
+}
+
+.payroll-admin-page button:hover,
+.payroll-admin-page .button:hover{
+  transform:translateY(-1px);
+  border-color:#d71920;
+  background:#2a181b;
+}
+
+/* ---------- Summary cards ---------- */
+
+.payroll-admin-page .grid{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:12px;
+  margin:18px 0;
+}
+
+.payroll-admin-page .card{
+  min-width:0;
+  padding:18px 20px;
+  border:1px solid #303036;
+  border-radius:14px;
+  background:linear-gradient(145deg,#171719,#0d0d0f);
+  box-shadow:0 12px 34px rgba(0,0,0,.18);
+}
+
+.payroll-admin-page .card small{
+  display:block;
+  margin-bottom:7px;
+  color:#85858c;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+}
+
+.payroll-admin-page .card strong{
+  color:#fff;
+  font-size:1.45rem;
+}
+
+/* ---------- Panels / tables ---------- */
+
+.payroll-admin-page .panel{
+  margin-top:16px;
+  overflow:hidden;
+  border:1px solid #303036;
+  border-radius:16px;
+  background:linear-gradient(145deg,#151517,#0b0b0d);
+  box-shadow:0 15px 42px rgba(0,0,0,.22);
+}
+
+.payroll-admin-page .panel > h2{
+  margin:0;
+  padding:20px 22px 16px;
+  border-bottom:1px solid #2d2d32;
+  font-size:1.28rem;
+}
+
+.payroll-admin-page .panel > p{
+  padding:0 22px;
+}
+
+.payroll-admin-page table{
+  width:100%;
+  border-collapse:collapse;
+}
+
+.payroll-admin-page th{
+  padding:13px 16px;
+  border-bottom:1px solid #303036;
+  background:#101012;
+  color:#85858c;
+  font-size:.68rem;
+  font-weight:900;
+  letter-spacing:.10em;
+  text-align:left;
+  text-transform:uppercase;
+  white-space:nowrap;
+}
+
+.payroll-admin-page td{
+  padding:15px 16px;
+  border-bottom:1px solid #29292e;
+  color:#e8e8eb;
+  vertical-align:middle;
+}
+
+.payroll-admin-page tbody tr{
+  transition:background .14s ease;
+}
+
+.payroll-admin-page tbody tr:hover{
+  background:#131316;
+}
+
+.payroll-admin-page tbody tr:last-child td{
+  border-bottom:0;
+}
+
+.payroll-admin-page td strong{
+  color:#fff;
+}
+
+.payroll-admin-page td .muted{
+  display:inline-block;
+  margin-top:4px;
+  font-size:.81rem;
+}
+
+/* ---------- Status pills ---------- */
+
+.payroll-admin-page .status{
+  display:inline-flex;
+  align-items:center;
+  min-height:28px;
+  padding:5px 9px;
+  border:1px solid #45454b;
+  border-radius:999px;
+  background:#1e1e22;
+  color:#d8d8dc;
+  font-size:.72rem;
+  font-weight:900;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+.payroll-admin-page .status-submitted{
+  border-color:#2f7145;
+  background:#102d1b;
+  color:#9df0b7;
+}
+
+.payroll-admin-page .status-emailed{
+  border-color:#806226;
+  background:#2b210e;
+  color:#f1d27f;
+}
+
+.payroll-admin-page .status-draft{
+  border-color:#55555d;
+  background:#202024;
+  color:#c7c7cd;
+}
+
+.payroll-admin-page .status-email-failed{
+  border-color:#87353d;
+  background:#321216;
+  color:#ff9da7;
+}
+
+/* ---------- Empty state ---------- */
+
+.payroll-admin-page .empty{
+  padding:34px 26px;
+  text-align:center;
+}
+
+.payroll-admin-page .empty strong{
+  display:block;
+  margin-bottom:6px;
+  font-size:1.08rem;
+}
+
+/* ---------- Detail page ---------- */
+
+.payroll-admin-page .panel table + p{
+  margin-top:0;
+}
+
+.payroll-admin-page .panel p{
+  line-height:1.55;
+}
+
+.payroll-admin-page .panel p strong{
+  color:#aaaab1;
+}
+
+.payroll-admin-page .receipt-button{
+  background:linear-gradient(180deg,#dc1720,#aa0710);
+  border-color:#e1252e;
+}
+
+.payroll-admin-page .receipt-button:hover{
+  background:linear-gradient(180deg,#ec202a,#be0913);
+}
+
+/* ---------- Mobile ---------- */
+
+@media(max-width:900px){
+  .payroll-admin-page .grid{
+    grid-template-columns:1fr;
+  }
+
+  .payroll-admin-page .panel{
+    overflow-x:auto;
+  }
+
+  .payroll-admin-page table{
+    min-width:760px;
+  }
+}
+
+@media(max-width:620px){
+  .payroll-admin-page .shell{
+    width:min(100% - 18px,1280px);
+    padding-top:10px;
+  }
+
+  .payroll-admin-page .top{
+    display:grid;
+    align-items:start;
+    padding:21px 18px;
+  }
+
+  .payroll-admin-page h1{
+    font-size:clamp(2.3rem,13vw,3.7rem);
+  }
+
+  .payroll-admin-page .top form,
+  .payroll-admin-page .top button{
+    width:100%;
+  }
+
+  .payroll-admin-page .card{
+    padding:15px 16px;
+  }
+}
+
+/* ---------- Monthly payroll ---------- */
+.payroll-admin-page .payroll-header-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+
+.payroll-admin-page .payroll-month-controls{
+  padding:18px 20px;
+}
+
+.payroll-admin-page .payroll-month-controls form{
+  display:flex;
+  align-items:end;
+  gap:12px;
+  flex-wrap:wrap;
+}
+
+.payroll-admin-page .payroll-month-controls label{
+  display:grid;
+  gap:7px;
+  color:#aaaab1;
+  font-size:.78rem;
+  font-weight:850;
+}
+
+.payroll-admin-page .payroll-month-controls input{
+  min-height:42px;
+  border:1px solid #44444b;
+  border-radius:9px;
+  background:#101012;
+  color:#fff;
+  padding:9px 12px;
+  font:inherit;
+}
+
+@media(max-width:620px){
+  .payroll-admin-page .payroll-header-actions{
+    display:grid;
+    width:100%;
+  }
+
+  .payroll-admin-page .payroll-header-actions .button,
+  .payroll-admin-page .payroll-header-actions form,
+  .payroll-admin-page .payroll-header-actions button{
+    width:100%;
+  }
+}
+
+
+/* ==========================================================
+   STUPHIE PRIVATE STAFF PAYMENT SETUP
+   ========================================================== */
+
+.pay-privacy-warning{
+  margin-bottom:18px;
+  border-color:rgba(220,165,50,.30);
+}
+
+.pay-setup-list{
+  display:grid;
+  gap:18px;
+}
+
+.pay-setup-card{
+  overflow:hidden;
+}
+
+.pay-setup-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:24px;
+  margin-bottom:20px;
+}
+
+.pay-setup-heading h2{
+  margin:5px 0;
+}
+
+.pay-setup-current{
+  min-width:220px;
+  display:grid;
+  gap:4px;
+  padding:14px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:10px;
+  background:rgba(255,255,255,.035);
+}
+
+.pay-setup-current span{
+  margin-top:7px;
+  font-size:10px;
+  letter-spacing:.08em;
+  color:rgba(255,255,255,.50);
+}
+
+.pay-setup-current span:first-child{
+  margin-top:0;
+}
+
+.pay-setup-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:16px;
+}
+
+.pay-setup-form{
+  display:grid;
+  gap:13px;
+  padding:16px;
+  border:1px solid rgba(255,255,255,.09);
+  border-radius:10px;
+  background:rgba(0,0,0,.12);
+}
+
+.pay-setup-form h3{
+  margin:0 0 4px;
+}
+
+.pay-setup-form label{
+  display:grid;
+  gap:6px;
+}
+
+.pay-setup-form label > span{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.04em;
+  color:rgba(255,255,255,.64);
+}
+
+.pay-setup-form select,
+.pay-setup-form input,
+.pay-setup-form textarea{
+  width:100%;
+  box-sizing:border-box;
+}
+
+.pay-rate-input{
+  display:grid;
+  grid-template-columns:auto 1fr;
+  align-items:center;
+  gap:8px;
+}
+
+.pay-rate-history{
+  margin-top:16px;
+  border-top:1px solid rgba(255,255,255,.08);
+  padding-top:14px;
+}
+
+.pay-rate-history summary{
+  cursor:pointer;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.06em;
+}
+
+.pay-rate-history table{
+  margin-top:14px;
+}
+
+@media(max-width:800px){
+
+  .pay-setup-heading{
+    display:block;
+  }
+
+  .pay-setup-current{
+    margin-top:14px;
+  }
+
+  .pay-setup-grid{
+    grid-template-columns:1fr;
+  }
+
+}
+
+
+/* ==========================================================
+   STUPHIE 21ST-20TH PAYMENT PERIOD
+   ========================================================== */
+
+.payroll-period-hero{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:24px;
+  margin-bottom:16px;
+}
+
+.payroll-period-hero h2{
+  margin:5px 0 7px;
+}
+
+.payroll-period-status{
+  display:grid;
+  justify-items:end;
+  gap:8px;
+  min-width:180px;
+}
+
+.payroll-period-summary{
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:12px;
+  margin-bottom:18px;
+}
+
+.payroll-period-summary article{
+  display:grid;
+  gap:6px;
+}
+
+.payroll-period-summary span{
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.07em;
+  color:rgba(255,255,255,.55);
+}
+
+.payroll-period-summary strong{
+  font-size:22px;
+}
+
+.payroll-section-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:20px;
+  margin-bottom:16px;
+}
+
+.payroll-section-heading h2{
+  margin:5px 0;
+}
+
+@media(max-width:1050px){
+  .payroll-period-summary{
+    grid-template-columns:repeat(2,minmax(0,1fr));
+  }
+}
+
+@media(max-width:700px){
+
+  .payroll-period-hero,
+  .payroll-section-heading{
+    display:block;
+  }
+
+  .payroll-period-status{
+    justify-items:start;
+    margin-top:14px;
+  }
+
+  .payroll-period-summary{
+    grid-template-columns:1fr;
+  }
+}

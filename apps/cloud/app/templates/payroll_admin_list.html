@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Payroll Admin | Stuphie Ltd</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet" href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}">
+</head>
+<body class="payroll-admin-page">
+<main class="shell">
+  <header class="top">
+    <div>
+      <div class="eyebrow">STUPHIE LTD</div>
+      <h1>Payroll Admin</h1>
+      <div class="muted">Payroll requiring management attention · {{ staff_email }}</div>
+    </div>
+    <div class="payroll-header-actions">
+      <a class="button" href="/staff">
+        ← Back to Dashboard
+      </a>
+
+      <a class="button" href="/staff/payroll/staff-payment-setup">
+        Staff Payment Setup
+      </a>
+
+      <a class="button" href="/staff/payroll/monthly">
+        Payroll Spreadsheet
+      </a>
+
+      <a class="button" href="/staff/payroll/history">
+        Payroll History
+      </a>
+
+      <form method="post" action="/staff/logout">
+        <button type="submit">Sign out</button>
+      </form>
+    </div>
+  </header>
+
+  <section class="panel">
+    {% if rows %}
+    <table>
+      <thead>
+        <tr>
+          <th>Staff member</th>
+          <th>Week</th>
+          <th>Hours</th>
+          <th>Rate</th>
+          <th>Gross pay</th>
+          <th>Expenses</th>
+          <th>Total due</th>
+          <th>Management status</th>
+          <th>Submitted</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in rows %}
+        <tr>
+          <td>
+            <strong>{{ row.staff_name }}</strong><br>
+            <span class="muted">{{ row.staff_email }}</span>
+          </td>
+          <td>{{ row.week_start.strftime('%d %b %Y') }}</td>
+          <td>{{ row.hours }}</td>
+          <td>£{{ row.hourly_rate }}</td>
+          <td>£{{ row.gross_pay }}</td>
+          <td>£{{ row.expenses }}</td>
+          <td><strong>£{{ row.total_due }}</strong></td>
+          <td>
+            <span class="status status-{{ row.management_state }}">
+              {{ row.management_label }}
+            </span>
+          </td>
+          <td>
+            {% if row.submitted_at %}
+              {{ row.submitted_at.strftime('%d %b %Y %H:%M') }}
+            {% else %}
+              —
+            {% endif %}
+          </td>
+          <td><a class="button" href="/staff/payroll/{{ row.id }}">Open</a></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="empty">
+        <strong>No payroll waiting for action.</strong>
+        <p class="muted">
+          Submitted payroll will appear here when it needs
+          approval or payment. Completed payroll is kept in
+          Payroll History.
+        </p>
+      </div>
+    {% endif %}
+  </section>
+</main>
+</body>
+</html>

@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <title>Payroll Submission | Pirouette</title>
+  <link rel="stylesheet" href="/static/cloud.css">
+  <link rel="stylesheet" href="/static/payroll-employee.css?v={{ request.app.state.settings.version }}">
+  <link rel="stylesheet" href="/static/payroll-admin.css?v={{ request.app.state.settings.version }}">
+</head>
+<body class="payroll-admin-page">
+<main class="shell">
+
+  <header class="top">
+    <div>
+      <a class="back" href="/my-payroll/history">
+        ← My Payroll
+      </a>
+
+      <div class="eyebrow" style="margin-top:18px">
+        PAYROLL SUBMISSION
+      </div>
+
+      <h1>
+        Week of {{ submission.week_start.strftime('%d %B %Y') }}
+      </h1>
+
+      <div class="muted">
+        {{ submission.staff_name }}
+      </div>
+    </div>
+  </header>
+
+  <section class="grid">
+    <div class="card">
+      <small>Status</small>
+      <strong>
+        <span class="status status-{{ submission.status|lower|replace('_', '-') }}">
+          {{ submission.status|title }}
+        </span>
+      </strong>
+    </div>
+
+    <div class="card">
+      <small>Total hours</small>
+      <strong>{{ total_hours }}</strong>
+    </div>
+
+    <div class="card">
+      <small>Total expenses</small>
+      <strong>£{{ total_expenses }}</strong>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Timesheet</h2>
+
+    {% if timesheets %}
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Start</th>
+          <th>Finish</th>
+          <th>Break</th>
+          <th>Hours</th>
+          <th>Type / event</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in timesheets %}
+        <tr>
+          <td>{{ row.get('work_date','') }}</td>
+          <td>{{ row.get('start_time','') }}</td>
+          <td>{{ row.get('finish_time','') }}</td>
+          <td>{{ row.get('break_minutes',0) }} min</td>
+          <td>
+            {{ '%.2f'|format(row._paid_minutes / 60) }}
+          </td>
+          <td>
+            {{ row.get('work_type') or row.get('event_name') or '—' }}
+          </td>
+          <td>{{ row.get('notes') or '—' }}</td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No timesheet entries.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Expenses</h2>
+
+    {% if expenses %}
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th>Amount</th>
+          <th>Receipt / explanation</th>
+        </tr>
+      </thead>
+      <tbody>
+      {% for row in expenses %}
+        <tr>
+          <td>{{ row.get('expense_date','') }}</td>
+          <td>
+            {{ row.get('description') or row.get('expense_type') or '—' }}
+          </td>
+          <td>£{{ row._amount }}</td>
+          <td>
+            {% if row._receipt_location %}
+              <a
+                class="button receipt-button"
+                href="/my-payroll/submissions/{{ submission.id }}/receipt/{{ row._index }}"
+                target="_blank"
+                rel="noopener"
+              >View receipt</a>
+            {% else %}
+              {{ row.get('no_receipt_reason') or row.get('receipt_explanation') or 'No receipt supplied' }}
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="muted">No expense claims.</p>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <h2>Submission record</h2>
+    <p>
+      <strong>Submitted:</strong>
+      {{ submission.submitted_at or '—' }}
+    </p>
+    <p>
+      <strong>Last updated:</strong>
+      {{ submission.updated_at }}
+    </p>
+  </section>
+
+</main>
+</body>
+</html>

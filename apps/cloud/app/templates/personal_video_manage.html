@@ -1,0 +1,559 @@
+{% extends "customer_base.html" %}
+
+{% block title %}
+Manage Personal Video Booking
+{% endblock %}
+
+{% block content %}
+<main class="personal-video-page">
+
+  <section class="personal-video-hero">
+    <div>
+      <p class="eyebrow">PERSONAL VIDEO</p>
+      <h1>Manage your booking</h1>
+      <p>{{ event.name }}</p>
+    </div>
+  </section>
+
+  <section class="personal-video-card">
+
+    <div class="personal-video-reference">
+      <span>Booking reference</span>
+      <strong>{{ booking.reference }}</strong>
+    </div>
+
+    <p>
+      {{ booking_type_label }} Personal Video booking
+    </p>
+
+    {% if saved %}
+    <div
+      class="status-message"
+      role="status"
+    >
+      <strong>Booking details updated.</strong>
+      <p>Your changes have been saved.</p>
+    </div>
+    {% endif %}
+
+    {% if form_error %}
+    <div
+      class="personal-video-error"
+      role="alert"
+    >
+      {{ form_error }}
+    </div>
+    {% endif %}
+
+    <form
+      method="post"
+      action="/personal-video/manage/{{ booking.manage_token }}"
+      class="personal-video-form"
+    >
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Your name</span>
+          <input
+            type="text"
+            name="customer_name"
+            required
+            maxlength="200"
+            autocomplete="name"
+            value="{{ booking.customer_name }}"
+          >
+        </label>
+
+        <label>
+          <span>Email address</span>
+          <input
+            type="email"
+            name="customer_email"
+            required
+            maxlength="320"
+            autocomplete="email"
+            value="{{ booking.customer_email }}"
+          >
+        </label>
+
+        <label>
+          <span>Phone number</span>
+          <input
+            type="tel"
+            name="customer_phone"
+            maxlength="80"
+            autocomplete="tel"
+            value="{{ booking.customer_phone }}"
+          >
+        </label>
+
+      </div>
+
+      {% if booking.booking_type == "ballroom" %}
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Competitor number</span>
+          <input
+            type="text"
+            name="competitor_number"
+            maxlength="100"
+            value="{{ booking.competitor_number }}"
+          >
+        </label>
+
+        <label>
+          <span>Outfit description</span>
+          <textarea
+            name="outfit_description"
+            maxlength="1000"
+            rows="4"
+          >{{ booking.outfit_description }}</textarea>
+        </label>
+
+      </div>
+
+      {% endif %}
+
+      <label>
+        <span>Notes for Sophie’s Photography</span>
+        <textarea
+          name="customer_notes"
+          maxlength="2000"
+          rows="5"
+        >{{ booking.customer_notes }}</textarea>
+      </label>
+
+      <button
+        class="button"
+        type="submit"
+      >
+        Save Changes
+      </button>
+
+    </form>
+
+  </section>
+
+  {% if booking.booking_type == "ballroom" %}
+
+  <section class="personal-video-card">
+
+    <p class="eyebrow">COMPETITION DETAILS</p>
+    <h2>Update your event information</h2>
+
+    <div class="status-message">
+      <strong>
+        You can return here when more information becomes
+        available.
+      </strong>
+      <p>
+        Event Number, Event Name and Dancer Number can be
+        added or corrected for each competition event.
+        Dancer numbers may be different for each event.
+      </p>
+    </div>
+
+    {% for entry in entries %}
+
+    <form
+      method="post"
+      action="/personal-video/manage/{{ booking.manage_token }}/entry/{{ entry.id }}"
+      class="personal-video-form personal-video-entry"
+    >
+
+      <h3>Competition Event {{ loop.index }}</h3>
+
+      {% if entry_saved == entry.id %}
+      <div
+        class="status-message"
+        role="status"
+      >
+        Event details saved.
+      </div>
+      {% endif %}
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Event Number <small>(optional)</small></span>
+          <input
+            type="text"
+            name="event_number"
+            maxlength="100"
+            placeholder="Can be added later"
+            value="{{ entry.event_number or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Event Name <small>(optional)</small></span>
+          <input
+            type="text"
+            name="event_name"
+            maxlength="240"
+            placeholder="Can be added later"
+            value="{{ entry.event_name or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Dancer Number <small>(optional)</small></span>
+          <input
+            type="text"
+            name="dancer_number"
+            maxlength="100"
+            placeholder="Can be added later"
+            value="{{ entry.dancer_number or '' }}"
+          >
+          <small>
+            This can be different for each event.
+          </small>
+        </label>
+
+        <div>
+          <strong>Date</strong>
+          <p>
+            {{ entry.performance_date or "Not entered" }}
+          </p>
+        </div>
+
+      </div>
+
+      {% if (
+        not entry.event_number
+        or not entry.event_name
+        or not entry.dancer_number
+      ) %}
+      <p class="personal-video-payment-note">
+        Some competition information is still missing.
+        Please update this event when you receive it.
+      </p>
+      {% endif %}
+
+      <button
+        class="button secondary"
+        type="submit"
+      >
+        Save Event Details
+      </button>
+
+    </form>
+
+    {% endfor %}
+
+  </section>
+
+  {% endif %}
+
+  {% if booking.booking_type == "freestyle" %}
+
+  <section class="personal-video-card">
+
+    <p class="eyebrow">SPOT DANCES</p>
+    <h2>Update your performance details</h2>
+
+    <div class="status-message">
+      <strong>
+        You can correct the details of each Spot Dance.
+      </strong>
+      <p>
+        The number of Spot Dances in the booking cannot be
+        changed here because that would alter the purchase
+        total.
+      </p>
+    </div>
+
+    {% for entry in entries %}
+
+    <form
+      method="post"
+      action="/personal-video/manage/{{ booking.manage_token }}/entry/{{ entry.id }}"
+      class="personal-video-form personal-video-entry"
+    >
+
+      <h3>Spot Dance {{ loop.index }}</h3>
+
+      {% if entry_saved == entry.id %}
+      <div
+        class="status-message"
+        role="status"
+      >
+        Performance details saved.
+      </div>
+      {% endif %}
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Dancer name / dancers</span>
+          <input
+            type="text"
+            name="dancer_name"
+            required
+            maxlength="200"
+            value="{{ entry.dancer_name or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Dancer number</span>
+          <input
+            type="text"
+            name="dancer_number"
+            required
+            maxlength="100"
+            value="{{ entry.dancer_number or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Dance style</span>
+          <select
+            name="dance_style"
+            required
+          >
+            {% for item in freestyle_styles %}
+            <option
+              value="{{ item }}"
+              {% if entry.dance_style == item %}selected{% endif %}
+            >
+              {{ item }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Category</span>
+          <select
+            name="category"
+            required
+          >
+            {% for item in freestyle_categories %}
+            <option
+              value="{{ item }}"
+              {% if entry.category == item %}selected{% endif %}
+            >
+              {{ item }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Age group</span>
+          <select
+            name="age_group"
+            required
+          >
+            {% for item in freestyle_age_groups %}
+            <option
+              value="{{ item }}"
+              {% if entry.age_group == item %}selected{% endif %}
+            >
+              {{ item }}
+            </option>
+            {% endfor %}
+          </select>
+        </label>
+
+        <label>
+          <span>Date of dance</span>
+          <input
+            type="date"
+            name="performance_date"
+            required
+            min="{{ event.start_date }}"
+            max="{{ event.end_date }}"
+            value="{% if entry.performance_date %}{{ entry.performance_date.isoformat() }}{% endif %}"
+          >
+        </label>
+
+        <label>
+          <span>Time of dance <small>(optional)</small></span>
+          <input
+            type="time"
+            name="performance_time"
+            value="{% if entry.performance_time %}{{ entry.performance_time.strftime('%H:%M') }}{% endif %}"
+          >
+        </label>
+
+      </div>
+
+      <button
+        class="button secondary"
+        type="submit"
+      >
+        Save Performance Details
+      </button>
+
+    </form>
+
+    {% endfor %}
+
+  </section>
+
+  {% endif %}
+
+  {% if booking.booking_type == "theatre" %}
+
+  <section class="personal-video-card">
+
+    <p class="eyebrow">PERFORMANCES</p>
+    <h2>Update your performance details</h2>
+
+    <div class="status-message">
+      <strong>
+        You can correct each Theatre performance.
+      </strong>
+      <p>
+        The number of performances in the booking cannot be
+        changed here because that would alter the purchase
+        total.
+      </p>
+    </div>
+
+    {% for entry in entries %}
+
+    <form
+      method="post"
+      action="/personal-video/manage/{{ booking.manage_token }}/entry/{{ entry.id }}"
+      class="personal-video-form personal-video-entry"
+    >
+
+      <h3>Performance {{ loop.index }}</h3>
+
+      {% if entry_saved == entry.id %}
+      <div
+        class="status-message"
+        role="status"
+      >
+        Performance details saved.
+      </div>
+      {% endif %}
+
+      <div class="personal-video-grid">
+
+        <label>
+          <span>Dancer / Group Name</span>
+          <input
+            type="text"
+            name="dancer_name"
+            required
+            maxlength="200"
+            value="{{ entry.dancer_name or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Exact Dance Name</span>
+          <input
+            type="text"
+            name="dance_name"
+            required
+            maxlength="240"
+            value="{{ entry.dance_name or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Category / Section</span>
+          <input
+            type="text"
+            name="category"
+            required
+            maxlength="120"
+            value="{{ entry.category or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Event Number <small>(optional)</small></span>
+          <input
+            type="text"
+            name="event_number"
+            maxlength="100"
+            value="{{ entry.event_number or '' }}"
+          >
+        </label>
+
+        <label>
+          <span>Date of performance</span>
+          <input
+            type="date"
+            name="performance_date"
+            required
+            min="{{ event.start_date }}"
+            max="{{ event.end_date }}"
+            value="{% if entry.performance_date %}{{ entry.performance_date.isoformat() }}{% endif %}"
+          >
+        </label>
+
+        <label>
+          <span>Time of performance <small>(optional)</small></span>
+          <input
+            type="time"
+            name="performance_time"
+            value="{% if entry.performance_time %}{{ entry.performance_time.strftime('%H:%M') }}{% endif %}"
+          >
+        </label>
+
+      </div>
+
+      <button
+        class="button secondary"
+        type="submit"
+      >
+        Save Performance Details
+      </button>
+
+    </form>
+
+    {% endfor %}
+
+  </section>
+
+  {% endif %}
+
+  <section class="personal-video-card">
+
+    <p class="eyebrow">BOOKING DETAILS</p>
+
+    {% if booking.booking_type == "ballroom" %}
+    <p>
+      Minimum commitment:
+      <strong>
+        {{ booking.minimum_video_count }}
+        Personal Video{% if booking.minimum_video_count != 1 %}s{% endif %}
+      </strong>
+    </p>
+    {% endif %}
+
+    <p>
+      Payment status:
+      <strong>
+        {{ booking.payment_status|replace("_", " ")|title }}
+      </strong>
+    </p>
+
+    <p>
+      Payment, filming instructions, video quantities,
+      pricing and purchase commitments cannot be changed
+      through this page. Please contact Sophie’s Photography
+      if you need help with those parts of your booking.
+    </p>
+
+    <a
+      class="button secondary"
+      href="/personal-video"
+    >
+      Finish
+    </a>
+
+  </section>
+
+</main>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "customer_base.html" %}
+
+{% block title %}Enter your code | {{ brand.display_name }}{% endblock %}
+
+{% block content %}
+<section class="customer-access-shell">
+  <div class="customer-access-card">
+    <p class="customer-access-eyebrow">EMAIL VERIFICATION</p>
+
+    <h1>Enter your six-digit code</h1>
+
+    <p class="customer-access-intro">
+      We sent a verification code to
+      <strong>{{ email }}</strong>.
+    </p>
+
+    {% if error %}
+      <div class="customer-access-error" role="alert">
+        {{ error }}
+      </div>
+    {% endif %}
+
+    <form method="post" action="/customer/verify">
+      <input
+        type="hidden"
+        name="csrf_token"
+        value="{{ csrf_token }}"
+      >
+
+      <label class="customer-access-field">
+        <span>Verification code</span>
+        <input
+          class="customer-access-code"
+          type="text"
+          name="code"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+          pattern="[0-9]{6}"
+          maxlength="6"
+          minlength="6"
+          required
+          autofocus
+        >
+      </label>
+
+      <button
+        class="customer-access-button"
+        type="submit"
+      >
+        Verify and continue
+      </button>
+    </form>
+
+    <p class="customer-access-small">
+      Your code expires after 10 minutes. Once verified, this device will
+      continue into your secure {{ brand.display_name }} customer session.
+    </p>
+  </div>
+</section>
+{% endblock %}

@@ -71,14 +71,6 @@
     </div>
     {% if gallery is defined and gallery %}<a class="customer-experience-home" href="/g/{{ gallery.slug }}">Gallery</a>{% endif %}
 
-<a
-  href="/customer/home"
-  class="customer-account-link"
-  aria-label="My {{ page_brand.display_name }}"
->
-  My Account
-</a>
-
 </header>
   <div class="language-control" data-language-control>
     <button type="button" class="language-button" data-language-button aria-haspopup="dialog" aria-controls="language-dialog">🌐 <span data-i18n="language">Language</span></button>
@@ -87,7 +79,7 @@
     </dialog>
   </div>
   <main class="page-content">{% block content %}{% endblock %}</main>
-  <script src="/customer-static/js/i18n.js" defer></script>
+  <script src="/customer-static/js/i18n.js?v={{ request.app.state.settings.version }}" defer></script>
   <script src="/static/customer-gallery.js?v={{ request.app.state.settings.version }}" defer></script>
   {% block scripts %}{% endblock %}
 </body>

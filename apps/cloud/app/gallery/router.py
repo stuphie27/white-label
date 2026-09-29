@@ -407,23 +407,6 @@ def build_gallery_router(templates: Jinja2Templates) -> APIRouter:
         if media == "videos" and not int(video_asset_count or 0):
             target = f"/g/{slug}?media=photos" if int(photo_asset_count or 0) else f"/g/{slug}"
             return RedirectResponse(target, status_code=303)
-        # Online gallery access requires a verified Sophie’s Photography
-        # customer identity. Existing staff/gallery access-code machinery is
-        # left in place elsewhere for compatibility, but it is no longer the
-        # customer-facing gate for the main gallery.
-        verified_profile = verified_customer_profile(session, request)
-
-        if verified_profile is None:
-            next_url = str(request.url.path)
-            if request.url.query:
-                next_url += "?" + str(request.url.query)
-
-            return RedirectResponse(
-                "/customer/register?next=" + quote(next_url, safe=""),
-                status_code=303,
-            )
-
-
         activity_folder_key = (
             f"pirouette_activity_last_folder_{gallery.id}"
         )

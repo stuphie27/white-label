@@ -84,8 +84,32 @@
   if(grid){
     languages.forEach(([code,label])=>{ const b=document.createElement('button'); b.type='button'; b.className='language-option'; b.dataset.languageOption=code; b.textContent=label; b.addEventListener('click',()=>{current=code;localStorage.setItem('pirouette_language',code);apply();dialog?.close();});grid.appendChild(b); });
   }
-  document.querySelector('[data-language-button]')?.addEventListener('click',()=>dialog?.showModal());
-  document.querySelector('[data-language-close]')?.addEventListener('click',()=>dialog?.close());
+  const languageButton=document.querySelector('[data-language-button]');
+  const languageClose=document.querySelector('[data-language-close]');
+
+  languageButton?.addEventListener('click',(event)=>{
+    event.preventDefault();
+    event.stopPropagation();
+
+    if(!dialog) return;
+
+    if(typeof dialog.showModal==='function'){
+      if(!dialog.open) dialog.showModal();
+    }else{
+      dialog.setAttribute('open','');
+    }
+  });
+
+  languageClose?.addEventListener('click',(event)=>{
+    event.preventDefault();
+    if(!dialog) return;
+
+    if(typeof dialog.close==='function'){
+      dialog.close();
+    }else{
+      dialog.removeAttribute('open');
+    }
+  });
   dialog?.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   apply();
 })();

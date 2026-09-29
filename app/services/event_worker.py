@@ -7,12 +7,14 @@ from datetime import datetime
 from app.services.scanner import scan_event
 from app.services.preview_processor import process_next_preview
 from app.services.upload_processor import process_next_upload
+from app.services.delivery_processor import process_next_delivery
 
 
 SCAN_INTERVAL_SECONDS = 5
 IDLE_SLEEP_SECONDS = 0.5
 UPLOAD_RETRY_DELAY_SECONDS = 30
 MAX_UPLOAD_RETRIES = 5
+DELIVERY_POLL_INTERVAL_SECONDS = 10
 
 
 def requeue_retryable_uploads(event_db_path: str):
@@ -132,6 +134,7 @@ def run_worker(event_db_path: str):
     print("")
 
     last_scan = 0.0
+    last_delivery_poll = 0.0
 
     while True:
         did_work = False
@@ -199,6 +202,32 @@ def run_worker(event_db_path: str):
                 exc,
                 flush=True,
             )
+
+        if now - last_delivery_poll >= DELIVERY_POLL_INTERVAL_SECONDS:
+            try:
+                delivery = process_next_delivery(
+                    str(event_db)
+                )
+
+                if delivery:
+                    did_work = True
+                    print(
+                        "DELIVERY READY "
+                        f"order={delivery['order_reference']} "
+                        f"type={delivery['product_type']} "
+                        f"files={delivery['files']} "
+                        f"status={delivery['status']}",
+                        flush=True,
+                    )
+
+            except Exception as exc:
+                print(
+                    "DELIVERY WARNING:",
+                    exc,
+                    flush=True,
+                )
+
+            last_delivery_poll = now
 
         if not did_work:
             time.sleep(IDLE_SLEEP_SECONDS)

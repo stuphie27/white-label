@@ -193,7 +193,7 @@ def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOr
         paths, missing = _asset_paths(session, order)
         if missing or not paths:
             order.status = "waiting_for_cloud_assets"
-            label = "high-resolution originals" if order.product_type == "high_res" else "low-resolution delivery files"
+            label = "high-resolution delivery files" if order.product_type == "high_res" else "low-resolution delivery files"
             order.fulfilment_error = f"Waiting for purchased {label}: " + ", ".join(missing or ["no assets supplied"])
             record_order_audit(session, order, "waiting_for_assets", old_status=old_status, new_status=order.status, detail=order.fulfilment_error)
             session.commit(); session.refresh(order)

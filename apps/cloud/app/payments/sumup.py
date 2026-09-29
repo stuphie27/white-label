@@ -126,13 +126,13 @@ def order_amount_pence(order: CloudOrder) -> int:
     return subtotal + max(0, int(order.delivery_charge_pence or 0))
 
 
-def attach_checkout(session: Session, settings, orders: list[CloudOrder], *, checkout_reference: str, redirect_url: str, return_url: str) -> HostedCheckout:
+def attach_checkout(session: Session, settings, orders: list[CloudOrder], *, checkout_reference: str, redirect_url: str, return_url: str, brand_name: str = "Photography") -> HostedCheckout:
     amount_pence = sum(order_amount_pence(order) for order in orders)
     checkout = create_hosted_checkout(
         settings,
         reference=checkout_reference,
         amount_pence=amount_pence,
-        description=f"Sophie’s Photography order {checkout_reference}",
+        description=f"{(brand_name or 'Photography').strip()} order {checkout_reference}",
         redirect_url=redirect_url,
         return_url=return_url,
     )

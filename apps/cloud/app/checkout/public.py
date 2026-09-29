@@ -1171,6 +1171,7 @@ def build_public_checkout_router(templates: Jinja2Templates) -> APIRouter:
                         request.app.state.settings,
                         orders,
                         checkout_reference=checkout_ref,
+                        brand_name=get_event_brand(event)["display_name"],
                         redirect_url=f"{base}/g/{slug}/orders/{checkout_ref}/payment-return",
                         return_url=f"{base}/api/payments/sumup/webhook",
                     )
@@ -1312,8 +1313,10 @@ def build_public_checkout_router(templates: Jinja2Templates) -> APIRouter:
                 return RedirectResponse(f"/g/{slug}/orders/{checkout_ref}", status_code=303)
             try:
                 base = request.app.state.settings.public_base_url.rstrip("/")
+                retry_event = session.get(Event, orders[0].event_id)
                 checkout = attach_checkout(
                     session, request.app.state.settings, orders, checkout_reference=checkout_ref,
+                    brand_name=get_event_brand(retry_event)["display_name"],
                     redirect_url=f"{base}/g/{slug}/orders/{checkout_ref}/payment-return",
                     return_url=f"{base}/api/payments/sumup/webhook",
                 )

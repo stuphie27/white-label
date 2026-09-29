@@ -42,7 +42,7 @@ from app.branding import BRANDS
 
 APP_DIR = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=APP_DIR / "templates")
-SHARED_UI_DIR = APP_DIR.parents[2] / "shared" / "ui"
+SHARED_UI_DIR = APP_DIR.parent / "shared" / "ui"
 OFFLINE_STATIC_DIR = APP_DIR.parents[1] / "offline" / "static"
 TEMPLATES.env.loader = ChoiceLoader([FileSystemLoader(str(APP_DIR / "templates")), FileSystemLoader(str(SHARED_UI_DIR / "templates"))])
 

@@ -1,0 +1,15 @@
+{% macro gallery_hero(kicker, title, description='', live=false, status_text='') -%}
+<header class="pirouette-customer-hero" data-pirouette-shared-component="gallery-hero">
+  <p class="pirouette-shared-kicker">{{ kicker }}</p>
+  <h1>{{ title }}</h1>
+  {% if description %}<p>{{ description }}</p>{% endif %}
+  {% if live or status_text %}<span class="pirouette-shared-status">{{ status_text or 'Live' }}</span>{% endif %}
+</header>
+{%- endmacro %}
+
+{% macro section_heading(kicker, title, count='') -%}
+<div class="pirouette-shared-heading" data-pirouette-shared-component="section-heading">
+  <div><p class="pirouette-shared-kicker">{{ kicker }}</p><h2>{{ title }}</h2></div>
+  {% if count %}<span>{{ count }}</span>{% endif %}
+</div>
+{%- endmacro %}

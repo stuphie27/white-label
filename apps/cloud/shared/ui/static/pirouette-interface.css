@@ -1,0 +1,45 @@
+/* Pirouette shared interface v0.9.9
+   Canonical visual layer used by both Project Pirouette and Pirouette Cloud. */
+:root{
+  --pirouette-bg:#050505;
+  --pirouette-panel:#101010;
+  --pirouette-panel-2:#171717;
+  --pirouette-line:#323232;
+  --pirouette-text:#fff;
+  --pirouette-muted:#b8b8b8;
+  --pirouette-red:#c50018;
+  --pirouette-red-bright:#ef1731;
+  --pirouette-green:#27c56c;
+  --pirouette-amber:#f0ab2f;
+  --pirouette-radius:14px;
+  --pirouette-shadow:0 16px 42px rgba(0,0,0,.34);
+  --pirouette-gap:18px;
+}
+.pirouette-interface{background:var(--pirouette-bg);color:var(--pirouette-text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+.pirouette-interface *{box-sizing:border-box}
+.pirouette-interface a{color:inherit}
+.pirouette-shared-card{background:linear-gradient(180deg,var(--pirouette-panel-2),var(--pirouette-panel));border:1px solid var(--pirouette-line);border-radius:var(--pirouette-radius);box-shadow:var(--pirouette-shadow)}
+.pirouette-shared-kicker,.eyebrow,.section-kicker{margin:0 0 .45rem;color:#ff5366;font-size:.72rem;font-weight:900;letter-spacing:.16em;text-transform:uppercase}
+.pirouette-shared-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:1rem;margin-bottom:1rem}
+.pirouette-shared-heading h1,.pirouette-shared-heading h2{margin:0;line-height:1.05}
+.pirouette-shared-status{display:inline-flex;align-items:center;gap:.45rem;border:1px solid #316943;border-radius:999px;background:#102b19;padding:.4rem .72rem;color:#bff6ce;font-weight:850}
+.pirouette-shared-status::before{content:"";width:.55rem;height:.55rem;border-radius:50%;background:var(--pirouette-green);box-shadow:0 0 0 .22rem rgba(39,197,108,.15)}
+.pirouette-customer-shell{width:min(1480px,calc(100% - 32px));margin:0 auto;padding:24px 0 110px}
+.pirouette-customer-hero{padding:28px;background:radial-gradient(circle at top right,rgba(197,0,24,.22),transparent 42%),linear-gradient(180deg,#181818,#090909);border:1px solid var(--pirouette-line);border-radius:18px;box-shadow:var(--pirouette-shadow)}
+.pirouette-customer-hero h1{font-size:clamp(2rem,5vw,4.7rem);margin:.2rem 0 .7rem;line-height:.95}
+.pirouette-customer-hero p{color:var(--pirouette-muted);max-width:850px;font-size:1.04rem}
+.pirouette-media-tabs{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+.pirouette-media-tab{display:inline-flex;align-items:center;justify-content:center;min-height:46px;padding:.72rem 1rem;border:1px solid var(--pirouette-line);border-radius:11px;background:#111;text-decoration:none;font-weight:850}
+.pirouette-media-tab.active,.pirouette-media-tab:hover{border-color:var(--pirouette-red-bright);background:var(--pirouette-red)}
+.pirouette-gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px}
+.pirouette-media-card{overflow:hidden;background:#111;border:1px solid var(--pirouette-line);border-radius:14px;box-shadow:0 10px 28px rgba(0,0,0,.28)}
+.pirouette-media-card>img,.pirouette-media-card>video{display:block;width:100%;aspect-ratio:4/3;object-fit:cover;background:#000}
+.pirouette-media-card figcaption,.pirouette-media-card .pirouette-media-copy{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px}
+.pirouette-media-card small{display:block;color:var(--pirouette-muted);margin-top:.25rem}
+.pirouette-media-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+.pirouette-media-actions button,.pirouette-media-actions select,.pirouette-primary-button{min-height:40px;border-radius:9px;border:1px solid #484848;background:#1d1d1d;color:#fff;padding:.55rem .75rem;font-weight:800}
+.pirouette-media-actions button:last-child,.pirouette-primary-button{background:var(--pirouette-red);border-color:var(--pirouette-red-bright)}
+.pirouette-live-processing{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin-top:14px}
+.pirouette-live-processing>div{padding:12px;background:#0c0c0c;border:1px solid #303030;border-radius:10px}
+.pirouette-live-processing strong{display:block;font-size:1.5rem}.pirouette-live-processing span{color:var(--pirouette-muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}
+@media(max-width:820px){.pirouette-live-processing{grid-template-columns:repeat(2,minmax(0,1fr))}.pirouette-customer-shell{width:min(100% - 18px,1480px)}.pirouette-customer-hero{padding:20px}.pirouette-media-card figcaption,.pirouette-media-card .pirouette-media-copy{align-items:flex-start;flex-direction:column}.pirouette-media-actions{justify-content:flex-start}}

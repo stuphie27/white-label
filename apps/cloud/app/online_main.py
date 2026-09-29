@@ -33,7 +33,7 @@ from app.payroll_requests import build_payroll_request_router
 APP_DIR = __import__("pathlib").Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=APP_DIR / "templates")
 
-SHARED_UI_DIR = APP_DIR.parents[2] / "shared" / "ui"
+SHARED_UI_DIR = APP_DIR.parent / "shared" / "ui"
 
 TEMPLATES.env.loader = ChoiceLoader(
     [

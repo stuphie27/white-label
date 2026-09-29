@@ -5,6 +5,7 @@ RUN addgroup --system pirouette && adduser --system --ingroup pirouette pirouett
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
+COPY shared ./shared
 COPY VERSION ./VERSION
 USER pirouette
 EXPOSE 8080

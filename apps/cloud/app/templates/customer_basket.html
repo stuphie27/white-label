@@ -123,7 +123,11 @@
 
       <section class="pricing-summary cloud-pricing-summary">
         <div class="customer-total"><span>Basket subtotal</span><strong>£{{ '%.2f'|format(subtotal_pence/100) }}</strong></div>
+        {% if has_print %}
         <p class="customer-note">UK postage is £7 once per order when physical products are posted. Digital purchases are supplied privately without the gallery watermark.</p>
+        {% else %}
+        <p class="customer-note">Digital purchases are supplied privately by secure email without the gallery watermark.</p>
+        {% endif %}
       </section>
     </div>
 

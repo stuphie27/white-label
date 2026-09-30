@@ -208,6 +208,16 @@ class Settings(BaseSettings):
     sumup_api_base: str = Field(default="https://api.sumup.com")
     sumup_timeout_seconds: int = Field(default=15, ge=3, le=60)
 
+    # Temporary production payment-test mode.
+    # When enabled, SumUp charges the configured test amount while
+    # the real catalogue and order item prices remain unchanged.
+    payment_test_mode: bool = Field(default=False)
+    payment_test_amount_pence: int = Field(
+        default=100,
+        ge=1,
+        le=1000,
+    )
+
     @field_validator("environment")
     @classmethod
     def validate_environment(cls, value: str) -> str:

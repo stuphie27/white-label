@@ -127,7 +127,16 @@ def order_amount_pence(order: CloudOrder) -> int:
 
 
 def attach_checkout(session: Session, settings, orders: list[CloudOrder], *, checkout_reference: str, redirect_url: str, return_url: str, brand_name: str = "Photography") -> HostedCheckout:
-    amount_pence = sum(order_amount_pence(order) for order in orders)
+    real_amount_pence = sum(
+        order_amount_pence(order)
+        for order in orders
+    )
+
+    amount_pence = (
+        int(settings.payment_test_amount_pence)
+        if settings.payment_test_mode
+        else real_amount_pence
+    )
     checkout = create_hosted_checkout(
         settings,
         reference=checkout_reference,
@@ -158,7 +167,14 @@ def verify_and_apply_checkout(session: Session, settings, checkout_id: str) -> l
 
     status = str(result.get("status") or "").upper()
     actual_currency = str(result.get("currency") or "").upper()
-    expected_pence = sum(int(order.payment_amount_pence or 0) for order in orders)
+    expected_pence = (
+        int(settings.payment_test_amount_pence)
+        if settings.payment_test_mode
+        else sum(
+            int(order.payment_amount_pence or 0)
+            for order in orders
+        )
+    )
     try:
         actual_pence = int((Decimal(str(result.get("amount"))) * Decimal(100)).quantize(Decimal("1")))
     except Exception as exc:

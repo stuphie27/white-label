@@ -15,7 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.db.models import CustomerDelivery, CloudOrder
-from app.email_design import branded_email_html, attach_sophies_logo
+from app.email_design import branded_email_html, attach_brand_logo
 from app.storage import delete as delete_storage, upload_file, spaces_enabled
 
 POLICY_FILES = {
@@ -34,11 +34,24 @@ def _safe_name(value: str, fallback: str) -> str:
     return cleaned[:120] or fallback
 
 
-def _send(settings, *, to: str, subject: str, body: str, action_label: str = "", action_url: str = "", customer_message: bool = False, cc_delivery_admin: bool = False) -> bool:
+def _send(settings, *, to: str, subject: str, body: str, action_label: str = "", action_url: str = "", customer_message: bool = False, cc_delivery_admin: bool = False, brand: dict | None = None) -> bool:
     if not settings.smtp_host:
         return False
+    brand = brand or {}
+
+    sender_name = str(
+        brand.get("sender_name")
+        or brand.get("display_name")
+        or settings.smtp_from_name
+    )
+
+    sender_email = str(
+        brand.get("sender_email")
+        or settings.smtp_from_email
+    )
+
     message = EmailMessage()
-    message["From"] = f"{settings.smtp_from_name} <{settings.smtp_from_email}>"
+    message["From"] = f"{sender_name} <{sender_email}>"
     message["To"] = to
     if cc_delivery_admin and settings.delivery_admin_email:
         admin_email = str(settings.delivery_admin_email).strip()
@@ -49,11 +62,13 @@ def _send(settings, *, to: str, subject: str, body: str, action_label: str = "",
     message.add_alternative(
         branded_email_html(
             subject, body, action_label=action_label, action_url=action_url,
-            customer_email=to, include_marketing_controls=customer_message,
+            customer_email=to,
+            include_marketing_controls=customer_message,
+            brand=brand,
         ),
         subtype="html",
     )
-    attach_sophies_logo(message)
+    attach_brand_logo(message, brand)
     with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
         if settings.smtp_use_tls:
             smtp.starttls()
@@ -65,9 +80,21 @@ def _send(settings, *, to: str, subject: str, body: str, action_label: str = "",
 
 def create_delivery(session: Session, settings, *, source_ref: str | None, event_name: str, order_reference: str,
                     customer_name: str, customer_email: str, customer_phone: str, delivery_type: str,
-                    files: Iterable[Path]) -> tuple[CustomerDelivery, str]:
+                    files: Iterable[Path], brand: dict | None = None) -> tuple[CustomerDelivery, str]:
     if delivery_type not in POLICY_FILES:
         raise ValueError("Unsupported delivery type")
+    brand = brand or {}
+
+    display_name = str(
+        brand.get("display_name")
+        or "Sophie’s Photography"
+    )
+
+    support_email = str(
+        brand.get("sender_email")
+        or settings.smtp_from_email
+    )
+
     paths = [Path(p).resolve() for p in files]
     if not paths or any(not p.is_file() for p in paths):
         raise ValueError("At least one valid delivery file is required")
@@ -83,10 +110,10 @@ def create_delivery(session: Session, settings, *, source_ref: str | None, event
             archive.write(p, arcname=f"Your Photos/{_safe_name(p.name, 'file')}")
         archive.write(policy, arcname=f"Licence/{policy.name}")
         readme = (
-            "Thank you for your purchase from Sophie’s Photography.\n\n"
+            f"Thank you for your purchase from {display_name}.\n\n"
             "Please read the enclosed licence before using these files.\n"
-            "Copyright remains with Sophie’s Photography.\n"
-            "Questions: photos@sophiesphotography.co.uk\n"
+            f"Copyright remains with {display_name}.\n"
+            f"Questions: {support_email}\n"
         )
         archive.writestr("Read Me First.txt", readme)
 
@@ -108,12 +135,13 @@ def create_delivery(session: Session, settings, *, source_ref: str | None, event
         expires_at=expires, reminder_due_at=expires - timedelta(days=1), max_downloads=0)
     session.add(delivery); session.commit(); session.refresh(delivery)
     link = f"{settings.public_base_url.rstrip('/')}/delivery/{token}"
-    sent = _send(settings, to=delivery.customer_email, subject="Your Sophie’s Photography files are ready",
+    sent = _send(settings, to=delivery.customer_email, subject=f"Your {display_name} files are ready",
         body=f"Hello {delivery.customer_name},\n\nYour photographs are ready to download securely.\n\nOrder: {delivery.order_reference or 'Your order'}\nEvent: {delivery.event_name}\nFiles: {delivery.item_count}\nDownloads available: Unlimited until expiry\n\nThis personal link expires on {expires:%d %B %Y at %H:%M UTC}. You can download your files as many times as needed during the five-day delivery window.",
         action_label="Download my photographs", action_url=link, customer_message=True,
-        cc_delivery_admin=True)
+        cc_delivery_admin=True, brand=brand)
     _send(settings, to=settings.delivery_admin_email, subject=f"Backup delivery link — {delivery.order_reference or delivery.customer_name}",
-        body=f"Customer: {delivery.customer_name}\nEvent: {delivery.event_name}\nOrder: {delivery.order_reference}\nFiles: {delivery.item_count}\nBackup link: {link}\nExpires: {expires:%d %B %Y at %H:%M UTC}\n")
+        body=f"Customer: {delivery.customer_name}\nEvent: {delivery.event_name}\nOrder: {delivery.order_reference}\nFiles: {delivery.item_count}\nBackup link: {link}\nExpires: {expires:%d %B %Y at %H:%M UTC}\n",
+        brand=brand)
     if sent:
         delivery.emailed_at = now; delivery.status = "sent"; session.commit()
     return delivery, token

@@ -11,6 +11,7 @@ from app.db.models import CloudOrder, CustomerDelivery, CustomerFavouriteSession
 from app.downloads.service import create_delivery
 from app.storage import download_to_temp, exists
 from app.operations import record_order_audit
+from app.branding import get_event_brand
 
 TERMINAL_STATUSES = {"completed", "cancelled", "refunded"}
 
@@ -200,6 +201,8 @@ def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOr
             return order
 
         event = session.get(Event, order.event_id)
+        brand = get_event_brand(event)
+
         try:
             delivery, _token = create_delivery(
                 session,
@@ -212,6 +215,7 @@ def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOr
                 customer_phone=order.customer_phone,
                 delivery_type=order.product_type,
                 files=paths,
+                brand=brand,
             )
             order.delivery_id = delivery.id
             order.status = "waiting_for_download" if delivery.emailed_at else "delivery_email_failed"

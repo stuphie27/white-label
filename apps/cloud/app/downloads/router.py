@@ -2,13 +2,20 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 from pathlib import Path
+import json
 import secrets
 from fastapi import APIRouter, BackgroundTasks, Form, Header, HTTPException, Request, status
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-from app.db.models import CustomerDelivery, CloudOrder, Event
+from app.db.models import (
+    CustomerDelivery,
+    CloudOrder,
+    Event,
+    Gallery,
+    GalleryAsset,
+)
 from app.branding import get_event_brand
 from app.downloads.service import complete_download, expire_due, find_by_token, revoke_delivery, send_due_reminders
 from app.storage import download_to_temp, exists
@@ -49,16 +56,345 @@ def _as_utc(value: datetime) -> datetime:
 def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
     router = APIRouter(tags=["downloads"])
 
-    @router.get("/delivery/{token}", response_class=HTMLResponse, include_in_schema=False)
-    async def delivery_page(request: Request, token: str):
+    @router.get(
+        "/delivery/{token}",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def delivery_page(
+        request: Request,
+        token: str,
+    ):
         with request.app.state.session_factory() as session:
-            expire_due(session, request.app.state.settings)
-            d = find_by_token(session, token)
-        if not d:
-            return templates.TemplateResponse(request=request, name="delivery_closed.html", context={"message":"This delivery link is invalid or has been removed."}, status_code=404)
-        if d.status in {"closed", "expired"} or d.deleted_at:
-            return templates.TemplateResponse(request=request, name="delivery_closed.html", context={"message":"This secure delivery has expired."})
-        return templates.TemplateResponse(request=request, name="delivery.html", context={"delivery":d, "token":token})
+            expire_due(
+                session,
+                request.app.state.settings,
+            )
+
+            d = find_by_token(
+                session,
+                token,
+            )
+
+            if not d:
+                return templates.TemplateResponse(
+                    request=request,
+                    name="delivery_closed.html",
+                    context={
+                        "message": (
+                            "This delivery link is invalid "
+                            "or has been removed."
+                        )
+                    },
+                    status_code=404,
+                )
+
+            if (
+                d.status in {"closed", "expired"}
+                or d.deleted_at
+            ):
+                return templates.TemplateResponse(
+                    request=request,
+                    name="delivery_closed.html",
+                    context={
+                        "message": (
+                            "This secure delivery has expired."
+                        )
+                    },
+                )
+
+            order = None
+            event = None
+
+            if d.source_ref:
+                order = session.scalar(
+                    select(CloudOrder).where(
+                        CloudOrder.source_ref
+                        == d.source_ref
+                    )
+                )
+
+            if order is not None:
+                event = session.get(
+                    Event,
+                    order.event_id,
+                )
+
+            brand = get_event_brand(event)
+
+            support_email = str(
+                brand.get("sender_email")
+                or request.app.state.settings.smtp_from_email
+                or ""
+            ).strip()
+
+            return templates.TemplateResponse(
+                request=request,
+                name="delivery.html",
+                context={
+                    "delivery": d,
+                    "token": token,
+                    "brand": brand,
+                    "support_email": support_email,
+                },
+            )
+
+    def _mobile_delivery_items(
+        session,
+        delivery: CustomerDelivery,
+    ) -> tuple[CloudOrder | None, list[dict]]:
+        if not delivery.source_ref:
+            return None, []
+
+        order = session.scalar(
+            select(CloudOrder).where(
+                CloudOrder.source_ref
+                == delivery.source_ref
+            )
+        )
+
+        if order is None:
+            return None, []
+
+        try:
+            raw_items = json.loads(
+                order.order_items_json or "[]"
+            )
+        except Exception:
+            raw_items = []
+
+        if not isinstance(raw_items, list):
+            raw_items = []
+
+        resolved = []
+
+        for item in raw_items:
+            if not isinstance(item, dict):
+                continue
+
+            asset_ref = str(
+                item.get("asset_source_ref") or ""
+            ).strip()
+
+            if not asset_ref:
+                continue
+
+            asset = session.scalar(
+                select(GalleryAsset)
+                .join(
+                    Gallery,
+                    GalleryAsset.gallery_id
+                    == Gallery.id,
+                )
+                .where(
+                    Gallery.event_id
+                    == order.event_id,
+                    GalleryAsset.source_ref
+                    == asset_ref,
+                )
+            )
+
+            if asset is None:
+                continue
+
+            storage_path = (
+                asset.highres_delivery_storage_path
+                if order.product_type == "high_res"
+                else asset.delivery_storage_path
+            )
+
+            storage_path = str(
+                storage_path or ""
+            ).strip()
+
+            if not storage_path:
+                continue
+
+            customer_filename = str(
+                item.get("filename")
+                or asset.filename
+                or "photograph.jpg"
+            ).strip()
+
+            filename_path = Path(
+                customer_filename
+            )
+
+            if (
+                filename_path.suffix.lower()
+                not in {".jpg", ".jpeg"}
+            ):
+                customer_filename = (
+                    filename_path.stem + ".jpg"
+                )
+
+            safe_filename = "".join(
+                c
+                if c.isalnum()
+                or c in " ._-()"
+                else "-"
+                for c in customer_filename
+            ).strip() or "photograph.jpg"
+
+            resolved.append(
+                {
+                    "filename": safe_filename,
+                    "storage_path": storage_path,
+                }
+            )
+
+        return order, resolved
+
+
+    @router.get(
+        "/delivery/{token}/items",
+        include_in_schema=False,
+    )
+    async def delivery_items(
+        request: Request,
+        token: str,
+    ):
+        with request.app.state.session_factory() as session:
+            d = find_by_token(
+                session,
+                token,
+            )
+
+            if (
+                not d
+                or d.deleted_at
+                or d.status in {"closed", "expired"}
+                or _as_utc(d.expires_at)
+                <= datetime.now(timezone.utc)
+            ):
+                raise HTTPException(
+                    410,
+                    "This delivery has expired or is closed",
+                )
+
+            _order, items = _mobile_delivery_items(
+                session,
+                d,
+            )
+
+            return {
+                "delivery_type": d.delivery_type,
+                "item_count": len(items),
+                "items": [
+                    {
+                        "index": index,
+                        "filename": item["filename"],
+                        "url": (
+                            f"/delivery/{token}/photo/{index}"
+                        ),
+                    }
+                    for index, item
+                    in enumerate(items)
+                ],
+            }
+
+
+    @router.get(
+        "/delivery/{token}/photo/{item_index}",
+        include_in_schema=False,
+    )
+    async def delivery_photo(
+        request: Request,
+        token: str,
+        item_index: int,
+        background_tasks: BackgroundTasks,
+    ):
+        with request.app.state.session_factory() as session:
+            d = find_by_token(
+                session,
+                token,
+            )
+
+            if (
+                not d
+                or d.deleted_at
+                or d.status in {"closed", "expired"}
+                or _as_utc(d.expires_at)
+                <= datetime.now(timezone.utc)
+            ):
+                raise HTTPException(
+                    410,
+                    "This delivery has expired or is closed",
+                )
+
+            _order, items = _mobile_delivery_items(
+                session,
+                d,
+            )
+
+            if (
+                item_index < 0
+                or item_index >= len(items)
+            ):
+                raise HTTPException(
+                    404,
+                    "Purchased photograph not found",
+                )
+
+            item = items[item_index]
+            settings = request.app.state.settings
+            storage_path = item["storage_path"]
+
+            if not exists(
+                settings,
+                storage_path,
+            ):
+                raise HTTPException(
+                    410,
+                    "This purchased photograph "
+                    "needs to be prepared again",
+                )
+
+            path = download_to_temp(
+                settings,
+                storage_path,
+                suffix=".jpg",
+            )
+
+            temporary_copy = storage_path.startswith(
+                "spaces://"
+            )
+
+            delivery_id = d.id
+            filename = item["filename"]
+
+        def finish():
+            try:
+                with request.app.state.session_factory() as session:
+                    complete_download(
+                        session,
+                        request.app.state.settings,
+                        delivery_id,
+                    )
+            finally:
+                if temporary_copy:
+                    path.unlink(
+                        missing_ok=True
+                    )
+
+        background_tasks.add_task(
+            finish
+        )
+
+        return FileResponse(
+            path,
+            media_type="image/jpeg",
+            headers={
+                "Cache-Control": "private, no-store",
+                "Content-Disposition": (
+                    'inline; filename="'
+                    + filename.replace('"', "")
+                    + '"'
+                ),
+            },
+            background=background_tasks,
+        )
+
 
     @router.get("/delivery/{token}/download", include_in_schema=False)
     async def delivery_download(request: Request, token: str, background_tasks: BackgroundTasks):

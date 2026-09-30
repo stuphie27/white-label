@@ -1,1 +1,314 @@
-{% extends "customer_base.html" %}{% block title %}Your photographs are ready | Sophie’s Photography{% endblock %}{% block content %}<main class="delivery-experience"><section class="delivery-hero"><div class="delivery-heart">♥</div><p class="eyebrow">SOPHIE’S PHOTOGRAPHY · SECURE DELIVERY</p><h1>Your photographs are ready</h1><p>Hello {{ delivery.customer_name }} — your private delivery has been prepared especially for you.</p></section><section class="delivery-status-card"><div class="delivery-status-badge">READY TO DOWNLOAD</div><dl><dt>Order</dt><dd>{{ delivery.order_reference or 'Photography delivery' }}</dd><dt>Files</dt><dd>{{ delivery.item_count }} photograph{% if delivery.item_count != 1 %}s{% endif %}</dd><dt>Delivery</dt><dd>Private unwatermarked purchased files</dd><dt>Downloads available</dt><dd>Unlimited until expiry</dd><dt>Secure link expires</dt><dd>{{ delivery.expires_at.strftime('%d %B %Y at %H:%M') }} UTC</dd></dl><a class="customer-primary-button delivery-download-button" href="/delivery/{{ token }}/download">↓ Download my photographs</a><p class="delivery-help">Your photographs arrive together in a ZIP with the correct usage licence. You may download this private delivery as many times as needed during the five-day delivery window. The ZIP is securely removed when the link expires.</p></section><section class="delivery-next"><h2>What happens next?</h2><div><article><strong>1</strong><span>Tap the download button</span></article><article><strong>2</strong><span>Open the ZIP on your phone, tablet or computer</span></article><article><strong>3</strong><span>Enjoy and share your purchased photographs ✨</span></article></div></section><p class="delivery-support">Need a hand? Email <a href="mailto:photos@sophiesphotography.co.uk">photos@sophiesphotography.co.uk</a>.</p></main>{% endblock %}
+{% extends "customer_base.html" %}
+
+{% block title %}
+Your photographs are ready | {{ page_brand.display_name }}
+{% endblock %}
+
+{% block content %}
+<main class="delivery-experience">
+
+  <section class="delivery-hero">
+    <div class="delivery-heart">♥</div>
+    <p class="eyebrow">
+      {{ page_brand.display_name | upper }} · SECURE DELIVERY
+    </p>
+    <h1>Your photographs are ready</h1>
+    <p>
+      Hello {{ delivery.customer_name }} — your private delivery
+      has been prepared especially for you.
+    </p>
+  </section>
+
+  <section class="delivery-status-card">
+    <div class="delivery-status-badge">
+      READY TO SAVE
+    </div>
+
+    <dl>
+      <dt>Order</dt>
+      <dd>{{ delivery.order_reference or 'Photography delivery' }}</dd>
+
+      <dt>Files</dt>
+      <dd>
+        {{ delivery.item_count }}
+        photograph{% if delivery.item_count != 1 %}s{% endif %}
+      </dd>
+
+      <dt>Delivery</dt>
+      <dd>Private unwatermarked purchased files</dd>
+
+      <dt>Downloads available</dt>
+      <dd>Unlimited until expiry</dd>
+
+      <dt>Secure link expires</dt>
+      <dd>
+        {{ delivery.expires_at.strftime('%d %B %Y at %H:%M') }} UTC
+      </dd>
+    </dl>
+
+    <button
+      type="button"
+      id="save-photos-to-phone"
+      class="customer-primary-button delivery-download-button"
+    >
+      Save photos to my phone
+    </button>
+
+    <p
+      id="phone-save-status"
+      class="delivery-help"
+      aria-live="polite"
+    >
+      On supported phones, this opens your normal share menu so
+      you can choose Save Images or Save to Photos.
+    </p>
+
+    <div
+      id="individual-photo-saves"
+      hidden
+    >
+      <p class="delivery-help">
+        Your phone cannot save the whole set at once.
+        Save the photographs individually below.
+      </p>
+
+      <div id="individual-photo-list"></div>
+    </div>
+
+    <a
+      id="zip-download"
+      class="customer-secondary-button"
+      href="/delivery/{{ token }}/download"
+    >
+      Download ZIP instead
+    </a>
+
+    <p class="delivery-help">
+      The ZIP remains available for computers and as a backup.
+      Your private delivery is available throughout the five-day
+      delivery window.
+    </p>
+  </section>
+
+  <section class="delivery-next">
+    <h2>Saving on your phone</h2>
+
+    <div>
+      <article>
+        <strong>1</strong>
+        <span>Tap Save photos to my phone</span>
+      </article>
+
+      <article>
+        <strong>2</strong>
+        <span>Choose Save Images or Save to Photos</span>
+      </article>
+
+      <article>
+        <strong>3</strong>
+        <span>Your photographs appear in your phone’s photo library</span>
+      </article>
+    </div>
+  </section>
+
+  {% if support_email %}
+  <p class="delivery-support">
+    Need a hand?
+    Email
+    <a href="mailto:{{ support_email }}">{{ support_email }}</a>.
+  </p>
+  {% endif %}
+
+</main>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  const token = {{ token | tojson }};
+  const button = document.getElementById("save-photos-to-phone");
+  const status = document.getElementById("phone-save-status");
+  const fallback = document.getElementById("individual-photo-saves");
+  const list = document.getElementById("individual-photo-list");
+  const zip = document.getElementById("zip-download");
+
+  let manifest = null;
+
+  async function getManifest() {
+    if (manifest) {
+      return manifest;
+    }
+
+    const response = await fetch(
+      "/delivery/" + encodeURIComponent(token) + "/items",
+      {
+        credentials: "same-origin",
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Unable to load your purchased photographs.");
+    }
+
+    manifest = await response.json();
+    return manifest;
+  }
+
+  async function fetchFile(item) {
+    const response = await fetch(
+      item.url,
+      {
+        credentials: "same-origin",
+        cache: "no-store"
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error(
+        "Unable to prepare " + item.filename
+      );
+    }
+
+    const blob = await response.blob();
+
+    return new File(
+      [blob],
+      item.filename,
+      {
+        type: blob.type || "image/jpeg"
+      }
+    );
+  }
+
+  function canShareFiles(files) {
+    return Boolean(
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare({ files: files })
+    );
+  }
+
+  async function showIndividualFallback(data) {
+    fallback.hidden = false;
+    list.innerHTML = "";
+
+    for (const item of data.items) {
+      const row = document.createElement("div");
+      row.style.margin = "0.75rem 0";
+
+      const save = document.createElement("button");
+      save.type = "button";
+      save.className = "customer-secondary-button";
+      save.textContent = "Save " + item.filename;
+
+      save.addEventListener("click", async function () {
+        save.disabled = true;
+        const originalText = save.textContent;
+        save.textContent = "Preparing…";
+
+        try {
+          const file = await fetchFile(item);
+
+          if (canShareFiles([file])) {
+            await navigator.share({
+              files: [file],
+              title: item.filename
+            });
+          } else {
+            window.open(
+              item.url,
+              "_blank",
+              "noopener"
+            );
+          }
+        } catch (error) {
+          status.textContent =
+            error.message ||
+            "Unable to prepare this photograph.";
+        } finally {
+          save.disabled = false;
+          save.textContent = originalText;
+        }
+      });
+
+      row.appendChild(save);
+      list.appendChild(row);
+    }
+
+    status.textContent =
+      "Use the individual buttons below, or download the ZIP.";
+  }
+
+  button.addEventListener("click", async function () {
+    button.disabled = true;
+    const originalText = button.textContent;
+    button.textContent = "Preparing your photos…";
+    status.textContent =
+      "Preparing your purchased photographs securely…";
+
+    try {
+      const data = await getManifest();
+
+      if (!data.items.length) {
+        throw new Error(
+          "Your individual photographs are not available yet."
+        );
+      }
+
+      const files = await Promise.all(
+        data.items.map(fetchFile)
+      );
+
+      if (canShareFiles(files)) {
+        await navigator.share({
+          files: files,
+          title: "Your photographs"
+        });
+
+        status.textContent =
+          "Your phone’s save/share menu has opened. " +
+          "Choose Save Images or Save to Photos.";
+      } else {
+        await showIndividualFallback(data);
+      }
+
+    } catch (error) {
+      try {
+        const data = await getManifest();
+        await showIndividualFallback(data);
+      } catch (_) {
+        status.textContent =
+          error.message ||
+          "Your photographs could not be prepared. " +
+          "Please use Download ZIP instead.";
+      }
+    } finally {
+      button.disabled = false;
+      button.textContent = originalText;
+    }
+  });
+
+  getManifest()
+    .then(function (data) {
+      if (
+        !navigator.share ||
+        !navigator.canShare
+      ) {
+        button.hidden = true;
+        zip.classList.remove("customer-secondary-button");
+        zip.classList.add("customer-primary-button");
+        showIndividualFallback(data);
+        return;
+      }
+
+    })
+    .catch(function () {
+      status.textContent =
+        "Individual phone saving is unavailable. " +
+        "Please use Download ZIP instead.";
+    });
+})();
+</script>
+{% endblock %}

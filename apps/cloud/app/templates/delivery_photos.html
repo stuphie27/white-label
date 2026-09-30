@@ -49,25 +49,62 @@ Save your photographs | {{ page_brand.display_name }}
             will save without this watermark.
           </p>
 
-          <button
-            type="button"
-            class="customer-primary-button delivery-share-one"
-            data-photo-url="{{ item.url }}"
-            data-photo-name="{{ item.filename }}"
-            style="margin-top:0.75rem;"
+          <div
+            style="
+              display:grid;
+              gap:0.65rem;
+              margin-top:0.9rem;
+            "
           >
-            Save / Share purchased photo
-          </button>
+            <button
+              type="button"
+              class="customer-primary-button delivery-share-one"
+              data-photo-url="{{ item.url }}"
+              data-photo-name="{{ item.filename }}"
+              style="
+                width:100%;
+                margin:0;
+              "
+            >
+              Save / Share purchased photo
+            </button>
 
-          <a
-            class="customer-secondary-button"
-            href="{{ item.url }}"
-            target="_blank"
-            rel="noopener"
-            style="margin-top:0.5rem;"
-          >
-            Open photo
-          </a>
+            <div
+              style="
+                display:grid;
+                grid-template-columns:1fr 1fr;
+                gap:0.65rem;
+              "
+            >
+              <a
+                class="customer-secondary-button"
+                href="{{ item.url }}"
+                target="_blank"
+                rel="noopener"
+                style="
+                  width:100%;
+                  margin:0;
+                  box-sizing:border-box;
+                  text-align:center;
+                "
+              >
+                Open photo
+              </a>
+
+              <a
+                class="customer-secondary-button"
+                href="/delivery/{{ token }}"
+                style="
+                  width:100%;
+                  margin:0;
+                  box-sizing:border-box;
+                  text-align:center;
+                "
+              >
+                Back
+              </a>
+            </div>
+          </div>
 
         </article>
         {% endfor %}
@@ -84,16 +121,14 @@ Save your photographs | {{ page_brand.display_name }}
 
     <a
       class="customer-secondary-button"
-      href="/delivery/{{ token }}"
-      style="margin-top:1rem;"
-    >
-      Back to delivery
-    </a>
-
-    <a
-      class="customer-secondary-button"
       href="/delivery/{{ token }}/download"
-      style="margin-top:0.5rem;"
+      style="
+        display:block;
+        width:100%;
+        box-sizing:border-box;
+        text-align:center;
+        margin-top:1rem;
+      "
     >
       Download ZIP instead
     </a>

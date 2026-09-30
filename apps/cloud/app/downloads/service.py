@@ -50,6 +50,49 @@ def _send(settings, *, to: str, subject: str, body: str, action_label: str = "",
         or settings.smtp_from_email
     )
 
+    brand_id = str(
+        brand.get("brand_id") or ""
+    ).strip()
+
+    profile = (
+        settings.smtp_profiles.get(brand_id, {})
+        if brand_id
+        else {}
+    )
+
+    if not isinstance(profile, dict):
+        profile = {}
+
+    smtp_host = str(
+        profile.get("host")
+        or settings.smtp_host
+    )
+
+    smtp_port = int(
+        profile.get("port")
+        or settings.smtp_port
+    )
+
+    smtp_username = str(
+        profile.get("username")
+        or settings.smtp_username
+    )
+
+    smtp_password = str(
+        profile.get("password")
+        or settings.smtp_password
+    )
+
+    smtp_use_tls = bool(
+        profile.get(
+            "use_tls",
+            settings.smtp_use_tls,
+        )
+    )
+
+    if not smtp_host:
+        return False
+
     message = EmailMessage()
     message["From"] = f"{sender_name} <{sender_email}>"
     message["To"] = to
@@ -69,11 +112,20 @@ def _send(settings, *, to: str, subject: str, body: str, action_label: str = "",
         subtype="html",
     )
     attach_brand_logo(message, brand)
-    with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=20) as smtp:
-        if settings.smtp_use_tls:
+    with smtplib.SMTP(
+        smtp_host,
+        smtp_port,
+        timeout=20,
+    ) as smtp:
+        if smtp_use_tls:
             smtp.starttls()
-        if settings.smtp_username:
-            smtp.login(settings.smtp_username, settings.smtp_password)
+
+        if smtp_username:
+            smtp.login(
+                smtp_username,
+                smtp_password,
+            )
+
         smtp.send_message(message)
     return True
 

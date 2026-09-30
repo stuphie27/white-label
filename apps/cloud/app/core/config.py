@@ -3,6 +3,7 @@ from __future__ import annotations
 from functools import lru_cache
 from pathlib import Path
 from urllib.parse import urlparse
+import json
 
 from pydantic import EmailStr, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -117,6 +118,31 @@ class Settings(BaseSettings):
     smtp_use_tls: bool = Field(default=True)
     smtp_from_email: str = Field(default="photos@sophiesphotography.co.uk")
     smtp_from_name: str = Field(default="Sophie’s Photography")
+
+    # Optional per-brand SMTP credentials.
+    # JSON object keyed by brand_id, for example:
+    # {
+    #   "partner": {
+    #       "host": "smtp.ionos.co.uk",
+    #       "port": 587,
+    #       "username": "...",
+    #       "password": "...",
+    #       "use_tls": true
+    #   }
+    # }
+    smtp_profiles_json: str = Field(default="{}")
+
+    @property
+    def smtp_profiles(self) -> dict:
+        try:
+            value = json.loads(
+                self.smtp_profiles_json or "{}"
+            )
+        except (TypeError, ValueError):
+            return {}
+
+        return value if isinstance(value, dict) else {}
+
     delivery_admin_email: str = Field(default="photos@sophiesphotography.co.uk")
     sumup_api_key: str = Field(default="")
     sumup_merchant_code: str = Field(default="")

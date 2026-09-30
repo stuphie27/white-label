@@ -27,9 +27,10 @@ Save your photographs | {{ page_brand.display_name }}
         {% for item in items %}
         <article class="delivery-photo-item">
 
+          {% if item.preview_url %}
           <img
-            src="{{ item.url }}"
-            alt="{{ item.filename }}"
+            src="{{ item.preview_url }}"
+            alt="Watermarked preview of {{ item.filename }}"
             loading="lazy"
             style="
               width:100%;
@@ -39,8 +40,14 @@ Save your photographs | {{ page_brand.display_name }}
               margin-bottom:0.75rem;
             "
           >
+          {% endif %}
 
           <strong>{{ item.filename }}</strong>
+
+          <p class="delivery-help" style="margin-top:0.5rem;">
+            <strong>Preview only</strong> — your purchased photo
+            will save without this watermark.
+          </p>
 
           <button
             type="button"
@@ -49,7 +56,7 @@ Save your photographs | {{ page_brand.display_name }}
             data-photo-name="{{ item.filename }}"
             style="margin-top:0.75rem;"
           >
-            Save / Share photo
+            Save / Share purchased photo
           </button>
 
           <a

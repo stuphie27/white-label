@@ -18,7 +18,12 @@ from app.db.models import (
 )
 from app.branding import get_event_brand
 from app.downloads.service import complete_download, expire_due, find_by_token, revoke_delivery, send_due_reminders
-from app.storage import download_to_temp, exists
+from app.storage import (
+    download_to_temp,
+    exists,
+    presigned_get_url,
+)
+from app.storage import client as spaces_client
 
 
 def _staff_delivery_csrf(request: Request) -> str:
@@ -300,17 +305,85 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
                 or ""
             ).strip()
 
-            visible_items = [
-                {
-                    "index": index,
-                    "filename": item["filename"],
-                    "url": (
-                        f"/delivery/{token}/photo/{index}"
-                    ),
-                }
-                for index, item
-                in enumerate(items)
-            ]
+            visible_items = []
+
+            preview_client = None
+
+            for index, item in enumerate(items):
+                asset_ref = None
+
+                try:
+                    raw_items = json.loads(
+                        order.order_items_json or "[]"
+                    )
+                except Exception:
+                    raw_items = []
+
+                if (
+                    isinstance(raw_items, list)
+                    and index < len(raw_items)
+                    and isinstance(raw_items[index], dict)
+                ):
+                    asset_ref = str(
+                        raw_items[index].get(
+                            "asset_source_ref"
+                        )
+                        or ""
+                    ).strip()
+
+                preview_url = ""
+
+                if asset_ref and order is not None:
+                    asset = session.scalar(
+                        select(GalleryAsset)
+                        .join(
+                            Gallery,
+                            GalleryAsset.gallery_id
+                            == Gallery.id,
+                        )
+                        .where(
+                            Gallery.event_id
+                            == order.event_id,
+                            GalleryAsset.source_ref
+                            == asset_ref,
+                        )
+                    )
+
+                    if asset is not None:
+                        preview_storage = str(
+                            asset.storage_path or ""
+                        ).strip()
+
+                        if preview_storage.startswith(
+                            "spaces://"
+                        ):
+                            if preview_client is None:
+                                preview_client = spaces_client(
+                                    request.app.state.settings
+                                )
+
+                            preview_url = presigned_get_url(
+                                request.app.state.settings,
+                                preview_storage,
+                                expires_seconds=900,
+                                storage_client=preview_client,
+                            )
+                        elif preview_storage:
+                            preview_url = (
+                                f"/g/{asset.gallery_id}/assets/"
+                                f"{asset.id}"
+                            )
+
+                visible_items.append(
+                    {
+                        "index": index,
+                        "filename": item["filename"],
+                        "url": (
+                            f"/delivery/{token}/photo/{index}"
+                        ),
+                        "preview_url": preview_url,
+                    }
+                )
 
             return templates.TemplateResponse(
                 request=request,

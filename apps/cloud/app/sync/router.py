@@ -900,6 +900,64 @@ def build_sync_router() -> APIRouter:
             "folder_count": folder_count,
         }
 
+    @router.post("/galleries/{gallery_ref}/assets/{asset_ref}/retire")
+    async def retire_gallery_asset(
+        gallery_ref: str,
+        asset_ref: str,
+        request: Request,
+        x_pirouette_sync_key: str | None = Header(default=None),
+    ):
+        """Retire one public gallery preview without deleting paid delivery files."""
+        _authorise(request, x_pirouette_sync_key)
+
+        with request.app.state.session_factory() as session:
+            gallery = session.scalar(
+                select(Gallery).where(
+                    Gallery.source_ref == gallery_ref
+                )
+            )
+
+            if gallery is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Gallery source reference not found",
+                )
+
+            asset = session.scalar(
+                select(GalleryAsset).where(
+                    GalleryAsset.gallery_id == gallery.id,
+                    GalleryAsset.source_ref == asset_ref,
+                )
+            )
+
+            # Idempotent: a missing asset is already effectively retired.
+            if asset is None:
+                return {
+                    "gallery_source_ref": gallery_ref,
+                    "source_ref": asset_ref,
+                    "status": "already_absent",
+                }
+
+            if str(asset.storage_path or ""):
+                delete(
+                    request.app.state.settings,
+                    str(asset.storage_path),
+                )
+
+            # Keep the database row and all private delivery paths.
+            asset.storage_path = ""
+            asset.size_bytes = 0
+            asset.status = "removed"
+
+            session.commit()
+
+        return {
+            "gallery_source_ref": gallery_ref,
+            "source_ref": asset_ref,
+            "status": "removed",
+        }
+
+
     @router.post("/galleries/{gallery_ref}/purge-non-favourites")
     async def purge_non_favourite_previews(
         gallery_ref: str, payload: FavouritePreviewPurgeSync, request: Request,

@@ -1998,4 +1998,41 @@ def build_sync_router() -> APIRouter:
         }
 
 
+    @router.get("/diagnostics/runtime")
+    async def runtime_diagnostics(
+        request: Request,
+        x_pirouette_sync_key: str | None = Header(default=None),
+    ):
+        """Temporary authenticated runtime fingerprint for deployment diagnosis."""
+        _authorise(request, x_pirouette_sync_key)
+
+        import socket
+        from sqlalchemy import text as sql_text
+
+        settings = request.app.state.settings
+
+        with request.app.state.session_factory() as session:
+            row = session.execute(
+                sql_text(
+                    """
+                    SELECT
+                        current_database(),
+                        inet_server_addr()::text,
+                        inet_server_port(),
+                        pg_backend_pid()
+                    """
+                )
+            ).one()
+
+        return {
+            "container_hostname": socket.gethostname(),
+            "database_name": row[0],
+            "database_server_addr": row[1],
+            "database_server_port": row[2],
+            "database_backend_pid": row[3],
+            "environment": settings.environment,
+            "version": settings.version,
+        }
+
+
     return router

@@ -1,0 +1,187 @@
+{% extends "customer_base.html" %}
+
+{% block title %}
+Save your photographs | {{ page_brand.display_name }}
+{% endblock %}
+
+{% block content %}
+<main class="delivery-experience">
+
+  <section class="delivery-hero">
+    <div class="delivery-heart">♥</div>
+    <p class="eyebrow">
+      {{ page_brand.display_name | upper }} · PRIVATE PHOTOS
+    </p>
+    <h1>Save your photographs</h1>
+    <p>
+      Tap a photograph below to save or share it on your phone.
+    </p>
+  </section>
+
+  <section class="delivery-status-card">
+
+    {% if items %}
+
+      <div class="delivery-photo-grid">
+
+        {% for item in items %}
+        <article class="delivery-photo-item">
+
+          <img
+            src="{{ item.url }}"
+            alt="{{ item.filename }}"
+            loading="lazy"
+            style="
+              width:100%;
+              height:auto;
+              display:block;
+              border-radius:10px;
+              margin-bottom:0.75rem;
+            "
+          >
+
+          <strong>{{ item.filename }}</strong>
+
+          <button
+            type="button"
+            class="customer-primary-button delivery-share-one"
+            data-photo-url="{{ item.url }}"
+            data-photo-name="{{ item.filename }}"
+            style="margin-top:0.75rem;"
+          >
+            Save / Share photo
+          </button>
+
+          <a
+            class="customer-secondary-button"
+            href="{{ item.url }}"
+            target="_blank"
+            rel="noopener"
+            style="margin-top:0.5rem;"
+          >
+            Open photo
+          </a>
+
+        </article>
+        {% endfor %}
+
+      </div>
+
+    {% else %}
+
+      <p class="delivery-help">
+        Your individual photographs are not available yet.
+      </p>
+
+    {% endif %}
+
+    <a
+      class="customer-secondary-button"
+      href="/delivery/{{ token }}"
+      style="margin-top:1rem;"
+    >
+      Back to delivery
+    </a>
+
+    <a
+      class="customer-secondary-button"
+      href="/delivery/{{ token }}/download"
+      style="margin-top:0.5rem;"
+    >
+      Download ZIP instead
+    </a>
+
+  </section>
+
+  {% if support_email %}
+  <p class="delivery-support">
+    Need a hand?
+    Email
+    <a href="mailto:{{ support_email }}">
+      {{ support_email }}
+    </a>.
+  </p>
+  {% endif %}
+
+</main>
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+(function () {
+  const buttons = document.querySelectorAll(
+    ".delivery-share-one"
+  );
+
+  buttons.forEach(function (button) {
+    button.addEventListener(
+      "click",
+      async function () {
+        const url = button.dataset.photoUrl;
+        const name = button.dataset.photoName;
+
+        button.disabled = true;
+        const original = button.textContent;
+        button.textContent = "Preparing…";
+
+        try {
+          const response = await fetch(
+            url,
+            {
+              credentials: "same-origin",
+              cache: "no-store"
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(
+              "Unable to prepare this photograph."
+            );
+          }
+
+          const blob = await response.blob();
+
+          const file = new File(
+            [blob],
+            name,
+            {
+              type: blob.type || "image/jpeg"
+            }
+          );
+
+          if (
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({
+              files: [file]
+            })
+          ) {
+            await navigator.share({
+              files: [file],
+              title: name
+            });
+          } else {
+            window.open(
+              url,
+              "_blank",
+              "noopener"
+            );
+          }
+
+        } catch (error) {
+          window.open(
+            url,
+            "_blank",
+            "noopener"
+          );
+        } finally {
+          button.disabled = false;
+          button.textContent = original;
+        }
+      }
+    );
+  });
+})();
+</script>
+{% endblock %}

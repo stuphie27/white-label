@@ -247,6 +247,85 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
 
 
     @router.get(
+        "/delivery/{token}/photos",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def delivery_photos_page(
+        request: Request,
+        token: str,
+    ):
+        with request.app.state.session_factory() as session:
+            d = find_by_token(
+                session,
+                token,
+            )
+
+            if (
+                not d
+                or d.deleted_at
+                or d.status in {"closed", "expired"}
+                or _as_utc(d.expires_at)
+                <= datetime.now(timezone.utc)
+            ):
+                return templates.TemplateResponse(
+                    request=request,
+                    name="delivery_closed.html",
+                    context={
+                        "message": (
+                            "This secure delivery has expired."
+                        )
+                    },
+                    status_code=410,
+                )
+
+            order, items = _mobile_delivery_items(
+                session,
+                d,
+            )
+
+            event = None
+
+            if order is not None:
+                event = session.get(
+                    Event,
+                    order.event_id,
+                )
+
+            brand = get_event_brand(event)
+
+            support_email = str(
+                brand.get("sender_email")
+                or request.app.state.settings.smtp_from_email
+                or ""
+            ).strip()
+
+            visible_items = [
+                {
+                    "index": index,
+                    "filename": item["filename"],
+                    "url": (
+                        f"/delivery/{token}/photo/{index}"
+                    ),
+                }
+                for index, item
+                in enumerate(items)
+            ]
+
+            return templates.TemplateResponse(
+                request=request,
+                name="delivery_photos.html",
+                context={
+                    "delivery": d,
+                    "token": token,
+                    "brand": brand,
+                    "support_email": support_email,
+                    "items": visible_items,
+                },
+            )
+
+
+    @router.get(
         "/delivery/{token}/items",
         include_in_schema=False,
     )

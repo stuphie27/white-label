@@ -8,6 +8,10 @@ BRANDS = {
         "public_host": "live.sophies.photography",
         "sender_name": "Sophie's Photography",
         "sender_email": "photos@sophiesphotography.co.uk",
+        "delivery_policies": {
+            "low_res": "Low Resolution Image Policy.pdf",
+            "high_res": "High Resolution Image Policy.pdf",
+        },
         "theme": {
             "page_background": "#180305",
             "header_background": "#090102",
@@ -27,6 +31,10 @@ BRANDS = {
         "public_host": "photos.dsi-london.video",
         "sender_name": "DSI",
         "sender_email": "photos@dsi-london.video",
+        "delivery_policies": {
+            "low_res": "DSI-TV_Low_Resolution_Image_Policy.pdf",
+            "high_res": "DSI-TV_High_Resolution_Image_Policy.pdf",
+        },
         "theme": {
             "page_background": "#031b3d",
             "header_background": "#011a38",

@@ -8,7 +8,8 @@ from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
-from app.db.models import CustomerDelivery
+from app.db.models import CustomerDelivery, CloudOrder, Event
+from app.branding import get_event_brand
 from app.downloads.service import complete_download, expire_due, find_by_token, revoke_delivery, send_due_reminders
 from app.storage import download_to_temp, exists
 
@@ -71,6 +72,30 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
             ):
                 raise HTTPException(410, "This delivery has expired or is closed")
             settings = request.app.state.settings
+
+            order = None
+            event = None
+
+            if d.source_ref:
+                order = session.scalar(
+                    select(CloudOrder).where(
+                        CloudOrder.source_ref == d.source_ref
+                    )
+                )
+
+            if order is not None:
+                event = session.get(
+                    Event,
+                    order.event_id,
+                )
+
+            brand = get_event_brand(event)
+
+            display_name = str(
+                brand.get("display_name")
+                or "Photography"
+            ).strip()
+
             if not exists(settings, d.zip_path):
                 return templates.TemplateResponse(
                     request=request,
@@ -78,7 +103,7 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
                     context={
                         "message": (
                             "We’re sorry, your secure download needs to be prepared again. "
-                            "Please contact Sophie’s Photography and we will restore your delivery."
+                            f"Please contact {display_name} and we will restore your delivery."
                         )
                     },
                     status_code=410,
@@ -87,7 +112,15 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
             path = download_to_temp(settings, d.zip_path, suffix=".zip")
             temporary_copy = str(d.zip_path).startswith("spaces://")
             delivery_id = d.id
-            filename = f"Sophies-Photography-{d.order_reference or 'Delivery'}.zip"
+            safe_brand = "".join(
+                c if c.isalnum() or c in "-_" else "-"
+                for c in display_name
+            ).strip("-") or "Photography"
+
+            filename = (
+                f"{safe_brand}-"
+                f"{d.order_reference or 'Delivery'}.zip"
+            )
 
         def finish():
             try:

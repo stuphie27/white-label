@@ -24,21 +24,40 @@ def _items(order: CloudOrder) -> list[dict]:
         return []
 
 
-def _asset_paths(session: Session, order: CloudOrder) -> tuple[list[Path], list[str]]:
+def _asset_paths(
+    session: Session,
+    order: CloudOrder,
+) -> tuple[list[Path], list[str], list[str]]:
     paths: list[Path] = []
+    filenames: list[str] = []
     missing: list[str] = []
+
     for item in _items(order):
         ref = str(item.get("asset_source_ref") or "").strip()
+
         if not ref:
             continue
-        asset = session.scalar(select(GalleryAsset).where(GalleryAsset.source_ref == ref))
+
+        asset = session.scalar(
+            select(GalleryAsset).where(
+                GalleryAsset.source_ref == ref
+            )
+        )
+
         if asset is None:
             missing.append(ref)
             continue
-        stored_path = asset.highres_delivery_storage_path if order.product_type == "high_res" else asset.delivery_storage_path
+
+        stored_path = (
+            asset.highres_delivery_storage_path
+            if order.product_type == "high_res"
+            else asset.delivery_storage_path
+        )
+
         if not stored_path:
             missing.append(ref)
             continue
+
         if str(stored_path).startswith("spaces://"):
             try:
                 delivery_path = download_to_temp(
@@ -51,11 +70,21 @@ def _asset_paths(session: Session, order: CloudOrder) -> tuple[list[Path], list[
                 continue
         else:
             delivery_path = Path(stored_path)
+
             if not delivery_path.is_file():
                 missing.append(ref)
                 continue
+
+        original_filename = str(
+            item.get("filename")
+            or asset.filename
+            or delivery_path.name
+        ).strip()
+
         paths.append(delivery_path)
-    return paths, missing
+        filenames.append(original_filename)
+
+    return paths, filenames, missing
 
 
 def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOrder:
@@ -191,7 +220,10 @@ def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOr
                 order.source_ref = stale_source_ref
 
         session.info["pirouette_settings"] = settings
-        paths, missing = _asset_paths(session, order)
+        paths, original_filenames, missing = _asset_paths(
+            session,
+            order,
+        )
         if missing or not paths:
             order.status = "waiting_for_cloud_assets"
             label = "high-resolution delivery files" if order.product_type == "high_res" else "low-resolution delivery files"
@@ -215,6 +247,7 @@ def process_paid_order(session: Session, settings, order: CloudOrder) -> CloudOr
                 customer_phone=order.customer_phone,
                 delivery_type=order.product_type,
                 files=paths,
+                customer_filenames=original_filenames,
                 brand=brand,
             )
             order.delivery_id = delivery.id

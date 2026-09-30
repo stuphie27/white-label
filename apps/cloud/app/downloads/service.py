@@ -132,7 +132,8 @@ def _send(settings, *, to: str, subject: str, body: str, action_label: str = "",
 
 def create_delivery(session: Session, settings, *, source_ref: str | None, event_name: str, order_reference: str,
                     customer_name: str, customer_email: str, customer_phone: str, delivery_type: str,
-                    files: Iterable[Path], brand: dict | None = None) -> tuple[CustomerDelivery, str]:
+                    files: Iterable[Path], customer_filenames: Iterable[str] | None = None,
+                    brand: dict | None = None) -> tuple[CustomerDelivery, str]:
     if delivery_type not in POLICY_FILES:
         raise ValueError("Unsupported delivery type")
     brand = brand or {}
@@ -148,19 +149,80 @@ def create_delivery(session: Session, settings, *, source_ref: str | None, event
     )
 
     paths = [Path(p).resolve() for p in files]
+
+    filenames = [
+        str(value or "").strip()
+        for value in (customer_filenames or [])
+    ]
+
     if not paths or any(not p.is_file() for p in paths):
         raise ValueError("At least one valid delivery file is required")
+
+    if filenames and len(filenames) != len(paths):
+        raise ValueError(
+            "Customer filenames do not match delivery files"
+        )
     token = secrets.token_urlsafe(36)
     now = datetime.now(timezone.utc)
     root = Path(settings.delivery_dir).expanduser().resolve()
     root.mkdir(parents=True, exist_ok=True)
     delivery_id = secrets.token_hex(12)
     zip_path = root / f"delivery-{delivery_id}.zip"
-    policy = Path(__file__).resolve().parents[1] / "policies" / POLICY_FILES[delivery_type]
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
-        for p in paths:
-            archive.write(p, arcname=f"Your Photos/{_safe_name(p.name, 'file')}")
-        archive.write(policy, arcname=f"Licence/{policy.name}")
+    policy_map = brand.get("delivery_policies") or {}
+    policy_name = str(
+        policy_map.get(delivery_type)
+        or POLICY_FILES[delivery_type]
+    ).strip()
+
+    policy = (
+        Path(__file__).resolve().parents[1]
+        / "policies"
+        / policy_name
+    )
+
+    if not policy.is_file():
+        raise FileNotFoundError(
+            f"Delivery policy not found: {policy_name}"
+        )
+
+    with zipfile.ZipFile(
+        zip_path,
+        "w",
+        compression=zipfile.ZIP_DEFLATED,
+        compresslevel=6,
+    ) as archive:
+
+        for index, delivery_path in enumerate(paths):
+            customer_filename = (
+                filenames[index]
+                if filenames
+                else delivery_path.name
+            )
+
+            # Delivery derivatives are JPEG files.
+            # Preserve normal JPG/JPEG customer filenames exactly.
+            # For other source formats preserve the original reference
+            # but use the correct .jpg extension.
+            original = Path(customer_filename)
+
+            if original.suffix.lower() not in {".jpg", ".jpeg"}:
+                customer_filename = original.stem + ".jpg"
+
+            archive.write(
+                delivery_path,
+                arcname=(
+                    "Your Photos/"
+                    + _safe_name(
+                        customer_filename,
+                        f"photo-{index + 1}.jpg",
+                    )
+                ),
+            )
+
+        archive.write(
+            policy,
+            arcname=f"Licence/{policy.name}",
+        )
         readme = (
             f"Thank you for your purchase from {display_name}.\n\n"
             "Please read the enclosed licence before using these files.\n"

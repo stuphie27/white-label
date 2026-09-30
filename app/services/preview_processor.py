@@ -104,7 +104,7 @@ def process_next_preview(event_db_path: str):
     if not event_db.exists():
         raise RuntimeError(f"Event database not found: {event_db}")
 
-    conn = sqlite3.connect(event_db)
+    conn = sqlite3.connect(event_db, timeout=30)
     conn.row_factory = sqlite3.Row
 
     event = conn.execute(
@@ -146,6 +146,10 @@ def process_next_preview(event_db_path: str):
             f"Safety stop: watermark file cannot be found: {watermark_path}"
         )
 
+    # Claim exactly one preview job atomically. BEGIN IMMEDIATE
+    # prevents another worker selecting the same pending row.
+    conn.execute("BEGIN IMMEDIATE")
+
     job = conn.execute(
         """
         SELECT
@@ -163,6 +167,7 @@ def process_next_preview(event_db_path: str):
     ).fetchone()
 
     if not job:
+        conn.rollback()
         conn.close()
         return None
 
@@ -193,6 +198,40 @@ def process_next_preview(event_db_path: str):
     conn.commit()
 
     original_path = Path(job["original_path"])
+
+    # A preview job may have been queued while an SD-card copy was
+    # still in progress. Re-check the actual image here as a second
+    # safety gate before doing any processing.
+    try:
+        with Image.open(original_path) as check_image:
+            check_image.verify()
+    except Exception:
+        conn.execute(
+            """
+            UPDATE processing_jobs
+            SET
+                status = 'pending',
+                started_at = NULL,
+                last_error = NULL
+            WHERE id = ?
+            """,
+            (job["job_id"],),
+        )
+
+        conn.execute(
+            """
+            UPDATE photos
+            SET
+                preview_status = 'pending',
+                last_error = NULL
+            WHERE id = ?
+            """,
+            (job["photo_id"],),
+        )
+
+        conn.commit()
+        conn.close()
+        return None
 
     preview_dir = event_root / "previews"
     preview_dir.mkdir(parents=True, exist_ok=True)

@@ -3,6 +3,7 @@ import sqlite3
 import sys
 import time
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime
 
 from app.services.scanner import scan_event
@@ -31,9 +32,24 @@ POST_UPLOAD_VERIFY_DELAY_SECONDS = 15
 # automatically returned to the upload queue.
 FULL_RECONCILE_INTERVAL_SECONDS = 60
 
+# A source photo must remain absent before its public cloud
+# preview is retired. This protects against temporary moves,
+# copying operations and brief filesystem interruptions.
+SOURCE_MISSING_GRACE_SECONDS = 60
+
+# In-memory missing-file timers. Restarting the worker resets
+# the timer, which is deliberately safer than immediate removal.
+_MISSING_SOURCE_STATE = {}
+
+
+# Conservative event throughput. These values intentionally avoid
+# saturating uncertain venue internet connections.
+PREVIEW_WORKERS = 2
+UPLOAD_WORKERS = 4
+
 
 def requeue_retryable_uploads(event_db_path: str):
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
 
     conn.execute(
         """
@@ -88,7 +104,7 @@ def requeue_retryable_uploads(event_db_path: str):
 
 
 def verify_uploaded_photo(event_db_path: str, photo_id: int) -> bool:
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
     conn.row_factory = sqlite3.Row
 
     try:
@@ -214,13 +230,15 @@ def verify_uploaded_photo(event_db_path: str, photo_id: int) -> bool:
 
 
 def reconcile_current_source_photos(event_db_path: str):
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
     conn.row_factory = sqlite3.Row
 
     try:
         event = conn.execute(
             """
-            SELECT public_slug
+            SELECT
+                public_slug,
+                source_folder
             FROM event_info
             WHERE id = 1
             """
@@ -229,6 +247,19 @@ def reconcile_current_source_photos(event_db_path: str):
         if not event:
             raise RuntimeError(
                 "Event information is missing."
+            )
+
+        source_folder = Path(
+            str(event["source_folder"] or "")
+        )
+
+        # Critical safety rule:
+        # if the external event source itself is unavailable,
+        # NEVER retire cloud photographs.
+        if not source_folder.is_dir():
+            raise RuntimeError(
+                "Source folder unavailable; "
+                "cloud retirement disabled."
             )
 
         rows = conn.execute(
@@ -244,11 +275,12 @@ def reconcile_current_source_photos(event_db_path: str):
             """
         ).fetchall()
 
-        # Only files that STILL EXIST on the event drive are current.
         current_rows = [
             row
             for row in rows
-            if Path(str(row["original_path"] or "")).is_file()
+            if Path(
+                str(row["original_path"] or "")
+            ).is_file()
         ]
 
         config = load_sync_config()
@@ -284,7 +316,87 @@ def reconcile_current_source_photos(event_db_path: str):
         )
 
         requeued = []
+        retired = []
 
+        current_ids = {
+            int(row["id"])
+            for row in current_rows
+        }
+
+        now_monotonic = time.monotonic()
+
+        # ----------------------------------------------------
+        # RETIRE OLD/MISSING SOURCE PATHS
+        # ----------------------------------------------------
+        for row in rows:
+            photo_id = int(row["id"])
+
+            if photo_id in current_ids:
+                _MISSING_SOURCE_STATE.pop(
+                    photo_id,
+                    None,
+                )
+                continue
+
+            if row["upload_status"] != "uploaded":
+                continue
+
+            first_missing = _MISSING_SOURCE_STATE.get(
+                photo_id
+            )
+
+            if first_missing is None:
+                _MISSING_SOURCE_STATE[photo_id] = (
+                    now_monotonic
+                )
+                continue
+
+            missing_for = (
+                now_monotonic - first_missing
+            )
+
+            if (
+                missing_for
+                < SOURCE_MISSING_GRACE_SECONDS
+            ):
+                continue
+
+            asset_ref = f"photo-{photo_id:08d}"
+
+            sync_json(
+                config,
+                "POST",
+                (
+                    "/api/sync/v1/galleries/"
+                    f"{urllib.parse.quote(gallery_ref, safe='')}"
+                    "/assets/"
+                    f"{urllib.parse.quote(asset_ref, safe='')}"
+                    "/retire"
+                ),
+            )
+
+            conn.execute(
+                """
+                UPDATE photos
+                SET
+                    upload_status = 'retired',
+                    remote_preview_key = NULL,
+                    last_error = NULL
+                WHERE id = ?
+                """,
+                (photo_id,),
+            )
+
+            retired.append(photo_id)
+
+            _MISSING_SOURCE_STATE.pop(
+                photo_id,
+                None,
+            )
+
+        # ----------------------------------------------------
+        # REPAIR CURRENT PHOTOS MISSING FROM CLOUD
+        # ----------------------------------------------------
         for ref, row in expected.items():
             if row["upload_status"] != "uploaded":
                 continue
@@ -345,7 +457,11 @@ def reconcile_current_source_photos(event_db_path: str):
                         job_type,
                         status
                     )
-                    VALUES (?, 'upload_preview', 'pending')
+                    VALUES (
+                        ?,
+                        'upload_preview',
+                        'pending'
+                    )
                     """,
                     (photo_id,),
                 )
@@ -358,14 +474,28 @@ def reconcile_current_source_photos(event_db_path: str):
             "CLOUD RECONCILE "
             f"current={len(current_rows)} "
             f"verified={verified_count} "
-            f"requeued={len(requeued)}",
+            f"requeued={len(requeued)} "
+            f"retired={len(retired)}",
             flush=True,
         )
 
         if requeued:
             print(
                 "CLOUD REQUEUE BATCH photos="
-                + ",".join(str(photo_id) for photo_id in requeued),
+                + ",".join(
+                    str(photo_id)
+                    for photo_id in requeued
+                ),
+                flush=True,
+            )
+
+        if retired:
+            print(
+                "CLOUD RETIRED photos="
+                + ",".join(
+                    str(photo_id)
+                    for photo_id in retired
+                ),
                 flush=True,
             )
 
@@ -373,6 +503,7 @@ def reconcile_current_source_photos(event_db_path: str):
             "current": len(current_rows),
             "verified": verified_count,
             "requeued": len(requeued),
+            "retired": len(retired),
         }
 
     finally:
@@ -380,7 +511,7 @@ def reconcile_current_source_photos(event_db_path: str):
 
 
 def queue_status(event_db_path: str):
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
     conn.row_factory = sqlite3.Row
 
     row = conn.execute(
@@ -445,6 +576,19 @@ def run_worker(event_db_path: str):
     last_full_reconcile = 0.0
     cloud_verify_queue: list[tuple[float, int]] = []
 
+    preview_pool = ThreadPoolExecutor(
+        max_workers=PREVIEW_WORKERS,
+        thread_name_prefix="stuphie-preview",
+    )
+
+    upload_pool = ThreadPoolExecutor(
+        max_workers=UPLOAD_WORKERS,
+        thread_name_prefix="stuphie-upload",
+    )
+
+    preview_futures = set()
+    upload_futures = set()
+
     while True:
         did_work = False
         now = time.monotonic()
@@ -472,55 +616,89 @@ def run_worker(event_db_path: str):
                 flush=True,
             )
 
-        try:
-            result = process_next_preview(
-                str(event_db)
-            )
+        # Collect completed preview workers.
+        finished_previews = {
+            future
+            for future in preview_futures
+            if future.done()
+        }
 
-            if result:
-                did_work = True
-                print(
-                    f"PREVIEW READY  photo={result['photo_id']}",
-                    flush=True,
-                )
+        for future in finished_previews:
+            preview_futures.remove(future)
 
-        except Exception as exc:
-            print(
-                "PREVIEW WARNING:",
-                exc,
-                flush=True,
-            )
+            try:
+                result = future.result()
 
-        try:
-            result = process_next_upload(
-                str(event_db)
-            )
-
-            if result:
-                did_work = True
-
-                photo_id = int(result["photo_id"])
-
-                cloud_verify_queue.append(
-                    (
-                        time.monotonic()
-                        + POST_UPLOAD_VERIFY_DELAY_SECONDS,
-                        photo_id,
+                if result:
+                    did_work = True
+                    print(
+                        f"PREVIEW READY  photo={result['photo_id']}",
+                        flush=True,
                     )
-                )
 
+            except Exception as exc:
                 print(
-                    "CLOUD UPLOADED "
-                    f"photo={photo_id} "
-                    f"size={result['size']}",
+                    "PREVIEW WARNING:",
+                    exc,
                     flush=True,
                 )
 
-        except Exception as exc:
-            print(
-                "UPLOAD WARNING:",
-                exc,
-                flush=True,
+        # Keep the preview pool full.
+        while len(preview_futures) < PREVIEW_WORKERS:
+            preview_futures.add(
+                preview_pool.submit(
+                    process_next_preview,
+                    str(event_db),
+                )
+            )
+
+        # Collect completed upload workers.
+        finished_uploads = {
+            future
+            for future in upload_futures
+            if future.done()
+        }
+
+        for future in finished_uploads:
+            upload_futures.remove(future)
+
+            try:
+                result = future.result()
+
+                if result:
+                    did_work = True
+
+                    photo_id = int(result["photo_id"])
+
+                    cloud_verify_queue.append(
+                        (
+                            time.monotonic()
+                            + POST_UPLOAD_VERIFY_DELAY_SECONDS,
+                            photo_id,
+                        )
+                    )
+
+                    print(
+                        "CLOUD UPLOADED "
+                        f"photo={photo_id} "
+                        f"size={result['size']}",
+                        flush=True,
+                    )
+
+            except Exception as exc:
+                print(
+                    "UPLOAD WARNING:",
+                    exc,
+                    flush=True,
+                )
+
+        # Keep the upload pool full.
+        while len(upload_futures) < UPLOAD_WORKERS:
+            upload_futures.add(
+                upload_pool.submit(
+                    process_next_upload,
+                    str(event_db),
+                )
             )
 
         due_verifications = [

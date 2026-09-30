@@ -24,7 +24,7 @@ HIGH_RES_JPEG_QUALITY = 95
 
 
 def _event_info(event_db_path: str):
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
     conn.row_factory = sqlite3.Row
     try:
         event = conn.execute(
@@ -45,7 +45,7 @@ def _find_original(
     filename: str,
     folder_path: str,
 ) -> Path:
-    conn = sqlite3.connect(event_db_path)
+    conn = sqlite3.connect(event_db_path, timeout=30)
     conn.row_factory = sqlite3.Row
 
     try:

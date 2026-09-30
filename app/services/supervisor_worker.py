@@ -18,7 +18,7 @@ MAX_UPLOAD_RETRIES = 5
 
 
 def load_enabled_events():
-    conn = sqlite3.connect(MASTER_DB)
+    conn = sqlite3.connect(MASTER_DB, timeout=30)
     conn.row_factory = sqlite3.Row
 
     rows = conn.execute(
@@ -53,7 +53,7 @@ def event_database(event):
 
 
 def requeue_retryable_uploads(event_db):
-    conn = sqlite3.connect(event_db)
+    conn = sqlite3.connect(event_db, timeout=30)
 
     conn.execute(
         """

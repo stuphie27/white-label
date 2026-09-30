@@ -1,6 +1,9 @@
 from pathlib import Path
 import sqlite3
 import sys
+import time
+
+from PIL import Image, UnidentifiedImageError
 
 
 SUPPORTED_EXTENSIONS = {
@@ -12,6 +15,54 @@ SUPPORTED_EXTENSIONS = {
     ".heic",
 }
 
+# A file copied from an SD card can appear in Finder before the copy
+# has finished. Do not queue a new/changed photograph until its size
+# and modification time have remained unchanged for this long.
+FILE_SETTLE_SECONDS = 8
+
+_FILE_SETTLE_STATE = {}
+
+
+def file_is_stable(path: Path, stat) -> bool:
+    key = str(path)
+    signature = (
+        int(stat.st_size),
+        float(stat.st_mtime),
+    )
+    now = time.monotonic()
+
+    previous = _FILE_SETTLE_STATE.get(key)
+
+    if not previous or previous["signature"] != signature:
+        _FILE_SETTLE_STATE[key] = {
+            "signature": signature,
+            "stable_since": now,
+        }
+        return False
+
+    return (
+        now - previous["stable_since"]
+        >= FILE_SETTLE_SECONDS
+    )
+
+
+def image_is_complete(path: Path) -> bool:
+    # Finder/macOS may expose a JPG before the SD-card copy has
+    # completely finished. Pillow verify() checks the image structure
+    # without decoding the full photograph into memory.
+    try:
+        with Image.open(path) as image:
+            image.verify()
+        return True
+
+    except (
+        UnidentifiedImageError,
+        OSError,
+        SyntaxError,
+        ValueError,
+    ):
+        return False
+
 
 def scan_event(event_db_path: str):
     event_db = Path(event_db_path)
@@ -19,7 +70,7 @@ def scan_event(event_db_path: str):
     if not event_db.exists():
         raise RuntimeError(f"Event database not found: {event_db}")
 
-    conn = sqlite3.connect(event_db)
+    conn = sqlite3.connect(event_db, timeout=30)
     conn.row_factory = sqlite3.Row
 
     event = conn.execute(
@@ -96,6 +147,35 @@ def scan_event(event_db_path: str):
             (str(path),),
         ).fetchone()
 
+        # Existing unchanged photographs are already safe and need
+        # no additional settling delay.
+        if existing is not None:
+            same_size = existing["file_size"] == stat.st_size
+            same_mtime = existing["modified_time"] == stat.st_mtime
+
+            if same_size and same_mtime:
+                conn.execute(
+                    """
+                    UPDATE photos
+                    SET relative_folder = ?
+                    WHERE id = ?
+                    """,
+                    (
+                        relative_folder,
+                        existing["id"],
+                    ),
+                )
+                unchanged += 1
+                continue
+
+        # New files and files that are actively changing must settle
+        # before any preview job is created or reset.
+        if not file_is_stable(path, stat):
+            continue
+
+        if not image_is_complete(path):
+            continue
+
         if existing is None:
             cursor = conn.execute(
                 """
@@ -134,21 +214,6 @@ def scan_event(event_db_path: str):
             )
 
             new_photos += 1
-            continue
-
-        same_size = existing["file_size"] == stat.st_size
-        same_mtime = existing["modified_time"] == stat.st_mtime
-
-        if same_size and same_mtime:
-            conn.execute(
-                """
-                UPDATE photos
-                SET relative_folder = ?
-                WHERE id = ?
-                """,
-                (relative_folder, existing["id"]),
-            )
-            unchanged += 1
             continue
 
         conn.execute(

@@ -453,7 +453,7 @@ def process_next_upload(event_db_path: str):
     client = spaces_client(config)
     bucket = config["STUPHIE_SPACES_BUCKET"]
 
-    conn = sqlite3.connect(event_db)
+    conn = sqlite3.connect(event_db, timeout=30)
     conn.row_factory = sqlite3.Row
 
     event = conn.execute(
@@ -470,6 +470,10 @@ def process_next_upload(event_db_path: str):
             "Event information is missing."
         )
 
+    # Claim exactly one upload job atomically. BEGIN IMMEDIATE
+    # prevents concurrent upload workers taking the same photo.
+    conn.execute("BEGIN IMMEDIATE")
+
     job = conn.execute(
         """
         SELECT
@@ -484,12 +488,16 @@ def process_next_upload(event_db_path: str):
           ON p.id = j.photo_id
         WHERE j.job_type = 'upload_preview'
           AND j.status = 'pending'
+          AND p.preview_status = 'ready'
+          AND p.preview_path IS NOT NULL
+          AND p.preview_path != ''
         ORDER BY j.id
         LIMIT 1
         """
     ).fetchone()
 
     if not job:
+        conn.rollback()
         conn.close()
         return None
 

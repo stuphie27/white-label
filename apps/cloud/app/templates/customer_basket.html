@@ -145,21 +145,20 @@
         {% if row.product_type in ['low_res', 'high_res'] %}{% set digital_state.has_digital = true %}{% endif %}
       {% endfor %}
 
-      {% if digital_state.has_digital %}
+      {% if digital_state.has_digital and event.status == 'live' and event.event_collection_available %}
       <fieldset class="checkout-choice-card checkout-button-card" aria-labelledby="digital-delivery-title">
         <legend id="digital-delivery-title">How would you like to receive your digital photographs?</legend>
         <p class="checkout-choice-intro">Choose the delivery preference for the digital files in this order.</p>
         <div class="checkout-option-buttons" data-digital-fulfilment-group>
-          <label class="checkout-option-button{% if event.status != 'live' %} is-disabled{% endif %}">
+          <label class="checkout-option-button">
             <input type="radio" name="digital_fulfilment" value="event_collection" data-customer-at-event="true"
-              {% if checkout_preferences.digital_fulfilment == 'event_collection' and event.status == 'live' %}checked{% endif %}
-              {% if event.status != 'live' %}disabled{% endif %}>
+              {% if checkout_preferences.digital_fulfilment == 'event_collection' %}checked{% endif %}>
             <span class="checkout-option-icon">⌂</span>
             <span><strong>Collect at the stand</strong><small>We will transfer the purchased files to you at the {{ brand.display_name }} stand. A secure backup email will also follow.</small></span>
           </label>
           <label class="checkout-option-button">
             <input type="radio" name="digital_fulfilment" value="secure_email_delivery" data-customer-at-event="false"
-              {% if checkout_preferences.digital_fulfilment != 'event_collection' or event.status != 'live' %}checked{% endif %}>
+              {% if checkout_preferences.digital_fulfilment != 'event_collection' %}checked{% endif %}>
             <span class="checkout-option-icon">✉</span>
             <span><strong>Receive by secure email</strong><small>We will email a private download link when your purchased photographs are ready.</small></span>
           </label>
@@ -167,6 +166,12 @@
       </fieldset>
       {% else %}
       <input type="hidden" name="digital_fulfilment" value="secure_email_delivery">
+      {% if digital_state.has_digital %}
+      <div class="checkout-choice-card">
+        <p><strong>Secure email delivery</strong></p>
+        <small>We will email a private download link when your purchased photographs are ready.</small>
+      </div>
+      {% endif %}
       {% endif %}
 
       {% if has_print %}
@@ -288,8 +293,10 @@
         <h2 id="online-payment-title">How would you like to pay?</h2>
         <p class="payment-privacy-note"><strong>We do not collect, see or store your card details.</strong> Online payments are processed securely by SumUp.</p>
         <div class="payment-action-grid">
-          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_cash" {% if event.status != 'live' or not event.service_desk_payments_enabled %}disabled{% endif %}>Pay Cash at the Stand</button>
-          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_card" {% if event.status != 'live' or not event.service_desk_payments_enabled %}disabled{% endif %}>Pay Card at the Stand</button>
+          {% if event.status == 'live' and event.service_desk_payments_enabled %}
+          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_cash">Pay Cash at the Stand</button>
+          <button class="customer-primary-button payment-action payment-desk" type="submit" name="payment_method" value="service_desk_card">Pay Card at the Stand</button>
+          {% endif %}
           <button class="customer-primary-button payment-action payment-action-online" type="submit" name="payment_method" value="sumup_online">Pay Securely Online with SumUp</button>
         </div>
       </section>

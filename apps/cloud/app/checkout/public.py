@@ -1041,7 +1041,10 @@ def build_public_checkout_router(templates: Jinja2Templates) -> APIRouter:
                 print_fulfilment = "home_delivery"
             if (
                 digital_fulfilment == "event_collection"
-                and event.status != "live"
+                and (
+                    event.status != "live"
+                    or not event.event_collection_available
+                )
             ):
                 digital_fulfilment = "secure_email_delivery"
             request.session[preference_key] = {
@@ -1134,6 +1137,7 @@ def build_public_checkout_router(templates: Jinja2Templates) -> APIRouter:
                     if (
                         digital_fulfilment == "event_collection"
                         and event.status == "live"
+                        and event.event_collection_available
                     ):
                         fulfilment_method = "event_collection"
                     else:

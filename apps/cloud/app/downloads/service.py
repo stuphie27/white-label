@@ -14,8 +14,9 @@ from typing import Iterable
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.db.models import CustomerDelivery, CloudOrder
+from app.db.models import CustomerDelivery, CloudOrder, Event
 from app.email_design import branded_email_html, attach_brand_logo
+from app.branding import get_event_brand
 from app.storage import delete as delete_storage, upload_file, spaces_enabled
 
 POLICY_FILES = {
@@ -248,7 +249,17 @@ def create_delivery(session: Session, settings, *, source_ref: str | None, event
         delivery_type=delivery_type, token_hash=token_hash(token), zip_path=storage_location, item_count=len(paths), status="ready",
         expires_at=expires, reminder_due_at=expires - timedelta(days=1), max_downloads=0)
     session.add(delivery); session.commit(); session.refresh(delivery)
-    link = f"{settings.public_base_url.rstrip('/')}/delivery/{token}"
+    public_host = str(
+        brand.get("public_host") or ""
+    ).strip()
+
+    public_base = (
+        f"https://{public_host}"
+        if public_host
+        else settings.public_base_url.rstrip("/")
+    )
+
+    link = f"{public_base}/delivery/{token}"
     sent = _send(settings, to=delivery.customer_email, subject=f"Your {display_name} files are ready",
         body=f"Hello {delivery.customer_name},\n\nYour photographs are ready to download securely.\n\nOrder: {delivery.order_reference or 'Your order'}\nEvent: {delivery.event_name}\nFiles: {delivery.item_count}\nDownloads available: Unlimited until expiry\n\nThis personal link expires on {expires:%d %B %Y at %H:%M UTC}. You can download your files as many times as needed during the five-day delivery window.",
         action_label="Download my photographs", action_url=link, customer_message=True,
@@ -303,8 +314,41 @@ def send_due_reminders(
         reminder_token = secrets.token_urlsafe(36)
         d.reminder_token_hash = token_hash(reminder_token)
 
+        order = None
+        event = None
+
+        if d.source_ref:
+            order = session.scalar(
+                select(CloudOrder).where(
+                    CloudOrder.source_ref == d.source_ref
+                )
+            )
+
+        if order is not None:
+            event = session.get(
+                Event,
+                order.event_id,
+            )
+
+        brand = get_event_brand(event)
+
+        public_host = str(
+            brand.get("public_host") or ""
+        ).strip()
+
+        public_base = (
+            f"https://{public_host}"
+            if public_host
+            else settings.public_base_url.rstrip("/")
+        )
+
+        display_name = str(
+            brand.get("display_name")
+            or "Photography"
+        ).strip()
+
         reminder_link = (
-            f"{settings.public_base_url.rstrip('/')}"
+            f"{public_base}"
             f"/delivery/{reminder_token}"
         )
 
@@ -312,7 +356,7 @@ def send_due_reminders(
             settings,
             to=d.customer_email,
             subject=(
-                "Reminder: your Sophie’s Photography "
+                f"Reminder: your {display_name} "
                 "download expires tomorrow"
             ),
             body=(
@@ -327,6 +371,7 @@ def send_due_reminders(
             action_label="Download my photographs",
             action_url=reminder_link,
             customer_message=True,
+            brand=brand,
         )
 
         if sent:

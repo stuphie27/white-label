@@ -127,6 +127,27 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
 
             brand = get_event_brand(event)
 
+            canonical_host = str(
+                brand.get("public_host") or ""
+            ).strip().lower()
+
+            request_host = str(
+                request.url.hostname or ""
+            ).strip().lower()
+
+            if (
+                canonical_host
+                and request_host
+                and request_host != canonical_host
+            ):
+                return RedirectResponse(
+                    url=(
+                        f"https://{canonical_host}"
+                        f"/delivery/{token}"
+                    ),
+                    status_code=307,
+                )
+
             support_email = str(
                 brand.get("sender_email")
                 or request.app.state.settings.smtp_from_email
@@ -298,6 +319,27 @@ def build_downloads_router(templates: Jinja2Templates) -> APIRouter:
                 )
 
             brand = get_event_brand(event)
+
+            canonical_host = str(
+                brand.get("public_host") or ""
+            ).strip().lower()
+
+            request_host = str(
+                request.url.hostname or ""
+            ).strip().lower()
+
+            if (
+                canonical_host
+                and request_host
+                and request_host != canonical_host
+            ):
+                return RedirectResponse(
+                    url=(
+                        f"https://{canonical_host}"
+                        f"/delivery/{token}/photos"
+                    ),
+                    status_code=307,
+                )
 
             support_email = str(
                 brand.get("sender_email")

@@ -139,9 +139,67 @@ class Settings(BaseSettings):
                 self.smtp_profiles_json or "{}"
             )
         except (TypeError, ValueError):
-            return {}
+            value = {}
 
-        return value if isinstance(value, dict) else {}
+        if not isinstance(value, dict):
+            value = {}
+
+        partner_username = str(
+            getattr(
+                self,
+                "partner_smtp_username",
+                "",
+            )
+            or ""
+        ).strip()
+
+        partner_password = str(
+            getattr(
+                self,
+                "partner_smtp_password",
+                "",
+            )
+            or ""
+        )
+
+        if partner_username and partner_password:
+            value["partner"] = {
+                "host": (
+                    str(
+                        getattr(
+                            self,
+                            "partner_smtp_host",
+                            "",
+                        )
+                        or self.smtp_host
+                    )
+                ),
+                "port": int(
+                    getattr(
+                        self,
+                        "partner_smtp_port",
+                        587,
+                    )
+                    or 587
+                ),
+                "username": partner_username,
+                "password": partner_password,
+                "use_tls": bool(
+                    getattr(
+                        self,
+                        "partner_smtp_use_tls",
+                        True,
+                    )
+                ),
+            }
+
+        return value
+
+    partner_smtp_host: str = Field(default="")
+    partner_smtp_port: int = Field(default=587, ge=1, le=65535)
+    partner_smtp_username: str = Field(default="")
+    partner_smtp_password: str = Field(default="")
+    partner_smtp_use_tls: bool = Field(default=True)
 
     delivery_admin_email: str = Field(default="photos@sophiesphotography.co.uk")
     sumup_api_key: str = Field(default="")

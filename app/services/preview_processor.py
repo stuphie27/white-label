@@ -250,17 +250,31 @@ def process_next_preview(event_db_path: str):
 
         upload_job = conn.execute(
             """
-            SELECT id
+            SELECT id, status
             FROM processing_jobs
             WHERE photo_id = ?
               AND job_type = 'upload_preview'
-              AND status IN ('pending','processing','completed')
+            ORDER BY id DESC
             LIMIT 1
             """,
             (job["photo_id"],),
         ).fetchone()
 
-        if not upload_job:
+        if upload_job:
+            conn.execute(
+                """
+                UPDATE processing_jobs
+                SET
+                    status = 'pending',
+                    attempts = 0,
+                    started_at = NULL,
+                    completed_at = NULL,
+                    last_error = NULL
+                WHERE id = ?
+                """,
+                (upload_job["id"],),
+            )
+        else:
             conn.execute(
                 """
                 INSERT INTO processing_jobs (

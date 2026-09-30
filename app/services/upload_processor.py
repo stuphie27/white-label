@@ -284,6 +284,33 @@ def sync_preview_to_cloud(event, job, preview_path):
             "Cloud asset reference verification failed."
         )
 
+    verified = sync_json(
+        config,
+        "GET",
+        (
+            "/api/sync/v1/galleries/"
+            f"{quoted_gallery}/assets/"
+            f"{quoted_asset}/metadata"
+        ),
+    )
+
+    if str(verified.get("source_ref") or "") != asset_ref:
+        raise RuntimeError(
+            "Cloud post-upload metadata verification failed."
+        )
+
+    if str(verified.get("status") or "") != "ready":
+        raise RuntimeError(
+            "Cloud post-upload asset is not ready."
+        )
+
+    if not bool(
+        verified.get("public_preview_available")
+    ):
+        raise RuntimeError(
+            "Cloud post-upload preview is unavailable."
+        )
+
     cloud_folder = str(
         completed.get("folder_path") or ""
     ).replace("\\", "/").strip("/")
@@ -300,6 +327,22 @@ def sync_preview_to_cloud(event, job, preview_path):
             "Cloud media type verification failed."
         )
 
+    if str(verified.get("media_kind") or "") != "photos":
+        raise RuntimeError(
+            "Cloud post-upload media type verification failed."
+        )
+
+    verified_folder = str(
+        verified.get("folder_path") or ""
+    ).replace("\\", "/").strip("/")
+
+    if verified_folder != relative_folder:
+        raise RuntimeError(
+            "Cloud post-upload folder verification failed: "
+            f"expected {relative_folder!r}, "
+            f"received {verified_folder!r}."
+        )
+
     if not bool(
         completed.get("public_preview_available")
     ):
@@ -311,6 +354,17 @@ def sync_preview_to_cloud(event, job, preview_path):
     cloud_size = int(
         completed.get("size_bytes") or 0
     )
+
+    verified_size = int(
+        verified.get("size_bytes") or 0
+    )
+
+    if verified_size != len(preview_bytes):
+        raise RuntimeError(
+            "Cloud post-upload size verification failed: "
+            f"expected {len(preview_bytes)}, "
+            f"received {verified_size}."
+        )
 
     if cloud_size != len(preview_bytes):
         raise RuntimeError(

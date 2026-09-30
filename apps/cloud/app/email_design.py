@@ -23,6 +23,16 @@ def sophies_logo_path() -> Path | None:
 def brand_logo_path(brand: dict | None) -> Path | None:
     brand = brand or {}
 
+    brand_id = str(
+        brand.get("brand_id") or ""
+    ).strip()
+
+    if brand_id == "partner":
+        email_logo = STATIC_IMAGES / "DSI-email-white.png"
+
+        if email_logo.is_file():
+            return email_logo
+
     logo_url = str(
         brand.get("logo_url") or ""
     ).strip()

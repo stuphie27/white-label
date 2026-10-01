@@ -48,7 +48,7 @@ def apply_watermark(image: Image.Image, watermark_path: Path):
     )
 
     # Keep the watermark visible but allow the photograph to show through.
-    opacity = 105
+    opacity = 85
     mask = mask.point(lambda p: int(p * opacity / 255))
     mark.putalpha(mask)
 

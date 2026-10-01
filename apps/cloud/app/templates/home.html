@@ -9,7 +9,7 @@
     <p class="eyebrow">{{ brand.display_name | upper }}</p>
     <h1>Event Galleries</h1>
     <p>
-      Select your event to view available photographs and videos.
+      Select your event to view available photographs.
       Upcoming events will appear here before their galleries open.
     </p>
   </section>
@@ -83,7 +83,7 @@
             {% if card.gallery_open %}
             <a
               class="primary-button customer-event-action"
-              href="/g/{{ gallery.slug }}">
+              href="/g/{{ gallery.slug }}?media=photos">
               {{ card.display_state }}
             </a>
             {% else %}

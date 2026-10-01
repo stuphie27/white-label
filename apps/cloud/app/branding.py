@@ -34,7 +34,7 @@ BRANDS = {
         "website_links": [
             {
                 "label": "DSI TV",
-        "url": "https://www.dsi-london.tv/subscription.html",
+        "url": "https://www.dsi-london.tv",
             },
             {
                 "label": "DSI London",

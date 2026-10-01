@@ -3072,3 +3072,80 @@ body.brand-partner .customer-experience-brand img {
   opacity: 1 !important;
 }
 
+
+
+/* DSI CUSTOMER HEADER WEBSITE LINKS */
+body.brand-partner .customer-experience-header {
+  flex-wrap: wrap;
+}
+
+body.brand-partner .customer-brand-header-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-left: 14px;
+  flex: 1 1 auto;
+  min-width: 280px;
+}
+
+body.brand-partner .customer-brand-header-links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 36px;
+  padding: 7px 13px;
+  border: 1px solid rgba(57,159,220,.75);
+  border-radius: 8px;
+  background: rgba(0,59,112,.72);
+  color: #fff;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+body.brand-partner .customer-brand-header-links a:hover {
+  background: #1599ef;
+  border-color: #35baff;
+}
+
+body.brand-partner .customer-brand-header-links a.primary {
+  background: #1599ef;
+  border-color: #35baff;
+}
+
+body.brand-partner .customer-brand-header-links a.primary:hover {
+  background: #35baff;
+}
+
+@media (max-width: 900px) {
+  body.brand-partner .customer-brand-header-links {
+    order: 4;
+    width: 100%;
+    min-width: 0;
+    margin: 4px 0 0;
+    flex-basis: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+
+@media (max-width: 650px) {
+  body.brand-partner .customer-experience-header {
+    flex-wrap: wrap;
+  }
+
+  body.brand-partner .customer-brand-header-links {
+    gap: 6px;
+    margin-top: 3px;
+  }
+
+  body.brand-partner .customer-brand-header-links a {
+    flex: 1 1 auto;
+    min-width: 0;
+    min-height: 34px;
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+}

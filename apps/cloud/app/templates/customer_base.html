@@ -79,6 +79,19 @@
     </dialog>
   </div>
   <main class="page-content">{% block content %}{% endblock %}</main>
+
+  {% if page_brand.website_links is defined and page_brand.website_links %}
+  <footer class="customer-brand-links">
+    <div class="customer-brand-links-inner">
+      <span class="customer-brand-links-title">DSI</span>
+      {% for link in page_brand.website_links %}
+      <a href="{{ link.url }}" target="_blank" rel="noopener noreferrer">
+        {{ link.label }}
+      </a>
+      {% endfor %}
+    </div>
+  </footer>
+  {% endif %}
   <script src="/customer-static/js/i18n.js?v={{ request.app.state.settings.version }}" defer></script>
   <script src="/static/customer-gallery.js?v={{ request.app.state.settings.version }}" defer></script>
   {% block scripts %}{% endblock %}

@@ -31,6 +31,20 @@ BRANDS = {
         "public_host": "photos.dsi-london.video",
         "sender_name": "DSI",
         "sender_email": "photos@dsi-london.video",
+        "website_links": [
+            {
+                "label": "DSI TV",
+        "url": "https://www.dsi-london.tv/subscription.html",
+            },
+            {
+                "label": "DSI London",
+        "url": "https://www.dsi-london.com",
+            },
+            {
+                "label": "Book Your Video",
+        "url": "https://www.dsi-london.video/personal-video-booking-form",
+            },
+        ],
         "delivery_policies": {
             "low_res": "DSI-TV_Low_Resolution_Image_Policy.pdf",
             "high_res": "DSI-TV_High_Resolution_Image_Policy.pdf",

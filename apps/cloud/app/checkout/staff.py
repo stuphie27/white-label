@@ -10,7 +10,7 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy import select
 
 from app.checkout.fulfilment import process_paid_order
-from app.checkout.audit import record_order_audit
+from app.operations import record_order_audit
 from app.db.models import CloudOrder, Event
 
 

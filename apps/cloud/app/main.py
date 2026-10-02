@@ -151,12 +151,19 @@ def create_app() -> FastAPI:
         allowed_staff_paths = {
             "/staff/login",
             "/staff/logout",
+            "/staff/forgot-password",
+            "/staff/forgot-password/sent",
             "/staff/payroll",
         }
+        allowed_staff_prefixes = (
+            "/staff/reset-password/",
+            "/staff/orders",
+        )
         payroll_detail = path.startswith("/staff/payroll/")
         if (
             (path == "/staff" or path.startswith("/staff/"))
             and path not in allowed_staff_paths
+            and not any(path.startswith(prefix) for prefix in allowed_staff_prefixes)
             and not payroll_detail
         ):
             return TEMPLATES.TemplateResponse(

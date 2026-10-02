@@ -26,6 +26,7 @@ from app.downloads.router import build_downloads_router
 from app.downloads.service import expire_due, send_due_reminders
 from app.checkout.router import build_checkout_router
 from app.checkout.public import build_public_checkout_router
+from app.checkout.staff import build_checkout_staff_router
 from app.customer_access import build_customer_access_router
 from app.customer_home import build_customer_home_router
 from app.customer_verification_email import send_customer_verification_code
@@ -183,6 +184,7 @@ def create_app() -> FastAPI:
     # Project Pirouette on the event Mac. The Cloud app serves public galleries,
     # checkout, payments, secure delivery and authenticated synchronisation APIs.
     application.include_router(build_public_checkout_router(TEMPLATES))
+    application.include_router(build_checkout_staff_router(TEMPLATES))
     application.include_router(build_gallery_router(TEMPLATES))
     application.include_router(build_sync_router())
     application.include_router(build_downloads_router(TEMPLATES))

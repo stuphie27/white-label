@@ -1579,82 +1579,87 @@ body.lightbox-open {
     z-index: 500;
 
     display: none;
+    align-items: center;
+    justify-content: center;
 
-    background:
-        rgba(0, 10, 28, 0.96);
+    padding: 24px;
 
-    backdrop-filter: blur(10px);
+    background: rgba(0, 0, 0, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
 }
 
 .gallery-lightbox.open {
     display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .gallery-lightbox-inner {
-    width: min(92vw, 1450px);
-    height: 94vh;
+    width: min(94vw, 1500px);
+    height: min(94vh, 1000px);
 
     display: grid;
-    grid-template-rows:
-        minmax(0, 1fr)
-        auto;
+    grid-template-rows: minmax(0, 1fr) auto;
 
-    padding: 14px 80px 14px;
+    gap: 14px;
 
-    gap: 10px;
+    min-width: 0;
+    min-height: 0;
 }
 
 .gallery-lightbox-image-wrap {
+    min-width: 0;
     min-height: 0;
 
     display: flex;
     align-items: center;
     justify-content: center;
+
+    overflow: hidden;
 }
 
 .gallery-lightbox-image-wrap img {
     display: block;
 
-    max-width: 100%;
-    max-height: calc(94vh - 105px);
-
     width: auto;
     height: auto;
 
+    max-width: 100%;
+    max-height: 100%;
+
     object-fit: contain;
 
-    border-radius: 8px;
+    border-radius: 4px;
 
     box-shadow:
-        0 20px 70px
-        rgba(0, 0, 0, 0.48);
+        0 24px 80px rgba(0, 0, 0, 0.55);
+
+    user-select: none;
+    -webkit-user-drag: none;
 }
 
 .gallery-lightbox-bar {
-    min-height: 76px;
+    min-height: 64px;
 
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    justify-content: space-between;
 
     gap: 20px;
 
-    padding: 10px 14px;
+    padding: 8px 14px;
 
-    border:
-        1px solid
-        rgba(82, 183, 242, 0.45);
-
-    border-radius: 11px;
+    border: 1px solid var(--brand-border);
+    border-radius: 10px;
 
     background:
-        linear-gradient(
-            135deg,
-            rgba(0, 53, 99, 0.94),
-            rgba(0, 24, 57, 0.97)
+        color-mix(
+            in srgb,
+            var(--brand-panel) 94%,
+            black
         );
+
+    box-shadow:
+        0 10px 35px rgba(0, 0, 0, 0.25);
 }
 
 .gallery-lightbox-details {
@@ -1673,88 +1678,111 @@ body.lightbox-open {
 }
 
 .gallery-lightbox-details span {
-    margin-top: 4px;
-
-    color: #8fc9ec;
-
+    margin-top: 3px;
+    color: var(--brand-muted);
     font-size: 12px;
 }
 
 .gallery-lightbox-actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
+    flex-shrink: 0;
 }
 
 .gallery-lightbox-favourite {
-    width: 50px;
-    height: 48px;
-
-    font-size: 30px !important;
-
-    border:
-        1px solid
-        rgba(104, 197, 249, 0.55) !important;
-
-    border-radius: 9px;
-}
-
-.gallery-lightbox-basket {
-    min-width: 180px;
-    height: 48px;
-}
-
-.gallery-lightbox-close {
-    position: absolute;
-
-    top: 18px;
-    right: 24px;
-
-    z-index: 510;
-
-    width: 46px;
+    width: 48px;
     height: 46px;
 
     padding: 0;
 
-    border-radius: 50%;
+    border-radius: 8px !important;
 
-    background:
-        rgba(0, 29, 64, 0.88);
-
-    border:
-        1px solid
-        rgba(110, 201, 251, 0.55);
-
-    font-size: 28px;
-
-    cursor: pointer;
+    font-size: 28px !important;
 }
 
+.gallery-lightbox-basket {
+    min-width: 175px;
+    height: 46px;
+}
+
+/* Elegant close control */
+.gallery-lightbox-close {
+    position: absolute;
+    top: 18px;
+    right: 22px;
+
+    z-index: 520;
+
+    width: 42px;
+    height: 42px;
+
+    padding: 0;
+
+    border: 0;
+    border-radius: 8px;
+
+    background: rgba(0, 0, 0, 0.18);
+
+    color: var(--brand-text);
+
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+
+    cursor: pointer;
+
+    opacity: 0.78;
+
+    transition:
+        opacity 0.18s ease,
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.gallery-lightbox-close:hover {
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.08);
+    transform: scale(1.05);
+}
+
+/* Subtle previous / next controls */
 .gallery-lightbox-arrow {
     position: absolute;
-
     top: 50%;
 
-    z-index: 510;
+    z-index: 520;
 
     width: 52px;
-    height: 70px;
+    height: 76px;
 
     padding: 0;
 
     transform: translateY(-50%);
 
-    border:
-        1px solid
-        rgba(112, 202, 251, 0.42);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
 
-    background:
-        rgba(0, 28, 62, 0.72);
+    background: rgba(0, 0, 0, 0.22);
 
-    font-size: 42px;
+    color: var(--brand-text);
+
+    font-size: 44px;
+    font-weight: 300;
+    line-height: 1;
 
     cursor: pointer;
+
+    opacity: 0.72;
+
+    transition:
+        opacity 0.18s ease,
+        background 0.18s ease;
+}
+
+.gallery-lightbox-arrow:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.48);
 }
 
 .gallery-lightbox-prev {
@@ -1765,44 +1793,32 @@ body.lightbox-open {
     right: 18px;
 }
 
-@media (max-width: 720px) {
+/* Tablet */
+@media (max-width: 900px) {
+
+    .gallery-lightbox {
+        padding: 12px;
+    }
 
     .gallery-lightbox-inner {
-        width: 100vw;
-        height: 100vh;
-
-        padding:
-            55px
-            10px
-            10px;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
     }
 
     .gallery-lightbox-image-wrap img {
-        max-height:
-            calc(100vh - 165px);
+        max-width: calc(100vw - 90px);
+        max-height: calc(100dvh - 105px);
     }
 
-    .gallery-lightbox-bar {
-        min-height: 90px;
-    }
-
-    .gallery-lightbox-details {
-        display: none;
-    }
-
-    .gallery-lightbox-actions {
-        width: 100%;
-    }
-
-    .gallery-lightbox-basket {
-        flex: 1;
+    .gallery-lightbox-close {
+        top: 10px;
+        right: 12px;
     }
 
     .gallery-lightbox-arrow {
-        width: 42px;
-        height: 58px;
-
-        font-size: 32px;
+        width: 44px;
+        height: 64px;
     }
 
     .gallery-lightbox-prev {
@@ -1812,93 +1828,26 @@ body.lightbox-open {
     .gallery-lightbox-next {
         right: 6px;
     }
-
-    .gallery-lightbox-close {
-        top: 8px;
-        right: 10px;
-    }
-
 }
 
-/* ===== LARGE RESPONSIVE GALLERY VIEWER ===== */
-
-/* Desktop / iPad landscape */
-.gallery-lightbox-inner {
-    width: 96vw;
-    height: 98vh;
-    padding: 10px 72px 10px;
-    gap: 8px;
-}
-
-.gallery-lightbox-image-wrap {
-    width: 100%;
-    min-height: 0;
-    overflow: hidden;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.gallery-lightbox-image-wrap img {
-    width: auto;
-    height: 100%;
-
-    max-width: 100%;
-    max-height: calc(98vh - 92px);
-
-    object-fit: contain;
-}
-
-/* Keep controls compact so the photograph gets the space */
-.gallery-lightbox-bar {
-    min-height: 66px;
-    padding: 8px 14px;
-}
-
-
-/* ===== TABLET / IPAD PORTRAIT ===== */
-
-@media (max-width: 900px) {
-
-    .gallery-lightbox-inner {
-        width: 100vw;
-        height: 100dvh;
-
-        padding: 48px 12px 8px;
-    }
-
-    .gallery-lightbox-image-wrap img {
-        max-width: calc(100vw - 24px);
-        max-height: calc(100dvh - 135px);
-    }
-
-}
-
-
-/* ===== MOBILE PHONE ===== */
-
+/* Mobile */
 @media (max-width: 600px) {
 
     .gallery-lightbox {
-        background: #001126;
+        padding: 6px;
+        background: rgba(0, 0, 0, 0.97);
     }
 
     .gallery-lightbox-inner {
-        width: 100vw;
-        height: 100dvh;
-
-        padding:
-            46px
-            6px
-            6px;
-
-        gap: 5px;
+        width: 100%;
+        height: 100%;
+        grid-template-rows: minmax(0, 1fr) auto;
+        gap: 8px;
     }
 
     .gallery-lightbox-image-wrap {
         width: 100%;
-        height: calc(100dvh - 125px);
+        height: 100%;
     }
 
     .gallery-lightbox-image-wrap img {
@@ -1910,15 +1859,14 @@ body.lightbox-open {
 
         object-fit: contain;
 
-        border-radius: 4px;
+        border-radius: 3px;
     }
 
     .gallery-lightbox-bar {
         width: 100%;
+        min-height: 58px;
 
-        min-height: 68px;
-
-        padding: 6px;
+        padding: 5px;
 
         border-radius: 8px;
     }
@@ -1933,40 +1881,45 @@ body.lightbox-open {
     }
 
     .gallery-lightbox-favourite {
-        flex: 0 0 52px;
-        height: 52px;
+        flex: 0 0 50px;
+        width: 50px;
+        height: 48px;
     }
 
     .gallery-lightbox-basket {
         flex: 1;
-        height: 52px;
+        min-width: 0;
+        height: 48px;
     }
 
     .gallery-lightbox-close {
-        top: 5px;
-        right: 7px;
+        top: 7px;
+        right: 9px;
 
         width: 38px;
         height: 38px;
+
+        font-size: 29px;
     }
 
     .gallery-lightbox-arrow {
         width: 38px;
-        height: 58px;
+        height: 56px;
 
-        background: rgba(0, 20, 48, 0.62);
+        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(0, 0, 0, 0.18);
+
+        font-size: 32px;
     }
 
     .gallery-lightbox-prev {
-        left: 4px;
+        left: 3px;
     }
 
     .gallery-lightbox-next {
-        right: 4px;
+        right: 3px;
     }
-
 }
-
 
 /* =========================================================
    STUPHIE WHITE-LABEL BRAND OVERRIDES

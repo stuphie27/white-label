@@ -1,7 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
+import hashlib
+import smtplib
+from email.message import EmailMessage
 import secrets
 
 from fastapi import APIRouter, Form, HTTPException, Request, status
@@ -11,7 +14,7 @@ from sqlalchemy import select
 
 from app.checkout.fulfilment import process_paid_order
 from app.operations import record_order_audit
-from app.db.models import CloudOrder, Event
+from app.db.models import CloudOrder, Event, StaffOrdersLoginToken
 
 
 def build_checkout_staff_router(templates: Jinja2Templates) -> APIRouter:
@@ -37,6 +40,181 @@ def build_checkout_staff_router(templates: Jinja2Templates) -> APIRouter:
             and supplied
             and secrets.compare_digest(expected, supplied)
         )
+
+    ORDERS_ACCESS_EMAIL = "photos@sophiesphotography.co.uk"
+    ORDERS_ACCESS_TTL_MINUTES = 20
+
+    def _orders_token_hash(token: str) -> str:
+        return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+    def _send_orders_magic_email(
+        request: Request,
+        *,
+        token: str,
+    ) -> None:
+        settings = request.app.state.settings
+
+        if not settings.smtp_host:
+            raise RuntimeError("SMTP is not configured for Orders access.")
+
+        base_url = str(settings.public_base_url or "").rstrip("/")
+        secure_link = f"{base_url}/staff/orders/access/{token}"
+
+        message = EmailMessage()
+        message["From"] = (
+            f"{settings.smtp_from_name} "
+            f"<{settings.smtp_from_email}>"
+        )
+        message["To"] = ORDERS_ACCESS_EMAIL
+        message["Subject"] = "Your Stuphie Online Orders access link"
+
+        message.set_content(
+            "Hello,\n\n"
+            "Use this private link to access the Stuphie Online Orders dashboard:\n\n"
+            f"{secure_link}\n\n"
+            "This link expires in 20 minutes and can only be used once.\n\n"
+            "If you did not request this link, you can ignore this email."
+        )
+
+        with smtplib.SMTP(
+            settings.smtp_host,
+            settings.smtp_port,
+            timeout=20,
+        ) as smtp:
+            smtp.ehlo()
+
+            if settings.smtp_use_tls:
+                smtp.starttls()
+                smtp.ehlo()
+
+            if settings.smtp_username:
+                smtp.login(
+                    settings.smtp_username,
+                    settings.smtp_password,
+                )
+
+            smtp.send_message(message)
+
+    @router.get(
+        "/orders/request-access",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def request_orders_access(request: Request):
+        factory = getattr(
+            request.app.state,
+            "session_factory",
+            None,
+        )
+
+        if factory is None:
+            raise HTTPException(503, "Database unavailable.")
+
+        now = datetime.now(timezone.utc)
+        raw_token = secrets.token_urlsafe(48)
+
+        with factory() as session:
+            session.query(StaffOrdersLoginToken).filter(
+                StaffOrdersLoginToken.staff_email
+                == ORDERS_ACCESS_EMAIL,
+                StaffOrdersLoginToken.used_at.is_(None),
+            ).update(
+                {"used_at": now},
+                synchronize_session=False,
+            )
+
+            session.add(
+                StaffOrdersLoginToken(
+                    staff_email=ORDERS_ACCESS_EMAIL,
+                    token_hash=_orders_token_hash(raw_token),
+                    expires_at=(
+                        now
+                        + timedelta(
+                            minutes=ORDERS_ACCESS_TTL_MINUTES
+                        )
+                    ),
+                )
+            )
+            session.commit()
+
+        try:
+            _send_orders_magic_email(
+                request,
+                token=raw_token,
+            )
+        except Exception:
+            with factory() as session:
+                session.query(StaffOrdersLoginToken).filter(
+                    StaffOrdersLoginToken.token_hash
+                    == _orders_token_hash(raw_token)
+                ).update(
+                    {"used_at": now},
+                    synchronize_session=False,
+                )
+                session.commit()
+
+            raise HTTPException(
+                503,
+                "Orders access email could not be sent.",
+            )
+
+        return HTMLResponse(
+            "<h1>Orders access link sent</h1>"
+            "<p>Check photos@sophiesphotography.co.uk for the "
+            "secure 20-minute access link.</p>"
+        )
+
+    @router.get(
+        "/orders/access/{token}",
+        include_in_schema=False,
+    )
+    async def orders_magic_login(
+        token: str,
+        request: Request,
+    ):
+        factory = getattr(
+            request.app.state,
+            "session_factory",
+            None,
+        )
+
+        if factory is None:
+            raise HTTPException(503, "Database unavailable.")
+
+        now = datetime.now(timezone.utc)
+
+        with factory() as session:
+            row = session.scalar(
+                select(StaffOrdersLoginToken).where(
+                    StaffOrdersLoginToken.token_hash
+                    == _orders_token_hash(token)
+                )
+            )
+
+            if (
+                row is None
+                or row.used_at is not None
+                or row.staff_email != ORDERS_ACCESS_EMAIL
+                or row.expires_at <= now
+            ):
+                raise HTTPException(
+                    403,
+                    "This Orders access link is invalid or expired.",
+                )
+
+            row.used_at = now
+            session.commit()
+
+        request.session["staff_authenticated"] = True
+        request.session["staff_email"] = ORDERS_ACCESS_EMAIL
+        request.session["staff_role"] = "super_admin"
+        request.session["staff_last_activity"] = int(now.timestamp())
+
+        return RedirectResponse(
+            "/staff/orders",
+            status_code=303,
+        )
+
 
     @router.get("/orders", response_class=HTMLResponse, include_in_schema=False)
     async def orders(request: Request, queue: str = ""):

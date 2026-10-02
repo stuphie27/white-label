@@ -19,6 +19,7 @@ class StaffAccessMiddleware(BaseHTTPMiddleware):
 
     PUBLIC_STAFF_PREFIXES = (
         "/staff/reset-password/",
+        "/staff/orders/access/",
     )
 
     async def dispatch(self, request: Request, call_next):

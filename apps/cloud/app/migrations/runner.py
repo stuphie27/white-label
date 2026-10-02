@@ -253,6 +253,12 @@ def staff_payroll_login_tokens(connection: Connection) -> None:
 
 
 
+@migration("025_staff_orders_login_tokens")
+def staff_orders_login_tokens(connection: Connection) -> None:
+    table = Base.metadata.tables["staff_orders_login_tokens"]
+    table.create(bind=connection, checkfirst=True)
+
+
 @migration("024_personal_video_foundation")
 def personal_video_foundation(connection: Connection) -> None:
     existing = {

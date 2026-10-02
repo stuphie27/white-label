@@ -454,6 +454,48 @@ class StaffPayrollSubmission(Base):
     )
 
 
+class StaffOrdersLoginToken(Base):
+    """Single-use magic-link challenge for the online Orders dashboard."""
+
+    __tablename__ = "staff_orders_login_tokens"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+
+    staff_email: Mapped[str] = mapped_column(
+        String(320),
+        nullable=False,
+        index=True,
+    )
+
+    token_hash: Mapped[str] = mapped_column(
+        String(64),
+        nullable=False,
+        unique=True,
+        index=True,
+    )
+
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
+
+    used_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
+    )
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+    )
+
+
 class StaffPayrollLoginToken(Base):
     """Single-use magic-link challenge for employee payroll history."""
 

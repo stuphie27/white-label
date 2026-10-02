@@ -192,9 +192,11 @@
       >
         <span class="protected-customer-image">
           <img
-            class="protected-customer-image-file"
+            class="protected-customer-image-file cloud-photo-expand-trigger"
             src="/g/{{ gallery.slug }}/assets/{{ asset.id }}"
-            alt="Event photograph"
+            alt="{{ asset.filename }}"
+            data-expand-image="/g/{{ gallery.slug }}/assets/{{ asset.id }}"
+            data-expand-alt="{{ asset.filename|e }}"
             loading="lazy"
             draggable="false"
           >

@@ -183,60 +183,72 @@ def _gallery(session, event_id: str):
 
 
 def _photo_counts(session, gallery_id: str):
-    conditions = [
-        GalleryAsset.gallery_id == gallery_id,
-        GalleryAsset.media_kind == "photos",
-    ]
+    """
+    Read the production gallery_assets table directly.
 
-    def count(extra=None):
-        clauses = list(conditions)
-        if extra is not None:
-            clauses.append(extra)
-        return int(
-            session.scalar(
-                select(func.count(GalleryAsset.id)).where(*clauses)
-            )
-            or 0
-        )
+    The production schema is PostgreSQL and the live database is the
+    source of truth for the White Label dashboard.
+    """
 
-    return {
-        "total": count(),
-        "ready": count(GalleryAsset.status == "ready"),
-        "waiting": count(
-            GalleryAsset.status.in_(
-                [
-                    "waiting",
-                    "pending",
-                    "processing",
-                    "uploading",
-                ]
-            )
-        ),
-        "failed": count(
-            GalleryAsset.status.in_(
-                ["failed", "error"]
-            )
-        ),
-        "removed": count(
-            GalleryAsset.status == "removed"
-        ),
+    rows = session.execute(
+        text("""
+            SELECT
+                media_kind,
+                status,
+                COUNT(*) AS amount
+            FROM gallery_assets
+            WHERE gallery_id = :gallery_id
+            GROUP BY media_kind, status
+        """),
+        {"gallery_id": gallery_id},
+    ).all()
+
+    result = {
+        "total": 0,
+        "ready": 0,
+        "waiting": 0,
+        "failed": 0,
+        "removed": 0,
     }
+
+    for media_kind, status, amount in rows:
+        if str(media_kind or "").lower() != "photos":
+            continue
+
+        status = str(status or "").lower()
+        amount = int(amount or 0)
+
+        if status != "removed":
+            result["total"] += amount
+
+        if status == "ready":
+            result["ready"] += amount
+        elif status in {
+            "waiting",
+            "pending",
+            "processing",
+            "uploading",
+        }:
+            result["waiting"] += amount
+        elif status in {"failed", "error"}:
+            result["failed"] += amount
+        elif status == "removed":
+            result["removed"] += amount
+
+    return result
 
 
 def _day_counts(session, gallery_id: str):
-    rows = session.execute(
-        select(
-            GalleryAsset.folder_path,
-            GalleryAsset.status,
-            func.count(GalleryAsset.id),
-        ).where(
-            GalleryAsset.gallery_id == gallery_id,
-            GalleryAsset.media_kind == "photos",
-        ).group_by(
-            GalleryAsset.folder_path,
-            GalleryAsset.status,
-        )
-    ).all()
+    """
+    Calculate event-day statistics directly from gallery_assets.folder_path.
+
+    The International's real production structure uses:
+      01 - Saturday/...
+      02 - Sunday/...
+      etc.
+
+    Only photograph assets are counted.
+    """
 
     result = {
         day: {
@@ -245,24 +257,43 @@ def _day_counts(session, gallery_id: str):
             "waiting": 0,
             "failed": 0,
             "removed": 0,
+            "percent": 0,
         }
         for day in DAY_NAMES
     }
 
+    rows = session.execute(
+        text("""
+            SELECT
+                folder_path,
+                status,
+                COUNT(*) AS amount
+            FROM gallery_assets
+            WHERE gallery_id = :gallery_id
+              AND lower(media_kind) = 'photos'
+            GROUP BY folder_path, status
+        """),
+        {"gallery_id": gallery_id},
+    ).all()
+
     for folder_path, status, amount in rows:
         path = str(folder_path or "")
+        status = str(status or "").lower()
+        amount = int(amount or 0)
 
         day = None
 
         for name, prefix in DAY_PREFIXES.items():
-            if path == prefix or path.startswith(prefix + "/"):
+            if (
+                path == prefix
+                or path.startswith(prefix + "/")
+            ):
                 day = name
                 break
 
         if day is None:
             continue
 
-        amount = int(amount or 0)
         bucket = result[day]
 
         if status != "removed":
@@ -283,63 +314,100 @@ def _day_counts(session, gallery_id: str):
             bucket["removed"] += amount
 
     for bucket in result.values():
-        total = bucket["total"]
-        bucket["percent"] = (
-            round(bucket["ready"] / total * 100, 1)
-            if total
-            else 0
-        )
+        if bucket["total"]:
+            bucket["percent"] = round(
+                bucket["ready"]
+                / bucket["total"]
+                * 100,
+                1,
+            )
 
     return result
 
 
 def _folder_counts(session, gallery_id: str):
-    folders = list(
-        session.scalars(
-            select(GalleryFolder).where(
-                GalleryFolder.gallery_id == gallery_id,
-                GalleryFolder.media_kind == "photos",
-                GalleryFolder.active.is_(True),
-            ).order_by(
-                GalleryFolder.sort_order,
-                GalleryFolder.path,
-            )
-        )
-    )
+    """
+    Build the live folder inventory from the actual production
+    gallery_folders and gallery_assets tables.
+
+    Active folders are the navigation structure. Asset counts come
+    from gallery_assets.folder_path, so the displayed count is the
+    number of real photographs beneath each folder.
+    """
+
+    folder_rows = session.execute(
+        text("""
+            SELECT
+                id,
+                name,
+                path,
+                parent_path,
+                media_kind,
+                active,
+                sort_order
+            FROM gallery_folders
+            WHERE gallery_id = :gallery_id
+              AND lower(media_kind) = 'photos'
+              AND active = TRUE
+            ORDER BY sort_order, path
+        """),
+        {"gallery_id": gallery_id},
+    ).mappings().all()
+
+    asset_rows = session.execute(
+        text("""
+            SELECT
+                folder_path,
+                COUNT(*) AS amount
+            FROM gallery_assets
+            WHERE gallery_id = :gallery_id
+              AND lower(media_kind) = 'photos'
+              AND status = 'ready'
+            GROUP BY folder_path
+        """),
+        {"gallery_id": gallery_id},
+    ).all()
+
+    asset_counts = {
+        str(path or ""): int(amount or 0)
+        for path, amount in asset_rows
+    }
 
     result = []
 
-    for folder in folders:
-        path = str(folder.path or "")
+    for folder in folder_rows:
+        folder_path = str(folder["path"] or "")
+        total = 0
 
-        count = int(
-            session.scalar(
-                select(func.count(GalleryAsset.id)).where(
-                    GalleryAsset.gallery_id == gallery_id,
-                    GalleryAsset.media_kind == "photos",
-                    GalleryAsset.status == "ready",
-                    (
-                        (GalleryAsset.folder_path == path)
-                        | GalleryAsset.folder_path.startswith(
-                            path + "/"
-                        )
-                    ),
+        for asset_path, amount in asset_counts.items():
+            if (
+                asset_path == folder_path
+                or asset_path.startswith(
+                    folder_path + "/"
                 )
-            )
-            or 0
-        )
+            ):
+                total += amount
 
         result.append(
             {
-                "path": path,
-                "name": folder.name or path,
-                "parent_path": folder.parent_path or "",
-                "count": count,
+                "path": folder_path,
+                "name": str(
+                    folder["name"]
+                    or folder_path
+                ),
+                "parent_path": str(
+                    folder["parent_path"]
+                    or ""
+                ),
+                "count": total,
+                "active": bool(folder["active"]),
+                "sort_order": int(
+                    folder["sort_order"] or 0
+                ),
             }
         )
 
     return result
-
 
 def _favourites(session, gallery_id: str):
     sessions = int(
@@ -1219,28 +1287,41 @@ def build_website_control_router(
             if not brand_id:
                 brand_id = "sophies"
 
-            events = _event_rows(
-                session,
-                brand_id,
-            )
-
+            # An explicitly supplied event is authoritative.
+            # Always derive its brand from the event itself.
             if event_id:
                 selected = _event(
                     session,
                     event_id,
                 )
 
-                if (
-                    selected is None
-                    or str(
+                if selected is not None:
+                    brand_id = str(
                         selected.brand_id
                         or "sophies"
-                    ) != brand_id
-                ):
+                    )
+
+                    events = _event_rows(
+                        session,
+                        brand_id,
+                    )
+                else:
                     event_id = ""
 
-            if not event_id and events:
-                event_id = str(events[0].id)
+            if not event_id:
+                events = _event_rows(
+                    session,
+                    brand_id,
+                )
+
+                if events:
+                    event_id = str(events[0].id)
+            else:
+                # Keep the event's own brand/event relationship intact.
+                events = _event_rows(
+                    session,
+                    brand_id,
+                )
 
             context = (
                 _context(
@@ -1277,6 +1358,56 @@ def build_website_control_router(
             },
         )
 
+    def _detail_context(
+        request: Request,
+        event_id: str,
+        section: str,
+        title: str,
+        subtitle: str,
+    ):
+        denied = _admin_check(request)
+
+        if denied:
+            return denied
+
+        with request.app.state.session_factory() as session:
+            context = _context(
+                session,
+                event_id,
+            )
+
+        if context is None:
+            return templates.TemplateResponse(
+                request=request,
+                name="website_control_detail.html",
+                context={
+                    "title": title,
+                    "subtitle": subtitle,
+                    "section": section,
+                    "context": None,
+                    "orders": [],
+                    "deliveries": [],
+                    "selected_day": "",
+                    "selected_folder": "",
+                },
+                status_code=404,
+            )
+
+        return templates.TemplateResponse(
+            request=request,
+            name="website_control_detail.html",
+            context={
+                "title": title,
+                "subtitle": subtitle,
+                "section": section,
+                "context": context,
+                "orders": context["orders"]["rows"],
+                "deliveries": context["deliveries"]["rows"],
+                "selected_day": "",
+                "selected_folder": "",
+            },
+        )
+
     @router.get(
         "/photos",
         response_class=HTMLResponse,
@@ -1286,25 +1417,12 @@ def build_website_control_router(
         request: Request,
         event: str = "",
     ):
-        denied = _admin_check(request)
-        if denied:
-            return denied
-
-        with request.app.state.session_factory() as session:
-            context = _context(
-                session,
-                event,
-            )
-
-        return templates.TemplateResponse(
-            request=request,
-            name="website_control_detail.html",
-            context={
-                "title": "Photo Pipeline",
-                "subtitle": "Complete photograph processing status",
-                "section": "photos",
-                "context": context,
-            },
+        return _detail_context(
+            request,
+            event,
+            "photos",
+            "Photo Pipeline",
+            "Complete photograph processing status",
         )
 
     @router.get(
@@ -1319,6 +1437,7 @@ def build_website_control_router(
         folder: str = "",
     ):
         denied = _admin_check(request)
+
         if denied:
             return denied
 
@@ -1328,38 +1447,56 @@ def build_website_control_router(
                 event,
             )
 
-        if context and (day or folder):
-            wanted_day = str(day or "").lower()
+        if context is None:
+            return templates.TemplateResponse(
+                request=request,
+                name="website_control_detail.html",
+                context={
+                    "title": "Gallery Folders",
+                    "subtitle": "Live folder structure and photograph counts",
+                    "section": "folders",
+                    "context": None,
+                    "orders": [],
+                    "deliveries": [],
+                    "selected_day": day,
+                    "selected_folder": folder,
+                },
+                status_code=404,
+            )
 
-            filtered = []
+        wanted_day = str(day or "").strip().lower()
+        wanted_folder = str(folder or "").strip().lower()
 
-            for row in context["folders"]:
-                path = row["path"].lower()
+        filtered = []
 
-                if folder:
-                    if (
-                        path != folder.lower()
-                        and not path.startswith(
-                            folder.lower() + "/"
-                        )
-                    ):
-                        continue
+        for row in context["folders"]:
+            path = str(row["path"] or "")
+            path_lower = path.lower()
 
-                if wanted_day:
-                    prefix = DAY_PREFIXES.get(
-                        wanted_day.capitalize(),
-                        "",
-                    ).lower()
+            if wanted_folder:
+                if (
+                    path_lower != wanted_folder
+                    and not path_lower.startswith(
+                        wanted_folder + "/"
+                    )
+                ):
+                    continue
 
-                    if prefix and not (
-                        path == prefix
-                        or path.startswith(prefix + "/")
-                    ):
-                        continue
+            if wanted_day:
+                prefix = DAY_PREFIXES.get(
+                    wanted_day.capitalize(),
+                    "",
+                ).lower()
 
-                filtered.append(row)
+                if prefix and not (
+                    path_lower == prefix
+                    or path_lower.startswith(prefix + "/")
+                ):
+                    continue
 
-            context["folders"] = filtered
+            filtered.append(row)
+
+        context["folders"] = filtered
 
         return templates.TemplateResponse(
             request=request,
@@ -1369,6 +1506,8 @@ def build_website_control_router(
                 "subtitle": "Live folder structure and photograph counts",
                 "section": "folders",
                 "context": context,
+                "orders": context["orders"]["rows"],
+                "deliveries": context["deliveries"]["rows"],
                 "selected_day": day,
                 "selected_folder": folder,
             },
@@ -1383,25 +1522,12 @@ def build_website_control_router(
         request: Request,
         event: str = "",
     ):
-        denied = _admin_check(request)
-        if denied:
-            return denied
-
-        with request.app.state.session_factory() as session:
-            context = _context(
-                session,
-                event,
-            )
-
-        return templates.TemplateResponse(
-            request=request,
-            name="website_control_detail.html",
-            context={
-                "title": "Website Activity",
-                "subtitle": "Visitors, gallery views and customer behaviour",
-                "section": "activity",
-                "context": context,
-            },
+        return _detail_context(
+            request,
+            event,
+            "activity",
+            "Website Activity",
+            "Visitors, gallery views and customer behaviour",
         )
 
     @router.get(
@@ -1413,30 +1539,12 @@ def build_website_control_router(
         request: Request,
         event: str = "",
     ):
-        denied = _admin_check(request)
-        if denied:
-            return denied
-
-        with request.app.state.session_factory() as session:
-            context = _context(
-                session,
-                event,
-            )
-
-        return templates.TemplateResponse(
-            request=request,
-            name="website_control_detail.html",
-            context={
-                "title": "Orders & Revenue",
-                "subtitle": "Orders, payment status and event revenue",
-                "section": "orders",
-                "context": context,
-                "orders": (
-                    context["orders"]["rows"]
-                    if context
-                    else []
-                ),
-            },
+        return _detail_context(
+            request,
+            event,
+            "orders",
+            "Orders & Revenue",
+            "Orders, payment status and event revenue",
         )
 
     @router.get(
@@ -1448,30 +1556,12 @@ def build_website_control_router(
         request: Request,
         event: str = "",
     ):
-        denied = _admin_check(request)
-        if denied:
-            return denied
-
-        with request.app.state.session_factory() as session:
-            context = _context(
-                session,
-                event,
-            )
-
-        return templates.TemplateResponse(
-            request=request,
-            name="website_control_detail.html",
-            context={
-                "title": "Digital Delivery",
-                "subtitle": "Customer delivery and download status",
-                "section": "deliveries",
-                "context": context,
-                "deliveries": (
-                    context["deliveries"]["rows"]
-                    if context
-                    else []
-                ),
-            },
+        return _detail_context(
+            request,
+            event,
+            "deliveries",
+            "Digital Delivery",
+            "Customer delivery and download status",
         )
 
     @router.get(
@@ -1483,25 +1573,12 @@ def build_website_control_router(
         request: Request,
         event: str = "",
     ):
-        denied = _admin_check(request)
-        if denied:
-            return denied
-
-        with request.app.state.session_factory() as session:
-            context = _context(
-                session,
-                event,
-            )
-
-        return templates.TemplateResponse(
-            request=request,
-            name="website_control_detail.html",
-            context={
-                "title": "System Health",
-                "subtitle": "White Label platform health",
-                "section": "health",
-                "context": context,
-            },
+        return _detail_context(
+            request,
+            event,
+            "health",
+            "System Health",
+            "White Label platform health",
         )
 
     return router

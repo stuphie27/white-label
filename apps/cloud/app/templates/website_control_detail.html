@@ -25,31 +25,31 @@
 
       {% if context %}
 
-        <a href="/stuphie-control?event={{ context.event.id }}">
+        <a href="/stuphie-control?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           ← Overview
         </a>
 
-        <a href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           Photos
         </a>
 
-        <a href="/stuphie-control/folders?event={{ context.event.id }}">
+        <a href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           Folders
         </a>
 
-        <a href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           Website Activity
         </a>
 
-        <a href="/stuphie-control/orders?event={{ context.event.id }}">
+        <a href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           Orders & Revenue
         </a>
 
-        <a href="/stuphie-control/deliveries?event={{ context.event.id }}">
+        <a href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           Digital Delivery
         </a>
 
-        <a href="/stuphie-control/health?event={{ context.event.id }}">
+        <a href="/stuphie-control/health?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           System Health
         </a>
 
@@ -81,7 +81,7 @@
       {% if context %}
         <a
           class="rose-button"
-          href="/stuphie-control?event={{ context.event.id }}"
+          href="/stuphie-control?brand={{ context.event.brand_id }}&event={{ context.event.id }}"
         >
           BACK TO OVERVIEW
         </a>
@@ -176,7 +176,15 @@
 
         <div class="section-heading">
           <span>GALLERY FOLDERS</span>
-          <small>{{ context.folders|length }} folders shown</small>
+          <small>
+            {% if selected_day %}
+              {{ selected_day|title }}
+            {% elif selected_folder %}
+              Selected folder
+            {% else %}
+              {{ context.folders|length }} folders shown
+            {% endif %}
+          </small>
         </div>
 
         <section class="folder-table">
@@ -185,7 +193,7 @@
 
             <a
               class="folder-table-row"
-              href="/stuphie-control/folders?event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
+              href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
             >
 
               <div>
@@ -348,16 +356,16 @@
             <div class="table-row">
 
               <span>
-                {{ order.order_reference }}
+                {{ order.order_reference|default(order.id, true) }}
               </span>
 
               <span>
-                {{ order.customer_name }}
-                <small>{{ order.customer_email }}</small>
+                {{ order.customer_name|default('Customer', true) }}
+                <small>{{ order.customer_email|default('', true) }}</small>
               </span>
 
               <span>
-                {{ order.payment_status }}
+                {{ order.payment_status|default('Unknown', true) }}
               </span>
 
               <span>
@@ -426,24 +434,24 @@
             <div class="table-row">
 
               <span>
-                {{ delivery.customer_name }}
-                <small>{{ delivery.customer_email }}</small>
+                {{ delivery.customer_name|default('Customer', true) }}
+                <small>{{ delivery.customer_email|default('', true) }}</small>
               </span>
 
               <span>
-                {{ delivery.order_reference }}
+                {{ delivery.order_reference|default('', true) }}
               </span>
 
               <span>
-                {{ delivery.delivery_type }}
+                {{ delivery.delivery_type|default('', true) }}
               </span>
 
               <span>
-                {{ delivery.status }}
+                {{ delivery.status|default('Unknown', true) }}
               </span>
 
               <span>
-                {{ delivery.expires_at }}
+                {{ delivery.expires_at|default('', true) }}
               </span>
 
             </div>

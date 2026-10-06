@@ -3,7 +3,6 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta http-equiv="refresh" content="60">
   <title>White Label Control Centre</title>
   <link rel="stylesheet" href="/static/website-control.css">
 </head>
@@ -26,12 +25,12 @@
       <a class="active" href="/stuphie-control">Overview</a>
 
       {% if context %}
-        <a href="/stuphie-control/photos?event={{ context.event.id }}">Photos</a>
-        <a href="/stuphie-control/folders?event={{ context.event.id }}">Folders</a>
-        <a href="/stuphie-control/activity?event={{ context.event.id }}">Website Activity</a>
-        <a href="/stuphie-control/orders?event={{ context.event.id }}">Orders & Revenue</a>
-        <a href="/stuphie-control/deliveries?event={{ context.event.id }}">Digital Delivery</a>
-        <a href="/stuphie-control/health?event={{ context.event.id }}">System Health</a>
+        <a href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">Photos</a>
+        <a href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">Folders</a>
+        <a href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">Website Activity</a>
+        <a href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">Orders & Revenue</a>
+        <a href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">Digital Delivery</a>
+        <a href="/stuphie-control/health?brand={{ context.event.brand_id }}&event={{ context.event.id }}">System Health</a>
       {% endif %}
 
       <a href="/stuphie-control/logout">Sign out</a>
@@ -161,12 +160,12 @@
 
       <div class="section-heading">
         <span>LIVE WEBSITE</span>
-        <small>Refreshes every 60 seconds</small>
+        <small>Live event information</small>
       </div>
 
       <section class="metric-grid">
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>VISITORS</span>
           <strong>{{ context.activity.visitors }}</strong>
           <small>
@@ -178,25 +177,25 @@
           </small>
         </a>
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>GALLERY VIEWS</span>
           <strong>{{ context.activity.gallery_views }}</strong>
           <small>Recorded gallery opens/views</small>
         </a>
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>PHOTO VIEWS</span>
           <strong>{{ context.activity.photo_views }}</strong>
           <small>Recorded photograph views</small>
         </a>
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>FAVOURITES</span>
           <strong>{{ context.favourites.favourites }}</strong>
           <small>{{ context.favourites.sessions }} favourite sessions</small>
         </a>
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>BASKET ACTIVITY</span>
           <strong>{{ context.activity.basket_activity }}</strong>
           <small>
@@ -208,7 +207,7 @@
           </small>
         </a>
 
-        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>CHECKOUT ACTIVITY</span>
           <strong>{{ context.activity.checkout_activity }}</strong>
           <small>Recorded checkout events</small>
@@ -223,37 +222,37 @@
 
       <section class="metric-grid">
 
-        <a class="metric" href="/stuphie-control/orders?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>ORDERS</span>
           <strong>{{ context.orders.total }}</strong>
           <small>{{ context.orders.paid }} paid</small>
         </a>
 
-        <a class="metric good" href="/stuphie-control/orders?event={{ context.event.id }}">
+        <a class="metric good" href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>PAID ORDERS</span>
           <strong>{{ context.orders.paid }}</strong>
           <small>{{ context.orders.awaiting }} awaiting payment</small>
         </a>
 
-        <a class="metric money" href="/stuphie-control/orders?event={{ context.event.id }}">
+        <a class="metric money" href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>REVENUE</span>
           <strong>£{{ "%.2f"|format(context.orders.revenue) }}</strong>
           <small>Paid orders</small>
         </a>
 
-        <a class="metric warning" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+        <a class="metric warning" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>DELIVERY WAITING</span>
           <strong>{{ context.deliveries.waiting }}</strong>
           <small>Awaiting customer delivery</small>
         </a>
 
-        <a class="metric warning" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+        <a class="metric warning" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>DELIVERY PROCESSING</span>
           <strong>{{ context.deliveries.processing }}</strong>
           <small>Currently processing</small>
         </a>
 
-        <a class="metric good" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+        <a class="metric good" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>DELIVERED</span>
           <strong>{{ context.deliveries.complete }}</strong>
           <small>Completed deliveries</small>
@@ -268,31 +267,31 @@
 
       <section class="metric-grid">
 
-        <a class="metric" href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>TOTAL PHOTOS</span>
           <strong>{{ context.photos.total }}</strong>
           <small>Known to the cloud</small>
         </a>
 
-        <a class="metric good" href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a class="metric good" href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>READY</span>
           <strong>{{ context.photos.ready }}</strong>
           <small>Available to customers</small>
         </a>
 
-        <a class="metric warning" href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a class="metric warning" href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>WAITING / PROCESSING</span>
           <strong>{{ context.photos.waiting }}</strong>
           <small>Not yet ready</small>
         </a>
 
-        <a class="metric danger" href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a class="metric danger" href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>FAILED</span>
           <strong>{{ context.photos.failed }}</strong>
           <small>Needs attention</small>
         </a>
 
-        <a class="metric" href="/stuphie-control/photos?event={{ context.event.id }}">
+        <a class="metric" href="/stuphie-control/photos?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
           <span>REMOVED</span>
           <strong>{{ context.photos.removed }}</strong>
           <small>Retired assets</small>
@@ -313,7 +312,7 @@
 
           <a
             class="day-card"
-            href="/stuphie-control/folders?event={{ context.event.id }}&day={{ day|lower }}"
+            href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}&day={{ day|lower }}"
           >
 
             <div class="day-top">
@@ -361,7 +360,7 @@
               <strong>Live inventory</strong>
             </div>
 
-            <a href="/stuphie-control/folders?event={{ context.event.id }}">
+            <a href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               VIEW ALL →
             </a>
 
@@ -373,7 +372,7 @@
 
               <a
                 class="folder-row"
-                href="/stuphie-control/folders?event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
+                href="/stuphie-control/folders?brand={{ context.event.brand_id }}&event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
               >
 
                 <span class="folder-icon">▦</span>
@@ -407,7 +406,7 @@
               <strong>Customer downloads</strong>
             </div>
 
-            <a href="/stuphie-control/deliveries?event={{ context.event.id }}">
+            <a href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               VIEW ALL →
             </a>
 
@@ -415,22 +414,22 @@
 
           <div class="status-list">
 
-            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+            <a class="status-row" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               <span>Waiting</span>
               <strong>{{ context.deliveries.waiting }}</strong>
             </a>
 
-            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+            <a class="status-row" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               <span>Processing</span>
               <strong>{{ context.deliveries.processing }}</strong>
             </a>
 
-            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+            <a class="status-row" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               <span>Complete</span>
               <strong>{{ context.deliveries.complete }}</strong>
             </a>
 
-            <a class="status-row danger-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+            <a class="status-row danger-row" href="/stuphie-control/deliveries?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               <span>Failed</span>
               <strong>{{ context.deliveries.failed }}</strong>
             </a>
@@ -452,7 +451,7 @@
               <strong>Latest customer interactions</strong>
             </div>
 
-            <a href="/stuphie-control/activity?event={{ context.event.id }}">
+            <a href="/stuphie-control/activity?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               VIEW ALL →
             </a>
 
@@ -512,7 +511,7 @@
               <strong>Platform status</strong>
             </div>
 
-            <a href="/stuphie-control/health?event={{ context.event.id }}">
+            <a href="/stuphie-control/health?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
               VIEW HEALTH →
             </a>
 
@@ -524,7 +523,7 @@
 
               <a
                 class="health-row"
-                href="/stuphie-control/health?event={{ context.event.id }}"
+                href="/stuphie-control/health?brand={{ context.event.brand_id }}&event={{ context.event.id }}"
               >
                 <span class="health-indicator {% if item.ok %}healthy{% else %}unhealthy{% endif %}"></span>
                 <strong>{{ item.name }}</strong>

@@ -1,0 +1,517 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ title }} · White Label</title>
+  <link rel="stylesheet" href="/static/website-control.css">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+  <aside class="sidebar">
+
+    <div class="brand-mark">
+      <div class="brand-symbol">WL</div>
+      <div>
+        <strong>WHITE LABEL</strong>
+        <span>CONTROL CENTRE</span>
+      </div>
+    </div>
+
+    <nav>
+
+      {% if context %}
+
+        <a href="/stuphie-control?event={{ context.event.id }}">
+          ← Overview
+        </a>
+
+        <a href="/stuphie-control/photos?event={{ context.event.id }}">
+          Photos
+        </a>
+
+        <a href="/stuphie-control/folders?event={{ context.event.id }}">
+          Folders
+        </a>
+
+        <a href="/stuphie-control/activity?event={{ context.event.id }}">
+          Website Activity
+        </a>
+
+        <a href="/stuphie-control/orders?event={{ context.event.id }}">
+          Orders & Revenue
+        </a>
+
+        <a href="/stuphie-control/deliveries?event={{ context.event.id }}">
+          Digital Delivery
+        </a>
+
+        <a href="/stuphie-control/health?event={{ context.event.id }}">
+          System Health
+        </a>
+
+      {% endif %}
+
+      <a href="/stuphie-control/logout">Sign out</a>
+
+    </nav>
+
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div>
+        <div class="eyebrow">WHITE LABEL CONTROL CENTRE</div>
+        <h1>{{ title }}</h1>
+
+        <p class="subtitle">
+          {{ subtitle }}
+
+          {% if context %}
+            · {{ context.event.name }}
+          {% endif %}
+        </p>
+      </div>
+
+      {% if context %}
+        <a
+          class="rose-button"
+          href="/stuphie-control?event={{ context.event.id }}"
+        >
+          BACK TO OVERVIEW
+        </a>
+      {% endif %}
+
+    </header>
+
+    {% if context %}
+
+      {% if section == "photos" %}
+
+        <div class="section-heading">
+          <span>PHOTO PIPELINE</span>
+          <small>Complete event status</small>
+        </div>
+
+        <section class="metric-grid">
+
+          <div class="metric">
+            <span>Total Photos</span>
+            <strong>{{ context.photos.total }}</strong>
+          </div>
+
+          <div class="metric good">
+            <span>Ready</span>
+            <strong>{{ context.photos.ready }}</strong>
+          </div>
+
+          <div class="metric warning">
+            <span>Waiting / Processing</span>
+            <strong>{{ context.photos.waiting }}</strong>
+          </div>
+
+          <div class="metric danger">
+            <span>Failed</span>
+            <strong>{{ context.photos.failed }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Removed</span>
+            <strong>{{ context.photos.removed }}</strong>
+          </div>
+
+        </section>
+
+        <div class="section-heading">
+          <span>DAY BY DAY</span>
+          <small>Cloud-side counts</small>
+        </div>
+
+        <section class="day-grid">
+
+          {% for day in ["Saturday","Sunday","Monday","Tuesday","Wednesday"] %}
+
+            {% set d = context.days[day] %}
+
+            <div class="day-card">
+
+              <div class="day-top">
+                <strong>{{ day }}</strong>
+
+                {% if d.waiting %}
+                  <span class="day-status uploading">UPLOADING</span>
+                {% elif d.ready %}
+                  <span class="day-status ready">READY</span>
+                {% else %}
+                  <span class="day-status waiting">WAITING</span>
+                {% endif %}
+              </div>
+
+              <div class="day-number">
+                {{ d.ready }}
+                <span>/ {{ d.total }}</span>
+              </div>
+
+              <div class="progress">
+                <span style="width:{{ d.percent }}%"></span>
+              </div>
+
+              <div class="day-footer">
+                <span>{{ d.percent }}% ready</span>
+                <span>{{ d.failed }} failed</span>
+              </div>
+
+            </div>
+
+          {% endfor %}
+
+        </section>
+
+      {% elif section == "folders" %}
+
+        <div class="section-heading">
+          <span>GALLERY FOLDERS</span>
+          <small>{{ context.folders|length }} folders shown</small>
+        </div>
+
+        <section class="folder-table">
+
+          {% for folder in context.folders %}
+
+            <a
+              class="folder-table-row"
+              href="/stuphie-control/folders?event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
+            >
+
+              <div>
+                <strong>{{ folder.name }}</strong>
+                <small>{{ folder.path }}</small>
+              </div>
+
+              <strong>{{ folder.count }}</strong>
+
+            </a>
+
+          {% else %}
+
+            <div class="empty">
+              No matching folders.
+            </div>
+
+          {% endfor %}
+
+        </section>
+
+      {% elif section == "activity" %}
+
+        <div class="section-heading">
+          <span>WEBSITE ACTIVITY</span>
+          <small>Real recorded customer activity</small>
+        </div>
+
+        <section class="metric-grid">
+
+          <div class="metric">
+            <span>Visitors</span>
+            <strong>{{ context.activity.visitors }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Gallery Views</span>
+            <strong>{{ context.activity.gallery_views }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Photo Views</span>
+            <strong>{{ context.activity.photo_views }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Favourite Events</span>
+            <strong>{{ context.activity.favourites }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Basket Activity</span>
+            <strong>{{ context.activity.basket_activity }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Checkout Activity</span>
+            <strong>{{ context.activity.checkout_activity }}</strong>
+          </div>
+
+        </section>
+
+        <section class="panel">
+
+          <div class="panel-title">
+            <div>
+              <span>RECENT ACTIVITY</span>
+              <strong>Latest customer interactions</strong>
+            </div>
+          </div>
+
+          <div class="activity-list">
+
+            {% for row in context.activity.recent %}
+
+              <div class="activity-row">
+
+                <span class="activity-dot"></span>
+
+                <div>
+                  <strong>
+                    {{
+                      row.get("activity_type")
+                      or row.get("event_type")
+                      or row.get("action")
+                      or "Customer activity"
+                    }}
+                  </strong>
+
+                  <small>
+                    {{
+                      row.get("page")
+                      or row.get("path")
+                      or row.get("folder_path")
+                      or row.get("photo_reference")
+                      or ""
+                    }}
+                  </small>
+                </div>
+
+                <time>{{ row.get("time","") }}</time>
+
+              </div>
+
+            {% else %}
+
+              <div class="empty">
+                No activity has been recorded.
+              </div>
+
+            {% endfor %}
+
+          </div>
+
+        </section>
+
+      {% elif section == "orders" %}
+
+        <div class="section-heading">
+          <span>ORDERS & REVENUE</span>
+          <small>Event sales</small>
+        </div>
+
+        <section class="metric-grid">
+
+          <div class="metric">
+            <span>Total Orders</span>
+            <strong>{{ context.orders.total }}</strong>
+          </div>
+
+          <div class="metric good">
+            <span>Paid Orders</span>
+            <strong>{{ context.orders.paid }}</strong>
+          </div>
+
+          <div class="metric warning">
+            <span>Awaiting Payment</span>
+            <strong>{{ context.orders.awaiting }}</strong>
+          </div>
+
+          <div class="metric money">
+            <span>Revenue</span>
+            <strong>£{{ "%.2f"|format(context.orders.revenue) }}</strong>
+          </div>
+
+        </section>
+
+        <section class="data-table">
+
+          <div class="table-head">
+            <span>ORDER</span>
+            <span>CUSTOMER</span>
+            <span>PAYMENT</span>
+            <span>AMOUNT</span>
+            <span>DATE</span>
+          </div>
+
+          {% for order in orders %}
+
+            <div class="table-row">
+
+              <span>
+                {{ order.order_reference }}
+              </span>
+
+              <span>
+                {{ order.customer_name }}
+                <small>{{ order.customer_email }}</small>
+              </span>
+
+              <span>
+                {{ order.payment_status }}
+              </span>
+
+              <span>
+                £{{ "%.2f"|format(order.payment_amount_pence / 100) }}
+              </span>
+
+              <span>
+                {{ order.created_at }}
+              </span>
+
+            </div>
+
+          {% else %}
+
+            <div class="empty">
+              No orders for this event.
+            </div>
+
+          {% endfor %}
+
+        </section>
+
+      {% elif section == "deliveries" %}
+
+        <div class="section-heading">
+          <span>DIGITAL DELIVERY</span>
+          <small>Customer delivery status</small>
+        </div>
+
+        <section class="metric-grid">
+
+          <div class="metric warning">
+            <span>Waiting</span>
+            <strong>{{ context.deliveries.waiting }}</strong>
+          </div>
+
+          <div class="metric warning">
+            <span>Processing</span>
+            <strong>{{ context.deliveries.processing }}</strong>
+          </div>
+
+          <div class="metric good">
+            <span>Complete</span>
+            <strong>{{ context.deliveries.complete }}</strong>
+          </div>
+
+          <div class="metric danger">
+            <span>Failed</span>
+            <strong>{{ context.deliveries.failed }}</strong>
+          </div>
+
+        </section>
+
+        <section class="data-table">
+
+          <div class="table-head">
+            <span>CUSTOMER</span>
+            <span>ORDER</span>
+            <span>TYPE</span>
+            <span>STATUS</span>
+            <span>EXPIRES</span>
+          </div>
+
+          {% for delivery in deliveries %}
+
+            <div class="table-row">
+
+              <span>
+                {{ delivery.customer_name }}
+                <small>{{ delivery.customer_email }}</small>
+              </span>
+
+              <span>
+                {{ delivery.order_reference }}
+              </span>
+
+              <span>
+                {{ delivery.delivery_type }}
+              </span>
+
+              <span>
+                {{ delivery.status }}
+              </span>
+
+              <span>
+                {{ delivery.expires_at }}
+              </span>
+
+            </div>
+
+          {% else %}
+
+            <div class="empty">
+              No deliveries for this event.
+            </div>
+
+          {% endfor %}
+
+        </section>
+
+      {% elif section == "health" %}
+
+        <div class="section-heading">
+          <span>SYSTEM HEALTH</span>
+          <small>White Label platform</small>
+        </div>
+
+        <section class="health-list large-health">
+
+          {% for item in context.health %}
+
+            <div class="health-row">
+
+              <span class="health-indicator {% if item.ok %}healthy{% else %}unhealthy{% endif %}"></span>
+
+              <strong>{{ item.name }}</strong>
+
+              <span>{{ item.status }}</span>
+
+            </div>
+
+          {% endfor %}
+
+        </section>
+
+        <section class="panel health-note">
+
+          <h2>Operational status</h2>
+
+          <p>
+            This page reports the health of the White Label cloud
+            platform and its current event connection. It does not
+            alter customer galleries, photographs, orders or event data.
+          </p>
+
+        </section>
+
+      {% endif %}
+
+    {% else %}
+
+      <section class="empty-event">
+        <div class="empty-icon">WL</div>
+        <h2>No event selected</h2>
+        <p>
+          Select a client and event from the control centre.
+        </p>
+      </section>
+
+    {% endif %}
+
+  </main>
+
+</div>
+
+</body>
+</html>

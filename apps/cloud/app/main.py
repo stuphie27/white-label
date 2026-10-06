@@ -40,6 +40,7 @@ from app.payroll_requests import build_payroll_request_router
 from app.sync.router import build_sync_router
 from app.event_master_sync import event_master_refresh_loop
 from app.branding import BRANDS
+from app.website_control import build_website_control_router
 
 APP_DIR = Path(__file__).resolve().parent
 TEMPLATES = Jinja2Templates(directory=APP_DIR / "templates")
@@ -175,6 +176,7 @@ def create_app() -> FastAPI:
         return await call_next(request)
 
     application.include_router(operations_router)
+    application.include_router(build_website_control_router(TEMPLATES))
     application.include_router(
         build_auth_router(
             TEMPLATES,

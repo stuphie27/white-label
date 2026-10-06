@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>White Label Control Centre</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background:
+        radial-gradient(circle at top, #26070a 0, #090909 42%, #030303 100%);
+      color: #fff;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .card {
+      width: min(440px, calc(100% - 32px));
+      background: #101010;
+      border: 1px solid #383838;
+      border-radius: 16px;
+      padding: 34px;
+      box-shadow: 0 30px 80px rgba(0,0,0,.55);
+    }
+    .eyebrow {
+      color: #e21b23;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 8px 0 8px;
+      font-size: 29px;
+    }
+    p {
+      color: #aaa;
+      line-height: 1.5;
+    }
+    label {
+      display: block;
+      margin: 24px 0 7px;
+      color: #ccc;
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+    }
+    input {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      border: 1px solid #555;
+      background: #080808;
+      color: #fff;
+      font-size: 15px;
+    }
+    button {
+      width: 100%;
+      margin-top: 14px;
+      padding: 14px;
+      border: 0;
+      border-radius: 8px;
+      background: #c90000;
+      color: #fff;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    button:hover { background: #e21b23; }
+    .message, .error {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 7px;
+      font-size: 13px;
+    }
+    .message {
+      background: #102b12;
+      border: 1px solid #275b2b;
+      color: #9be39d;
+    }
+    .error {
+      background: #31090b;
+      border: 1px solid #7b2025;
+      color: #ff9b9f;
+    }
+    .secure {
+      margin-top: 22px;
+      color: #666;
+      font-size: 11px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="eyebrow">Stuphie Online</div>
+    <h1>White Label Control Centre</h1>
+    <p>
+      Private website management. A secure one-time login link
+      will be sent to the authorised control-centre email address.
+    </p>
+
+    <form method="post" action="/stuphie-control/login">
+      <label for="email">Authorised email</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        placeholder="photos@sophiesphotography.co.uk"
+        required
+      >
+      <button type="submit">Send Magic Login Link</button>
+    </form>
+
+    {% if message %}
+      <div class="message">{{ message }}</div>
+    {% endif %}
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if local_magic_link %}
+      <a
+        href="{{ local_magic_link }}"
+        style="display:block;width:100%;margin-top:18px;padding:15px;border-radius:8px;background:#c90000;color:#fff;text-align:center;font-weight:900;text-decoration:none;"
+      >
+        OPEN SECURE LOGIN
+      </a>
+    {% endif %}
+
+    <div class="secure">
+      Restricted to the authorised White Label administrator.
+    </div>
+  </main>
+</body>
+</html>

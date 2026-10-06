@@ -1,0 +1,570 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta http-equiv="refresh" content="60">
+  <title>White Label Control Centre</title>
+  <link rel="stylesheet" href="/static/website-control.css">
+</head>
+
+<body>
+
+<div class="app-shell">
+
+  <aside class="sidebar">
+
+    <div class="brand-mark">
+      <div class="brand-symbol">WL</div>
+      <div>
+        <strong>WHITE LABEL</strong>
+        <span>CONTROL CENTRE</span>
+      </div>
+    </div>
+
+    <nav>
+      <a class="active" href="/stuphie-control">Overview</a>
+
+      {% if context %}
+        <a href="/stuphie-control/photos?event={{ context.event.id }}">Photos</a>
+        <a href="/stuphie-control/folders?event={{ context.event.id }}">Folders</a>
+        <a href="/stuphie-control/activity?event={{ context.event.id }}">Website Activity</a>
+        <a href="/stuphie-control/orders?event={{ context.event.id }}">Orders & Revenue</a>
+        <a href="/stuphie-control/deliveries?event={{ context.event.id }}">Digital Delivery</a>
+        <a href="/stuphie-control/health?event={{ context.event.id }}">System Health</a>
+      {% endif %}
+
+      <a href="/stuphie-control/logout">Sign out</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <span>PRIVATE ADMINISTRATION</span>
+      <small>{{ staff_email }}</small>
+    </div>
+
+  </aside>
+
+  <main class="main">
+
+    <header class="topbar">
+
+      <div>
+        <div class="eyebrow">STUPHIE ONLINE</div>
+        <h1>Website Control Centre</h1>
+
+        {% if context %}
+          <p class="subtitle">
+            {{ context.event.name }}
+            {% if context.event.venue %}
+              · {{ context.event.venue }}
+            {% endif %}
+          </p>
+        {% else %}
+          <p class="subtitle">
+            White Label website management
+          </p>
+        {% endif %}
+      </div>
+
+      <div class="admin-pill">
+        <span class="online-dot"></span>
+        SUPER ADMIN
+      </div>
+
+    </header>
+
+    <section class="selectors">
+
+      <form method="get" action="/stuphie-control">
+
+        <div class="selector">
+          <label>CLIENT / BRAND</label>
+
+          <select name="brand" onchange="this.form.submit()">
+
+            {% for brand in brands %}
+              <option
+                value="{{ brand.id }}"
+                {% if brand.id == brand_id %}selected{% endif %}
+              >
+                {{ brand.name }}
+              </option>
+            {% endfor %}
+
+          </select>
+        </div>
+
+        <div class="selector">
+          <label>EVENT</label>
+
+          <select name="event" onchange="this.form.submit()">
+
+            {% for event in events %}
+              <option
+                value="{{ event.id }}"
+                {% if context and event.id == context.event.id %}
+                  selected
+                {% endif %}
+              >
+                {{ event.name }}
+              </option>
+            {% else %}
+              <option>No events available</option>
+            {% endfor %}
+
+          </select>
+
+          <input type="hidden" name="brand" value="{{ brand_id }}">
+
+        </div>
+
+      </form>
+
+    </section>
+
+    {% if context %}
+
+      <section class="event-banner">
+
+        <div>
+          <span class="banner-label">
+            {{ brand_name }} · CURRENT EVENT
+          </span>
+
+          <strong>{{ context.event.name }}</strong>
+
+          <small>
+            {{ context.event.start_date }}
+
+            {% if context.event.end_date != context.event.start_date %}
+              — {{ context.event.end_date }}
+            {% endif %}
+
+            {% if context.event.venue %}
+              · {{ context.event.venue }}
+            {% endif %}
+          </small>
+        </div>
+
+        {% if public_host and context.event.public_slug %}
+          <a
+            class="rose-button"
+            href="https://{{ public_host }}/g/{{ context.event.public_slug }}"
+            target="_blank"
+            rel="noopener"
+          >
+            OPEN LIVE GALLERY
+          </a>
+        {% endif %}
+
+      </section>
+
+      <div class="section-heading">
+        <span>LIVE WEBSITE</span>
+        <small>Refreshes every 60 seconds</small>
+      </div>
+
+      <section class="metric-grid">
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>VISITORS</span>
+          <strong>{{ context.activity.visitors }}</strong>
+          <small>
+            {% if context.activity.available %}
+              Recorded visitors / sessions
+            {% else %}
+              Activity tracking unavailable
+            {% endif %}
+          </small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>GALLERY VIEWS</span>
+          <strong>{{ context.activity.gallery_views }}</strong>
+          <small>Recorded gallery opens/views</small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>PHOTO VIEWS</span>
+          <strong>{{ context.activity.photo_views }}</strong>
+          <small>Recorded photograph views</small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>FAVOURITES</span>
+          <strong>{{ context.favourites.favourites }}</strong>
+          <small>{{ context.favourites.sessions }} favourite sessions</small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>BASKET ACTIVITY</span>
+          <strong>{{ context.activity.basket_activity }}</strong>
+          <small>
+            {% if context.baskets.tracked %}
+              {{ context.baskets.count }} tracked baskets
+            {% else %}
+              Activity events recorded
+            {% endif %}
+          </small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/activity?event={{ context.event.id }}">
+          <span>CHECKOUT ACTIVITY</span>
+          <strong>{{ context.activity.checkout_activity }}</strong>
+          <small>Recorded checkout events</small>
+        </a>
+
+      </section>
+
+      <div class="section-heading">
+        <span>SALES</span>
+        <small>Event totals</small>
+      </div>
+
+      <section class="metric-grid">
+
+        <a class="metric" href="/stuphie-control/orders?event={{ context.event.id }}">
+          <span>ORDERS</span>
+          <strong>{{ context.orders.total }}</strong>
+          <small>{{ context.orders.paid }} paid</small>
+        </a>
+
+        <a class="metric good" href="/stuphie-control/orders?event={{ context.event.id }}">
+          <span>PAID ORDERS</span>
+          <strong>{{ context.orders.paid }}</strong>
+          <small>{{ context.orders.awaiting }} awaiting payment</small>
+        </a>
+
+        <a class="metric money" href="/stuphie-control/orders?event={{ context.event.id }}">
+          <span>REVENUE</span>
+          <strong>£{{ "%.2f"|format(context.orders.revenue) }}</strong>
+          <small>Paid orders</small>
+        </a>
+
+        <a class="metric warning" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+          <span>DELIVERY WAITING</span>
+          <strong>{{ context.deliveries.waiting }}</strong>
+          <small>Awaiting customer delivery</small>
+        </a>
+
+        <a class="metric warning" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+          <span>DELIVERY PROCESSING</span>
+          <strong>{{ context.deliveries.processing }}</strong>
+          <small>Currently processing</small>
+        </a>
+
+        <a class="metric good" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+          <span>DELIVERED</span>
+          <strong>{{ context.deliveries.complete }}</strong>
+          <small>Completed deliveries</small>
+        </a>
+
+      </section>
+
+      <div class="section-heading">
+        <span>PHOTO PIPELINE</span>
+        <small>Cloud gallery status</small>
+      </div>
+
+      <section class="metric-grid">
+
+        <a class="metric" href="/stuphie-control/photos?event={{ context.event.id }}">
+          <span>TOTAL PHOTOS</span>
+          <strong>{{ context.photos.total }}</strong>
+          <small>Known to the cloud</small>
+        </a>
+
+        <a class="metric good" href="/stuphie-control/photos?event={{ context.event.id }}">
+          <span>READY</span>
+          <strong>{{ context.photos.ready }}</strong>
+          <small>Available to customers</small>
+        </a>
+
+        <a class="metric warning" href="/stuphie-control/photos?event={{ context.event.id }}">
+          <span>WAITING / PROCESSING</span>
+          <strong>{{ context.photos.waiting }}</strong>
+          <small>Not yet ready</small>
+        </a>
+
+        <a class="metric danger" href="/stuphie-control/photos?event={{ context.event.id }}">
+          <span>FAILED</span>
+          <strong>{{ context.photos.failed }}</strong>
+          <small>Needs attention</small>
+        </a>
+
+        <a class="metric" href="/stuphie-control/photos?event={{ context.event.id }}">
+          <span>REMOVED</span>
+          <strong>{{ context.photos.removed }}</strong>
+          <small>Retired assets</small>
+        </a>
+
+      </section>
+
+      <div class="section-heading">
+        <span>EVENT DAYS</span>
+        <small>Click any day for its folders</small>
+      </div>
+
+      <section class="day-grid">
+
+        {% for day in ["Saturday","Sunday","Monday","Tuesday","Wednesday"] %}
+
+          {% set d = context.days[day] %}
+
+          <a
+            class="day-card"
+            href="/stuphie-control/folders?event={{ context.event.id }}&day={{ day|lower }}"
+          >
+
+            <div class="day-top">
+
+              <strong>{{ day }}</strong>
+
+              {% if d.waiting %}
+                <span class="day-status uploading">UPLOADING</span>
+              {% elif d.ready %}
+                <span class="day-status ready">READY</span>
+              {% else %}
+                <span class="day-status waiting">WAITING</span>
+              {% endif %}
+
+            </div>
+
+            <div class="day-number">
+              {{ d.ready }}
+              <span>/ {{ d.total }}</span>
+            </div>
+
+            <div class="progress">
+              <span style="width:{{ d.percent }}%"></span>
+            </div>
+
+            <div class="day-footer">
+              <span>{{ d.percent }}% ready</span>
+              <span>{{ d.failed }} failed</span>
+            </div>
+
+          </a>
+
+        {% endfor %}
+
+      </section>
+
+      <div class="two-column">
+
+        <section class="panel">
+
+          <div class="panel-title">
+
+            <div>
+              <span>GALLERY FOLDERS</span>
+              <strong>Live inventory</strong>
+            </div>
+
+            <a href="/stuphie-control/folders?event={{ context.event.id }}">
+              VIEW ALL →
+            </a>
+
+          </div>
+
+          <div class="folder-list">
+
+            {% for folder in context.folders[:15] %}
+
+              <a
+                class="folder-row"
+                href="/stuphie-control/folders?event={{ context.event.id }}&folder={{ folder.path|urlencode }}"
+              >
+
+                <span class="folder-icon">▦</span>
+
+                <span class="folder-name">
+                  {{ folder.name }}
+                </span>
+
+                <strong>{{ folder.count }}</strong>
+
+              </a>
+
+            {% else %}
+
+              <div class="empty">
+                No active folders found.
+              </div>
+
+            {% endfor %}
+
+          </div>
+
+        </section>
+
+        <section class="panel">
+
+          <div class="panel-title">
+
+            <div>
+              <span>DELIVERY</span>
+              <strong>Customer downloads</strong>
+            </div>
+
+            <a href="/stuphie-control/deliveries?event={{ context.event.id }}">
+              VIEW ALL →
+            </a>
+
+          </div>
+
+          <div class="status-list">
+
+            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+              <span>Waiting</span>
+              <strong>{{ context.deliveries.waiting }}</strong>
+            </a>
+
+            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+              <span>Processing</span>
+              <strong>{{ context.deliveries.processing }}</strong>
+            </a>
+
+            <a class="status-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+              <span>Complete</span>
+              <strong>{{ context.deliveries.complete }}</strong>
+            </a>
+
+            <a class="status-row danger-row" href="/stuphie-control/deliveries?event={{ context.event.id }}">
+              <span>Failed</span>
+              <strong>{{ context.deliveries.failed }}</strong>
+            </a>
+
+          </div>
+
+        </section>
+
+      </div>
+
+      <div class="two-column">
+
+        <section class="panel">
+
+          <div class="panel-title">
+
+            <div>
+              <span>RECENT ACTIVITY</span>
+              <strong>Latest customer interactions</strong>
+            </div>
+
+            <a href="/stuphie-control/activity?event={{ context.event.id }}">
+              VIEW ALL →
+            </a>
+
+          </div>
+
+          <div class="activity-list">
+
+            {% for row in context.activity.recent %}
+
+              <div class="activity-row">
+
+                <span class="activity-dot"></span>
+
+                <div>
+                  <strong>
+                    {{
+                      row.get("activity_type")
+                      or row.get("event_type")
+                      or row.get("action")
+                      or "Customer activity"
+                    }}
+                  </strong>
+
+                  <small>
+                    {{
+                      row.get("page")
+                      or row.get("path")
+                      or row.get("folder_path")
+                      or row.get("photo_reference")
+                      or ""
+                    }}
+                  </small>
+                </div>
+
+                <time>{{ row.get("time","") }}</time>
+
+              </div>
+
+            {% else %}
+
+              <div class="empty">
+                No customer activity recorded yet.
+              </div>
+
+            {% endfor %}
+
+          </div>
+
+        </section>
+
+        <section class="panel">
+
+          <div class="panel-title">
+
+            <div>
+              <span>SYSTEM HEALTH</span>
+              <strong>Platform status</strong>
+            </div>
+
+            <a href="/stuphie-control/health?event={{ context.event.id }}">
+              VIEW HEALTH →
+            </a>
+
+          </div>
+
+          <div class="health-list">
+
+            {% for item in context.health %}
+
+              <a
+                class="health-row"
+                href="/stuphie-control/health?event={{ context.event.id }}"
+              >
+                <span class="health-indicator {% if item.ok %}healthy{% else %}unhealthy{% endif %}"></span>
+                <strong>{{ item.name }}</strong>
+                <span>{{ item.status }}</span>
+              </a>
+
+            {% endfor %}
+
+          </div>
+
+        </section>
+
+      </div>
+
+    {% else %}
+
+      <section class="empty-event">
+
+        <div class="empty-icon">WL</div>
+
+        <h2>No local event data</h2>
+
+        <p>
+          The local development database is intentionally separate
+          from production. Once this build is deployed, the control
+          centre will use the existing White Label event data.
+        </p>
+
+      </section>
+
+    {% endif %}
+
+    <footer>
+      White Label Control Centre ·
+      {{ generated_at.strftime("%d %b %Y %H:%M UTC") }}
+    </footer>
+
+  </main>
+
+</div>
+
+</body>
+</html>

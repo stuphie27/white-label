@@ -1284,11 +1284,13 @@ def build_website_control_router(
                 | set(BRANDS.keys())
             )
 
-            if not brand_id:
-                brand_id = "sophies"
-
-            # An explicitly supplied event is authoritative.
-            # Always derive its brand from the event itself.
+            # -------------------------------------------------
+            # Event selection is authoritative.
+            #
+            # If an event ID is supplied, NEVER replace it with
+            # the first event for a brand. Derive the brand from
+            # the selected event itself.
+            # -------------------------------------------------
             if event_id:
                 selected = _event(
                     session,
@@ -1300,7 +1302,6 @@ def build_website_control_router(
                         selected.brand_id
                         or "sophies"
                     )
-
                     events = _event_rows(
                         session,
                         brand_id,
@@ -1308,20 +1309,42 @@ def build_website_control_router(
                 else:
                     event_id = ""
 
+            # -------------------------------------------------
+            # No event supplied.
+            #
+            # Prefer DSI/partner when it has a current production
+            # event. This is the live White Label partner control
+            # centre and prevents the page opening on an unrelated
+            # Sophie event such as Champions Of Tomorrow.
+            #
+            # If partner has no events, fall back safely to the
+            # first available brand/event.
+            # -------------------------------------------------
             if not event_id:
-                events = _event_rows(
+                partner_events = _event_rows(
                     session,
-                    brand_id,
+                    "partner",
                 )
 
-                if events:
-                    event_id = str(events[0].id)
-            else:
-                # Keep the event's own brand/event relationship intact.
-                events = _event_rows(
-                    session,
-                    brand_id,
-                )
+                if partner_events:
+                    brand_id = "partner"
+                    events = partner_events
+                    event_id = str(
+                        partner_events[0].id
+                    )
+                else:
+                    if not brand_id:
+                        brand_id = "sophies"
+
+                    events = _event_rows(
+                        session,
+                        brand_id,
+                    )
+
+                    if events:
+                        event_id = str(
+                            events[0].id
+                        )
 
             context = (
                 _context(

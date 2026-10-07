@@ -310,8 +310,198 @@
 
         </section>
 
-      {% elif section == "orders" %}
+      {% elif section == "order_detail" %}
 
+        <div class="section-heading">
+          <span>ORDER DETAILS</span>
+          <small>{{ order.order_reference or order.id }}</small>
+        </div>
+
+        <section class="metric-grid">
+
+          <div class="metric">
+            <span>Customer</span>
+            <strong>{{ order.customer_name|default("Customer", true) }}</strong>
+            <small>{{ order.customer_email|default("", true) }}</small>
+          </div>
+
+          <div class="metric">
+            <span>Payment</span>
+            <strong>
+              {% if order.payment_status == "paid" %}
+                PAID
+              {% else %}
+                {{ order.payment_status|default("Unknown", true)|replace("_", " ")|title }}
+              {% endif %}
+            </strong>
+            <small>£{{ "%.2f"|format(order.payment_amount_pence / 100) }}</small>
+          </div>
+
+          <div class="metric">
+            <span>Order Status</span>
+            <strong>{{ order.status|default("Unknown", true)|replace("_", " ")|title }}</strong>
+          </div>
+
+          <div class="metric">
+            <span>Product</span>
+            <strong>{{ order.product_type|default("Digital", true)|replace("_", " ")|title }}</strong>
+          </div>
+
+        </section>
+
+        <section class="panel">
+
+          <div class="panel-title">
+            <div>
+              <span>WHAT WAS ORDERED</span>
+              <strong>{{ order_items|length }} item{% if order_items|length != 1 %}s{% endif %}</strong>
+            </div>
+          </div>
+
+          <div class="activity-list">
+
+            {% for item in order_items %}
+
+              <div class="activity-row">
+
+                <span class="activity-dot"></span>
+
+                <div>
+                  <strong>{{ item.filename|default("Photograph", true) }}</strong>
+
+                  <small>
+                    Reference: {{ item.source_ref|default("—", true) }}
+                  </small>
+
+                  <small>
+                    {{ item.folder_path|default("Folder not recorded", true) }}
+                  </small>
+
+                  <small>
+                    {{ item.product_name|default(item.product_type, true)|replace("_", " ")|title }}
+                    · £{{ "%.2f"|format(item.unit_price_pence / 100) }}
+                  </small>
+                </div>
+
+              </div>
+
+            {% else %}
+
+              <div class="empty">
+                No order items recorded.
+              </div>
+
+            {% endfor %}
+
+          </div>
+
+        </section>
+
+        <section class="panel">
+
+          <div class="panel-title">
+            <div>
+              <span>DIGITAL DELIVERY</span>
+              <strong>
+                {% if delivery %}
+                  {{ delivery.status|default("Unknown", true)|replace("_", " ")|title }}
+                {% else %}
+                  Not created
+                {% endif %}
+              </strong>
+            </div>
+          </div>
+
+          {% if delivery %}
+
+            <div class="activity-list">
+
+              <div class="activity-row">
+                <span class="activity-dot"></span>
+                <div>
+                  <strong>Email</strong>
+                  <small>
+                    {% if delivery.emailed_at %}
+                      Sent {{ delivery.emailed_at }}
+                    {% else %}
+                      Not sent
+                    {% endif %}
+                  </small>
+                </div>
+              </div>
+
+              <div class="activity-row">
+                <span class="activity-dot"></span>
+                <div>
+                  <strong>Download</strong>
+                  <small>
+                    {% if delivery.downloaded_at %}
+                      Downloaded {{ delivery.downloaded_at }}
+                    {% else %}
+                      Not downloaded yet
+                    {% endif %}
+                  </small>
+                </div>
+              </div>
+
+              <div class="activity-row">
+                <span class="activity-dot"></span>
+                <div>
+                  <strong>Download count</strong>
+                  <small>
+                    {{ delivery.download_count|default(0, true) }}
+                  </small>
+                </div>
+              </div>
+
+              <div class="activity-row">
+                <span class="activity-dot"></span>
+                <div>
+                  <strong>Expiry</strong>
+                  <small>
+                    {{ delivery.expires_at|default("Not set", true) }}
+                  </small>
+                </div>
+              </div>
+
+            </div>
+
+          {% else %}
+
+            <div class="empty">
+              No digital delivery has been created yet.
+            </div>
+
+          {% endif %}
+
+        </section>
+
+        {% if order.fulfilment_error %}
+
+          <section class="panel">
+
+            <div class="panel-title">
+              <div>
+                <span>FULFILMENT ERROR</span>
+                <strong>Attention required</strong>
+              </div>
+            </div>
+
+            <div class="empty">
+              {{ order.fulfilment_error }}
+            </div>
+
+          </section>
+
+        {% endif %}
+
+        <p style="margin-top:24px;">
+          <a class="button" href="/stuphie-control/orders?brand={{ context.event.brand_id }}&event={{ context.event.id }}">
+            ← Back to Orders & Revenue
+          </a>
+        </p>
+
+      {% elif section == "orders" %}
         <div class="section-heading">
           <span>ORDERS & REVENUE</span>
           <small>Event sales</small>
@@ -353,7 +543,10 @@
 
           {% for order in orders %}
 
-            <div class="table-row">
+                      <a
+              class="table-row"
+              href="/stuphie-control/order/{{ order.id }}?brand={{ context.event.brand_id }}&event={{ context.event.id }}"
+            >
 
               <span>
                 {{ order.order_reference|default(order.id, true) }}
@@ -376,7 +569,7 @@
                 {{ order.created_at }}
               </span>
 
-            </div>
+            </a>
 
           {% else %}
 

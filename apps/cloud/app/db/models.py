@@ -2019,6 +2019,88 @@ class CustomerVerificationChallenge(Base):
 # ---------------------------------------------------------------------------
 # STUPHIE CUSTOMER LIVE ACTIVITY
 # ---------------------------------------------------------------------------
+class CustomerGalleryVisit(Base):
+    """Anonymous website visit for a public gallery.
+
+    This is deliberately separate from CustomerGalleryActivity, which
+    represents a verified customer identity. No name, email, or customer
+    identity is stored here.
+    """
+
+    __tablename__ = "customer_gallery_visits"
+
+    id: Mapped[str] = mapped_column(
+        String(36),
+        primary_key=True,
+        default=lambda: str(uuid4()),
+    )
+
+    event_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("events.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    gallery_id: Mapped[str] = mapped_column(
+        String(36),
+        ForeignKey("galleries.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+
+    visitor_id: Mapped[str] = mapped_column(
+        String(36),
+        nullable=False,
+        index=True,
+    )
+
+    first_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+    last_seen_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        default=lambda: datetime.now(timezone.utc),
+        index=True,
+    )
+
+    visit_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+
+    gallery_views: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    photo_views: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    folder_views: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=0,
+    )
+
+    __table_args__ = (
+        UniqueConstraint(
+            "gallery_id",
+            "visitor_id",
+            name="uq_customer_gallery_visit_visitor",
+        ),
+    )
+
 
 class CustomerGalleryActivity(Base):
     """Current and cumulative activity for a verified online customer."""

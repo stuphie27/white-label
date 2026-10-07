@@ -317,7 +317,7 @@
   };
 
   // Maintain live presence while the customer is browsing.
-  sendActivity("heartbeat");
+  sendActivity("gallery_view");
 
   window.setInterval(
     () => sendActivity("heartbeat"),

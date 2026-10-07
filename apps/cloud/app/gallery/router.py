@@ -14,7 +14,7 @@ from app.auth.service import new_csrf_token
 from app.checkout.catalogue import event_catalogue
 from app.customer_ownership import verified_customer_profile
 from app.customer_activity import record_customer_activity
-from app.db.models import CustomerFavourite, CustomerFavouriteSession, Event, GalleryAsset, GalleryFolder
+from app.db.models import CustomerFavourite, CustomerFavouriteSession, CustomerGalleryVisit, Event, GalleryAsset, GalleryFolder
 from app.branding import get_event_brand
 from app.db.session import database_is_ready, database_schema_is_ready
 from app.storage import presigned_get_url
@@ -528,9 +528,78 @@ def build_gallery_router(templates: Jinja2Templates) -> APIRouter:
             )
 
             if profile is None:
+                visitor_id = str(
+                    request.session.get(
+                        f"gallery_visitor_id_{gallery.id}",
+                        "",
+                    )
+                    or ""
+                ).strip()
+
+                if not visitor_id:
+                    from uuid import uuid4
+
+                    visitor_id = str(uuid4())
+                    request.session[
+                        f"gallery_visitor_id_{gallery.id}"
+                    ] = visitor_id
+
+                visitor = session.scalar(
+                    select(CustomerGalleryVisit).where(
+                        CustomerGalleryVisit.gallery_id == gallery.id,
+                        CustomerGalleryVisit.visitor_id == visitor_id,
+                    )
+                )
+
+                if visitor is None:
+                    visitor = CustomerGalleryVisit(
+                        event_id=str(gallery.event_id),
+                        gallery_id=str(gallery.id),
+                        visitor_id=visitor_id,
+                        visit_count=1,
+                        gallery_views=(
+                            1
+                            if action in {
+                                "gallery_view",
+                                "gallery_open",
+                                "open",
+                            }
+                            else 0
+                        ),
+                        photo_views=(
+                            1
+                            if action == "photo_view"
+                            else 0
+                        ),
+                    )
+                    session.add(visitor)
+                else:
+                    from datetime import datetime, timezone
+
+                    visitor.last_seen_at = datetime.now(timezone.utc)
+
+                    if action in {
+                        "gallery_view",
+                        "gallery_open",
+                        "open",
+                    }:
+                        visitor.gallery_views = (
+                            int(visitor.gallery_views or 0) + 1
+                        )
+
+                    if action == "photo_view":
+                        visitor.photo_views = (
+                            int(visitor.photo_views or 0) + 1
+                        )
+
+                session.commit()
+
                 return {
-                    "ok": False,
-                    "reason": "not_verified",
+                    "ok": True,
+                    "anonymous": True,
+                    "photo_views": int(
+                        visitor.photo_views or 0
+                    ),
                 }
 
             activity = record_customer_activity(

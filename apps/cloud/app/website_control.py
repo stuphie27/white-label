@@ -1580,7 +1580,133 @@ def build_website_control_router(
             "Website Activity",
             "Visitors, gallery views and customer behaviour",
         )
+    @router.get(
+        "/order/{order_id}",
+        response_class=HTMLResponse,
+        include_in_schema=False,
+    )
+    async def order_detail(
+        request: Request,
+        order_id: str,
+        event: str = "",
+    ):
+        denied = _admin_check(request)
 
+        if denied:
+            return denied
+
+        with request.app.state.session_factory() as session:
+            order = session.get(CloudOrder, order_id)
+
+            if order is None:
+                return HTMLResponse("Order not found", status_code=404)
+
+            # Orders must remain scoped to their own event.
+            event_id = str(order.event_id)
+
+            if event and str(event) != event_id:
+                return HTMLResponse("Order not found", status_code=404)
+
+            context = _context(session, event_id)
+
+            if context is None:
+                return HTMLResponse("Event not found", status_code=404)
+
+            delivery = None
+
+            if order.delivery_id:
+                delivery = session.get(
+                    CustomerDelivery,
+                    order.delivery_id,
+                )
+
+            items = []
+
+            try:
+                import json
+
+                raw_items = json.loads(
+                    order.order_items_json or "[]"
+                )
+
+                for item in raw_items:
+                    source_ref = str(
+                        item.get("asset_source_ref") or ""
+                    ).strip()
+
+                    asset = None
+
+                    if source_ref:
+                        asset = session.scalar(
+                            select(GalleryAsset).where(
+                                GalleryAsset.source_ref == source_ref,
+                                GalleryAsset.gallery_id == context["gallery"].id,
+                            )
+                        )
+
+                    items.append(
+                        {
+                            "source_ref": source_ref,
+                            "filename": (
+                                item.get("filename")
+                                or (
+                                    asset.filename
+                                    if asset
+                                    else ""
+                                )
+                            ),
+                            "folder_path": (
+                                item.get("folder_path")
+                                or (
+                                    asset.folder_path
+                                    if asset
+                                    else ""
+                                )
+                            ),
+                            "product_name": (
+                                item.get("product_name")
+                                or order.product_type
+                                or ""
+                            ),
+                            "product_type": (
+                                item.get("product_type")
+                                or order.product_type
+                                or ""
+                            ),
+                            "quantity": item.get(
+                                "quantity",
+                                1,
+                            ),
+                            "unit_price_pence": item.get(
+                                "unit_price_pence",
+                                0,
+                            ),
+                        }
+                    )
+
+            except (TypeError, ValueError):
+                items = []
+
+        return templates.TemplateResponse(
+            request=request,
+            name="website_control_detail.html",
+            context={
+                "title": "Order Details",
+                "subtitle": (
+                    order.order_reference
+                    or order.id
+                ),
+                "section": "order_detail",
+                "context": context,
+                "orders": [],
+                "deliveries": [],
+                "selected_day": "",
+                "selected_folder": "",
+                "order": order,
+                "delivery": delivery,
+                "order_items": items,
+            },
+        )
     @router.get(
         "/orders",
         response_class=HTMLResponse,

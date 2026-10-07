@@ -18,6 +18,7 @@ from app.db.models import (
     CustomerDelivery,
     CustomerFavourite,
     CustomerFavouriteSession,
+    CustomerGalleryVisit,
     Event,
     Gallery,
     GalleryAsset,
@@ -729,11 +730,38 @@ def _activity(session, gallery_id: str):
 
             recent.append(item)
 
+    anonymous_visitors = session.execute(
+        text("""
+            SELECT COUNT(DISTINCT visitor_id)
+            FROM customer_gallery_visits
+            WHERE gallery_id = :gid
+        """),
+        {"gid": gallery_id},
+    ).scalar() or 0
+
+    anonymous_gallery_views = session.execute(
+        text("""
+            SELECT COALESCE(SUM(gallery_views), 0)
+            FROM customer_gallery_visits
+            WHERE gallery_id = :gid
+        """),
+        {"gid": gallery_id},
+    ).scalar() or 0
+
+    anonymous_photo_views = session.execute(
+        text("""
+            SELECT COALESCE(SUM(photo_views), 0)
+            FROM customer_gallery_visits
+            WHERE gallery_id = :gid
+        """),
+        {"gid": gallery_id},
+    ).scalar() or 0
+
     return {
         "events": int(events),
-        "visitors": int(visitors),
-        "gallery_views": gallery_views,
-        "photo_views": photo_views,
+        "visitors": int(visitors) + int(anonymous_visitors),
+        "gallery_views": int(gallery_views) + int(anonymous_gallery_views),
+        "photo_views": int(photo_views) + int(anonymous_photo_views),
         "favourites": favourite_events,
         "basket_activity": basket_events,
         "checkout_activity": checkout_events,
